@@ -405,6 +405,8 @@
     \chapter*{\listnomenclature
       \@mkboth{
           \MakeUppercase\listnomenclature}{\MakeUppercase\listnomenclature}}
+Unless otherwise specified, the following naming conventions apply. 
+\vspace{0.2cm}
 \begin{longtable}[c]{#1}#2\end{longtable}\par
     \cleardoublepage
 }

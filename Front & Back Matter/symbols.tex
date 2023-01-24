@@ -2,14 +2,95 @@
 
 \lhead{\emph{Symbols}} % Set the left side page header to "Symbols"
 
+
 \listofnomenclature{lll} % Include a list of Symbols (a three column table)
 {
-$a$ & distance & m \\
-$P$ & power & W (Js$^{-1}$) \\
-% Symbol & Name & Unit \\
 
-& & \\ % Gap to separate the Roman symbols from the Greek
+\textbf{Scalar constants} \\[0.2cm]
 
-$\omega$ & angular frequency & rads$^{-1}$ \\
-% Symbol & Name & Unit \\
-}
+$N$  & The number of nodes in a graph \\
+$T$  & The number of time points considered \\
+$M$  & The number of explanatory variables \\
+$Q$  & The number of queries \\[0.5cm]
+
+\textbf{Scalar variables} \\[0.2cm]
+
+$\alpha$ & An autocorrelation regularisation parameter \\
+$\beta$  & A hyperparameter characterising a graph filter \\
+$\gamma$ & A precision parameter \\
+$\lambda$ & An eigenvalue \textit{or} ridge regression penalty parameter \\
+$\mu$ & The mean of a random variable \\
+$\theta$ & AR(1) autocorrelation parameter \\
+$\sigma^2$ & The variance of a random variable \\[0.5cm]
+
+
+
+\textbf{Matrices} \\[0.2cm]
+
+$\A$  & The graph adjacency matrix \\
+$\D$  & A diagonal matrix \\
+$\E$  & The prediction residuals \\
+$\F$  & A predicted graph signal \\ 
+$\G$  & A graph filter \\
+$\HH$ & A Hessian matrix \\
+$\I$  & The identity matrix \\
+$\K$  & A kernel (Gram) matrix \\
+$\LL$ & The graph Laplacian \\
+$\Ss$ & A binary selection matrix \\
+$\U$  & Laplacian eigenvector matrix \\
+$\V$  & Kernel eigenvector matrix \\
+$\X$  & Data matrix of explanatory variables \\
+$\Y$  & (Partially) observed graph signal  \\
+$\LAM$ & A diagonal eigenvalue matrix \\
+$\SIG$ & A covariance matrix\\
+$\PHI$ & Auxiliary eigenvector matrix \\
+$\PSI$ & Auxiliary eigenvector matrix \\
+$\OMEGA$ & Log marginal variance matrix \\[0.5cm]
+
+
+\textbf{Vectors/tensors} \\[0.2cm]
+
+$\e$ &  The prediction residuals \\
+$\f$ &  The predicted graph signal \\
+$\s$ &  A binary selection vector/tensor \\
+$\x$ & A vector of explanatory variables \\
+$\y$ & The observed graph signal \\
+$\alphaa$ & A flexible intercept vector/tensor \\
+$\betaa$ & A graph filter parameter vector \textit{or} vector of regression coefficients \\
+$\thetaa$ & A aggregated coefficient vector $[ \alphaa^\top, \, \betaa^\top ]^\top$ \\[0.5cm]
+
+
+\textbf{Functions} \\[0.2cm]
+
+$g(\cdot)$   & A graph filter function \\
+$p(\text{statement})$ & The probability that a statement is true \\
+$\pi(\cdot)$ & A probability density function \\
+$\xi(\cdot)$ & Optimisation target function \\
+$\kappa(\cdot, \, \cdot)$ & A kernel function  \\[0.5cm]
+
+
+\textbf{Operations} \\[0.2cm]
+
+
+$(\cdot)^\top$ & Transpose of a matrix/vector \\
+$|| \cdot ||_\text{F}$ & The Frobenius norm \\
+$\vecc{\cdot}$ & Convert a matrix to a vector in column-major order \\
+$\text{vec}_{\, \text{RM}}(\cdot)$ & Convert a matrix to a vector in row-major order \\
+$\mat{\cdot}$ & Convert a vector to a matrix in column-major order \\
+$\text{mat}_{\, \text{RM}}(\cdot)$ & Convert a vector to a matrix in row-major order \\
+$\diag{\cdot}$ & Convert a vector to a diagonal matrix \\
+$\diagi{\cdot}$ & Convert the diagonal of a matrix into a vector \\
+$\otimes$ & The Kronecker product \\
+$\oplus$ & The Kronecker sum \\
+$\circ$ & The Hadamard product \\[0.5cm]
+
+
+\textbf{Miscellaneous} \\[0.2cm]
+
+$\hat{(\cdot)}$ & The estimator of a matrix/vector/tensor \\
+$O(\cdot)$ & The runtime complexity \\
+$x_i$ & A vector element \\
+$\X_i$ & A matrix column \\
+$\X_{ij}$ & A vector element \\
+
+ }
