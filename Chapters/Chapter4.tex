@@ -10,14 +10,47 @@
 
 \label{sec:reg_and_rec_intro}
 
-In this chapter, we turn our attention to the topic of signal processing on Cartesian product graphs. 
+In this chapter, we turn our attention to the topic of signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to define a product between two graphs and, in general, there may be many consistent ways to define it. Other prominent examples include the strong, direct and lexicographic products \citep{Imrich2000}. 
 
+In the general case, we consider two undirected graphs $\mathcal{G}_N = (\mathcal{V}_N, \mathcal{E}_N)$ and $\mathcal{G}_T = (\mathcal{V}_T, \mathcal{E}_T)$ with vertex sets given by $\mathcal{V}_N = \{n \in \mathbb{N} \, | \, n \leq N \}$ and $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ respectively. (In the present context we do not regard zero to be an element of the natural numbers). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_N$ and $\mathcal{G}_T$. This can be generically written as follows. 
+
+\begin{equation}
+    \mathcal{G} = \mathcal{G}_N \, \diamond \, \mathcal{G}_T = (\mathcal{V}, \, \mathcal{E})
+\end{equation}
+
+For all definitions of a graph product, the new vertex set $\mathcal{V}$ is given by the Cartesian product of the vertex sets of the factor graphs, that is
+
+\begin{equation}
+    \mathcal{V} = \mathcal{V}_N \times \mathcal{V}_T = \{(n, \, t) \in \mathbb{N}^2 \, | \, n \leq N \; \text{and} \; t \leq T \}
+\end{equation}
+
+Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. For the Cartesian product, which is commonly denoted as $\mathcal{G}_N \, \square \, \mathcal{G}_T$, the new edge set is constructed as follows. 
+
+\begin{equation}
+    \mathcal{E} = \Big\{\, \big[(n, \, t), \, (n',  t') \big] \; \Big| \; \big(n = n' \; \text{and} \; [t, t'] \in \mathcal{E}_T \big) \; \text{or} \; \big(t = t' \; \text{and} \; [n, n'] \in \mathcal{E}_N\big)  \Big\}
+\end{equation}
+     
+
+This can be described more succinctly by considering the respective adjacency matrices of the factor graphs. If $\mathcal{G}_N$ and $\mathcal{G}_T$ have adjacency matrices given by $\A_N$ and $\A_T$, then the adjacency matrix of their Cartesian product is given by the Kronecker sum of their respective adjacency matrices \citep{Fiedler1973}. 
+
+\begin{equation}
+    \A = \A_N \oplus \A_T 
+\end{equation}
+
+Note that while, given this definition, it may seem that the Cartesian product of graphs is non-commutative since, in general, $\A_N \oplus \A_T  \neq \A_T \oplus \A_N $, the graphs $\mathcal{G}_N \, \square \, \mathcal{G}_T$ and $\mathcal{G}_T \, \square \, \mathcal{G}_N$ are isomorphically identical \citep{Imrich2000}. The only key difference arises from the ordering of the node sets. 
+
+% The direct and strong graph products have a similarly succinct representation in terms of the factor adjacency matrices. Specifically, 
+
+
+% \begin{align}
+%     \text{Direct:} & \; \A = \A_N \otimes \A_T \\ \text{Strong:} & \; \A = \A_N \otimes \A_T + \A_N \oplus \A_T
+% \end{align}
 
 \section{Graph Signal Reconstruction on Cartesian Product Graphs}
 
 \label{sec:gsr_cpg}
 
-Hello
+One task that is of particular interest 
 
 \subsection{A stationary iterative method}
 

@@ -6,12 +6,21 @@
 \listofnomenclature{lll} % Include a list of Symbols (a three column table)
 {
 
-\textbf{Scalar constants} \\[0.2cm]
+\textbf{Integer constants} \\[0.2cm]
 
 $N$  & The number of nodes in a graph \\
 $T$  & The number of time points considered \\
 $M$  & The number of explanatory variables \\
 $Q$  & The number of queries \\[0.5cm]
+
+\textbf{Integer variables} \\[0.2cm]
+
+$n$  & The index of a specific node in a graph \\
+$t$  & The index of a specific time point \\
+$m$  & The index of a specific explanatory variable \\
+$q$  & The index of a specific query \\
+$i, j, k$  & Generic indexing variables \\[0.5cm]
+
 
 \textbf{Scalar variables} \\[0.2cm]
 
@@ -23,7 +32,7 @@ $\mu$ & The mean of a random variable \\
 $\theta$ & AR(1) autocorrelation parameter \\
 $\sigma^2$ & The variance of a random variable \\[0.5cm]
 
-
+\newpage
 
 \textbf{Matrices} \\[0.2cm]
 
@@ -31,7 +40,7 @@ $\A$  & The graph adjacency matrix \\
 $\D$  & A diagonal matrix \\
 $\E$  & The prediction residuals \\
 $\F$  & A predicted graph signal \\ 
-$\G$  & A graph filter \\
+$\G$  & A graph filter matrix \\
 $\HH$ & A Hessian matrix \\
 $\I$  & The identity matrix \\
 $\K$  & A kernel (Gram) matrix \\
@@ -43,8 +52,8 @@ $\X$  & Data matrix of explanatory variables \\
 $\Y$  & (Partially) observed graph signal  \\
 $\LAM$ & A diagonal eigenvalue matrix \\
 $\SIG$ & A covariance matrix\\
-$\PHI$ & Auxiliary eigenvector matrix \\
-$\PSI$ & Auxiliary eigenvector matrix \\
+$\PHI$ & A generic eigenvector matrix \\
+$\PSI$ & A generic eigenvector matrix \\
 $\OMEGA$ & Log marginal variance matrix \\[0.5cm]
 
 
@@ -58,6 +67,8 @@ $\y$ & The observed graph signal \\
 $\alphaa$ & A flexible intercept vector/tensor \\
 $\betaa$ & A graph filter parameter vector \textit{or} vector of regression coefficients \\
 $\thetaa$ & A aggregated coefficient vector $[ \alphaa^\top, \, \betaa^\top ]^\top$ \\[0.5cm]
+
+\newpage
 
 
 \textbf{Functions} \\[0.2cm]
@@ -84,6 +95,13 @@ $\diagi{\cdot}$ & Convert the diagonal of a matrix into a vector \\
 $\otimes$ & The Kronecker product \\
 $\oplus$ & The Kronecker sum \\
 $\circ$ & The Hadamard product \\[0.5cm]
+
+
+\textbf{Graphs} \\[0.2cm]
+
+$\mathcal{G}$ & A graph  \\
+$\mathcal{V}$ & A vertex/node set \\
+$\mathcal{E}$ & An edge set \\[0.5cm]
 
 
 \textbf{Miscellaneous} \\[0.2cm]
