@@ -6,13 +6,13 @@
 
 
 
-\section{Introduction}
+\section{Product Graphs}
 
 \label{sec:reg_and_rec_intro}
 
-In this chapter, we turn our attention to the topic of signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to define a product between two graphs and, in general, there may be many consistent ways to define it. Other prominent examples include the strong, direct and lexicographic products \citep{Imrich2000}. 
+In this chapter, we turn our attention to the topic of signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to consistently define a product between two graphs. In this section we formally introduce the concept of a graph product, examine  some prominent examples, and explain why we choose to look specifically at the Cartesian graph product. 
 
-In the general case, we consider two undirected graphs $\mathcal{G}_N = (\mathcal{V}_N, \mathcal{E}_N)$ and $\mathcal{G}_T = (\mathcal{V}_T, \mathcal{E}_T)$ with vertex sets given by $\mathcal{V}_N = \{n \in \mathbb{N} \, | \, n \leq N \}$ and $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ respectively. (In the present context we do not regard zero to be an element of the natural numbers). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_N$ and $\mathcal{G}_T$. This can be generically written as follows. 
+In the general case, consider two undirected graphs $\mathcal{G}_N = (\mathcal{V}_N, \mathcal{E}_N)$ and $\mathcal{G}_T = (\mathcal{V}_T, \mathcal{E}_T)$ with vertex sets given by $\mathcal{V}_N = \{n \in \mathbb{N} \, | \, n \leq N \}$ and $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ respectively. (In this context we do not regard zero to be an element of the natural numbers). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_N$ and $\mathcal{G}_T$. This can be generically written as follows. 
 
 \begin{equation}
     \mathcal{G} = \mathcal{G}_N \, \diamond \, \mathcal{G}_T = (\mathcal{V}, \, \mathcal{E})
@@ -24,7 +24,57 @@ For all definitions of a graph product, the new vertex set $\mathcal{V}$ is give
     \mathcal{V} = \mathcal{V}_N \times \mathcal{V}_T = \{(n, \, t) \in \mathbb{N}^2 \, | \, n \leq N \; \text{and} \; t \leq T \}
 \end{equation}
 
-Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. For the Cartesian product, which is commonly denoted as $\mathcal{G}_N \, \square \, \mathcal{G}_T$, the new edge set is constructed as follows. 
+Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(n, t)$ and $(n', t')$ are to be connected in the new graph.
+
+\begin{table}[h]
+\def\arraystretch{1.5}
+\centering
+\begin{tabular}{lclc}
+1. & $[n, \, n'] \in \mathcal{E}_N$ & and &  $t = t'$  \\
+2. & $[n, \, n'] \notin \mathcal{E}_N$  & and &  $t = t'$  \\
+3. & $[n, \, n'] \in \mathcal{E}_N$ & and &  $[t, \, t'] \in \mathcal{E}_T$ \\
+4. & $[n, \, n'] \notin \mathcal{E}_N$ & and &  $[t, \, t'] \in \mathcal{E}_T$  \\
+5. & $[n, \, n'] \in \mathcal{E}_N$ & and & $[t, \, t'] \notin \mathcal{E}_T$  \\
+6. & $[n, \, n'] \notin \mathcal{E}_N$ & and & $[t, \, t'] \notin \mathcal{E}_T$  \\
+7. & $n = n'$ & and & $[t, \, t'] \in \mathcal{E}_T$,  \\
+8. & $n = n'$ & and &  $[t, \, t'] \notin \mathcal{E}_T$ 
+\end{tabular}
+\end{table}
+
+
+
+Each definition of a graph product corresponds to the union of a specific subset of these conditions, thus, there exist 256 different types of graph product \citep{Barik2015}. Of these, the Cartesian product (conditions 1 or 7), the direct product (condition 3), the strong product (conditions 1, 3 or 7) and the lexicographic product (conditions 1, 3, 5 or 7) are referred to as the standard products and are well-studied \citep{Imrich2000}. In each of these four cases, the adjacency and Laplacian matrices of the product graph can be describes in terms of matrices relating to the factor graphs \citep{Barik2015, Barik2018}. 
+
+\begin{table}[h]
+\def\arraystretch{1.8}
+\centering
+\begin{tabular}{lll}
+
+    & Adjacency 
+    & Laplacian \\
+
+    Cartesian 
+    & $\A_N \oplus \A_T$ 
+    & $\LL_N \oplus \LL_T$ \\
+
+    Direct 
+    & $\A_N \otimes \A_T$  
+    & $\D_N \otimes \A_T + \A_N \otimes \D_T - \LL_N \otimes \LL_T$ \\
+    
+    Strong 
+    & $\A_N \otimes \A_T + \A_N \oplus \A_T$ 
+    & $\D_N \otimes \A_T + \A_N \otimes \D_T $ \\
+
+    Lexicographic 
+    & $\I_N \otimes \A_T + \A_N \oplus \J_N$ 
+    &  $\I_N \oplus \LL_T + \LL_N \otimes \J_N + \D_N \otimes (N \I_N - \J_N)$ 
+
+\end{tabular}
+\end{table}
+
+
+
+For the Cartesian product, which is commonly denoted as $\mathcal{G}_N \, \square \, \mathcal{G}_T$, the new edge set is constructed as follows. 
 
 \begin{equation}
     \mathcal{E} = \Big\{\, \big[(n, \, t), \, (n',  t') \big] \; \Big| \; \big(n = n' \; \text{and} \; [t, t'] \in \mathcal{E}_T \big) \; \text{or} \; \big(t = t' \; \text{and} \; [n, n'] \in \mathcal{E}_N\big)  \Big\}
