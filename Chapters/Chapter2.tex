@@ -16,6 +16,31 @@
 
 \subsection{Graph filters}
 
+\begin{table}[b]
+    \renewcommand{\arraystretch}{1.7}
+    \small
+    \begin{center}
+    \begin{tabular}{|l|c|}
+    \hline
+    \textbf{Filter}   & $g(\lambda; \,\beta)$    \\ 
+    \hline
+    1-hop random walk & $(1 + \beta \lambda)^{-1}$ \\
+    \hline
+    Diffusion         & $\exp(-\beta \lambda)$       \\
+    \hline
+    ReLu              & $\max (1 - \beta \lambda, 0)$  \\
+    \hline
+    Sigmoid           & $2 \big( 1 + \exp(\beta \lambda)\big)^{-1}$ \\
+    \hline
+    Bandlimited       & $1, \,\text{if} \; \beta \lambda \leq 1 \; \text{else} \; 0$   \\
+    \hline
+    \end{tabular}
+    \end{center}
+    \caption{Isotropic graph filter functions}
+    \label{tab:iso_filters}
+    \end{table}
+
+
 
 \section{Regression and Reconstruction}
 

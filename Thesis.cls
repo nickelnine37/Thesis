@@ -173,62 +173,62 @@
 \newcommand*{\subject}[1]{\def\subjectname{#1}}
 \newcommand*{\keywords}[1]{\def\keywordnames{#1}}
 
-%----------------------------------------------------------------------------------------
+%---------------------------------   
 %	DOCUMENT VARIABLES
 %	Fill in the lines below to update the thesis template
 %	If you wish to cite each of the variables defined below, look at the
 %	section above for the citation command e.g. \examiner{} below is
 %	defined as \examname above so you cite it as \examname
-%----------------------------------------------------------------------------------------
+%---------------------------------   
 
 \thesistitle{Bayesian Reconsruction and Regression over Networks} % Your thesis title - this is used in the title and abstract
-%-------------------------------------------------  
+%---------------------------------   
 \supervisor{Dr. James \textsc{Smith}} % You supervisor's name - this is used in the title page
-%-------------------------------------------------   
+%---------------------------------   
 \examiner{} % Your examiner's name - this is not currently used anywhere in the template, cite it with \examname if you want it
-%-------------------------------------------------   
+%---------------------------------   
 \degree{MSc.} % Your degree name - this is currently used in the title page and abstract
-%-------------------------------------------------   
+%---------------------------------   
 \authors{John \textsc{Smith}} % Your name - this is used in the title page and abstract
-%-------------------------------------------------   
+%---------------------------------   
 \addresses{} % Your address - this is not currently used anywhere in the template, cite it with \addressnames if you want it
-%-------------------------------------------------   
+%---------------------------------    
 \subject{} % Your subject area - this is not currently used anywhere in the template, cite it with \subjectname if you want it
-%-------------------------------------------------   
+%---------------------------------   
 \keywords{} % Keywords for your thesis - this is not currently used anywhere in the template, cite it with \keywordnames if you want it
-%-------------------------------------------------   
+%---------------------------------   
 \university{\texorpdfstring{\href{http://www.hw.ac.uk} % Your university's URL
                 {Heriot-Watt University}} % Your university's name - this is currently used in the title page
                 {Heriot-Watt University}}
-%-------------------------------------------------   
+%---------------------------------     
 \UNIVERSITY{\texorpdfstring{\href{http://www.hw.ac.uk)} % Your university's URL
                 {HERIOT_WATT UNIVERSITY}} % Your university's name in capitals - this is currently used in the abstract page
                 {UNIVERSITY NAME (IN BLOCK CAPITALS)}}
-%-------------------------------------------------                
+%---------------------------------               
 \department{\texorpdfstring{\href{http://www.macs.hw.ac.uk} % Your department's URL
                 {School of Mathematical and Computer Sciences}} % Your department's name - used in the title page and abstract
                 {School of Mathematical and Computer Sciences}}
-%-------------------------------------------------                
+%---------------------------------                
 \DEPARTMENT{\texorpdfstring{\href{http://www.macs.hw.ac.uk} % Your department's URL
                 {DEPARTMENT OR SCHOOL NAME (IN BLOCK CAPITALS)}} % Your department's name in capitals - this is not currently used anywhere in the template, cite it with \DEPTNAME if you want it
                 {DEPARTMENT OR SCHOOL NAME (IN BLOCK CAPITALS)}}
-%-------------------------------------------------                
+%---------------------------------              
 \group{\texorpdfstring{\href{Research Group Web Site URL Here (include http://)} % Your research group's URL
                 {Research Group Name}} % Your research group's name - this is currently used in the title page 
                 {Research Group Name}}
-%-------------------------------------------------                
+%---------------------------------                 
 \GROUP{\texorpdfstring{\href{Research Group Web Site URL Here (include http://)} % Your research group's URL
                 {RESEARCH GROUP NAME (IN BLOCK CAPITALS)}} % Your research group's name in capitals - this is not currently used anywhere in the template, cite it with \GROUPNAME if you want it
                 {RESEARCH GROUP NAME (IN BLOCK CAPITALS)}}
-%-------------------------------------------------                
+%---------------------------------  
 \faculty{\texorpdfstring{\href{Faculty Web Site URL Here (include http://)} % Your faculty's URL
                 {Faculty Name}} % Your faculty's name - this is currently used in the abstract page
                 {Faculty Name}}
-%-------------------------------------------------                
+%---------------------------------  
 \FACULTY{\texorpdfstring{\href{Faculty Web Site URL Here (include http://)} % Your faculty's URL
                 {FACULTY NAME (IN BLOCK CAPITALS)}} % Your faculty's name in capitals - this is not currently used anywhere in the template, cite it with \FACNAME if you want it
                 {FACULTY NAME (IN BLOCK CAPITALS)}}
-%----------------------------------------------------------------------------------------    
+%---------------------------------   
 
 % The default title page, this is not used in this www.latextemplates.com version            
 \renewcommand\maketitle{
@@ -285,9 +285,11 @@
   \global\let\and\relax
   \cleardoublepage
 }
-%----------------------------------------------------------------------------------------
+
+%-----------------------------------------
 %	ABSTRACT PAGE DESIGN
-%----------------------------------------------------------------------------------------
+%------------------------------------------
+
 \newenvironment{abstract}
 {
   \btypeout{Abstract Page}
@@ -310,7 +312,9 @@
     \bigskip
   \end{center}
 }
-%----------------------------------------------------------------------------------------
+
+%-------------------------------------------------
+
 {
   \vfil\vfil\vfil\null
   \cleardoublepage
@@ -339,6 +343,9 @@
    \cleardoublepage
 }\end{spacing}
 }
+
+%---------------------------------   
+
 \renewcommand\listoffigures{
 \btypeout{List of Figures}
 \addtotoc{List of Figures}
@@ -357,6 +364,9 @@
     \cleardoublepage
 }\end{spacing}
 }
+
+%---------------------------------   
+
 \renewcommand\listoftables{
 \btypeout{List of Tables}
 \addtotoc{List of Tables}
@@ -375,6 +385,9 @@
     \cleardoublepage
 }\end{spacing}
 }
+
+%---------------------------------   
+
 \newcommand\listsymbolname{Abbreviations}
 \usepackage{longtable}
 \newcommand\listofsymbols[2]{
@@ -386,6 +399,9 @@
 \begin{longtable}[c]{#1}#2\end{longtable}\par
     \cleardoublepage
 }
+
+%---------------------------------   
+
 \newcommand\listconstants{Physical Constants}
 \usepackage{longtable}
 \newcommand\listofconstants[2]{
@@ -397,6 +413,9 @@
 \begin{longtable}[c]{#1}#2\end{longtable}\par
     \cleardoublepage
 }
+
+%---------------------------------   
+
 \newcommand\listnomenclature{Symbols}
 \usepackage{longtable}
 \newcommand\listofnomenclature[2]{
@@ -410,6 +429,25 @@ Unless otherwise specified, the following naming conventions apply.
 \begin{longtable}[c]{#1}#2\end{longtable}\par
     \cleardoublepage
 }
+
+%---------------------------------   
+
+\newcommand\listidentities{Identities}
+\usepackage{longtable}
+\newcommand\listofidentities[2]{
+\btypeout{\listidentities}
+\addtotoc{\listidentities}
+    \chapter*{\listidentities
+      \@mkboth{
+          \MakeUppercase\listidentities}{\MakeUppercase\listidentities}}
+\vspace{0.2cm}
+\begin{longtable}[c]{#1}#2\end{longtable}\par
+    \cleardoublepage
+}
+
+%---------------------------------   
+
+
 \newcommand\acknowledgements[1]{
 \btypeout{Acknowledgements}
 \addtotoc{Acknowledgements}

@@ -173,7 +173,7 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
 
 \subsection{GSP with Cartesian product graphs} 
 
-While both the direct and strong products do find uses in certain applications (see \citep{Kaveh2011}), they are both less common and more challenging to work with in a graph signal processing context due to their spectral properties described in the previous subsection. In practice, being limited to regular factor graphs means the majority of practical GSP applications are ruled out. The lexicographic product does not share this drawback, however it is also significantly less common than the Cartesian product in real-world applications. For this reason, in the following, we focus primarily on the Cartesian product. 
+While both the direct and strong products do find uses in certain applications (for example, see \citep{Kaveh2011}), they are both less common and more challenging to work with in a graph signal processing context due to their spectral properties described in the previous subsection. In practice, being limited to regular factor graphs means the majority of practical GSP applications are ruled out. The lexicographic product does not share this drawback, however it is also significantly less common than the Cartesian product in real-world applications. For this reason, in the following, we focus primarily on the Cartesian product. 
 
 Given the spectral decomposition of the Cartesian graph product stated in table \ref{tab:product_graph_spectra}, we can write the Laplacian eigendecomposition in matrix form as follows. 
 
@@ -196,7 +196,7 @@ Correspondingly, we can define the IGFT acting on a matrix of spectral component
 
 \note{Product graph signals: repseprentation and vectorisation}{
 
-    It is natural to assume that signals defined on the nodes of a Cartesian product graph $\mathcal{G}_A \, \square \; \mathcal{G}_B$ can be represented by matrices (order two tensors) of shape $(A \times B)$. Since product graph operators, such as the Laplacian $\LL_A \oplus \LL_B$, act on vectors of length $AB$, we must define a consistent function to map matrix graph signals $\in \R^{A \times B}$ to vector graph signals $\in \R^{AB}$. The standard mathematical operator for this purpose is the $\vecc{\cdot}$ function, along with its reverse operator $\mat{\cdot}$. However, this is somewhat problematic since $\vecc{\cdot}$ is defined to act in \textit{column-major} order, that is 
+    It is natural to assume that signals defined on the nodes of a Cartesian product graph $\mathcal{G}_A \, \square \; \mathcal{G}_B$ could be represented by matrices (order two tensors) of shape $(A \times B)$. Since product graph operators, such as the Laplacian $\LL_A \oplus \LL_B$, act on vectors of length $AB$, we must define a consistent function to map matrix graph signals $\in \R^{A \times B}$ to vector graph signals $\in \R^{AB}$. The standard mathematical operator for this purpose is the $\vecc{\cdot}$ function, along with its reverse operator $\mat{\cdot}$. However, this is somewhat problematic since $\vecc{\cdot}$ is defined to act in \textit{column-major} order, that is 
 
     $$
     \text{vec} \left( \begin{bmatrix}
@@ -211,15 +211,68 @@ Correspondingly, we can define the IGFT acting on a matrix of spectral component
     \end{bmatrix}
     $$
 
-    As is visible, this does not result in a lexicographic ordering of the matrix elements when the graph signal has shape $(A \times B)$. Therefore, to avoid this issue and to be consistent with standard mathematical notation, we will assume that graph signals are represented by matrices  of shape $(B \times A)$ when considering the product between two graphs. This ensures that matrix elements are correctly mapped to vector elements when using the column-major $\vecc{\cdot}$ function. 
+    As is visible, this does not result in a lexicographic ordering of the matrix elements when the graph signal has shape $(A \times B)$. Therefore, to avoid this issue and to be consistent with standard mathematical notation, we will assume that graph signals are represented by matrices  of shape $(B \times A)$ when considering the product between two graphs. For graph signals of this shape, the first index represents traversal of the nodes in $\mathcal{G}_B$, and the second index represents traversal of the nodes in $\mathcal{G}_A$. This ensures that matrix elements are correctly mapped to vector elements when using the column-major $\vecc{\cdot}$ function. 
 
 }
+
+Given these definitions, we can define a spectral operator (usually a low-pass filter) $\HH$ which acts on graph signals according to a spectral scaling function $g(\lambda \,; \, \beta)$ such as one of those defined in table \ref{tab:iso_filters}. As with regular non-product graphs, the action of this operator can be understood as first transforming a signal into the frequency domain via the GFT, then scaling the spectral components according to some function, and finally transforming back into the vertex domain via the IGFT. 
+
+\begin{align} 
+    \HH &= g(\LL_A \oplus \LL_B) \notag \\ 
+       &= \big( \U_A \otimes \U_B \big) \, g \big( \LAM_A \oplus \LAM_B \big) \, \big( \U_A^\top \otimes \U_B^\top \big) \\
+       &= \big( \U_A \otimes \U_B \big) \, \Diag{\vecc{\G}} \, \big( \U_A^\top \otimes \U_B^\top \big)
+\end{align}
+
+The matrix $\G \in \R^{B \times A}$, which we refer to as the spectral scaling matrix, holds the value of the scaling function applied to the sum of
+pairs of eigenvalues, such that
+
+\begin{equation}
+    \G_{ba} = g(\lambda^{(A)}_a + \lambda^{(B)}_b; \beta)
+\end{equation}
+
+We observe that defining the filtering operation in this manner implies that the intensity is equal across both $\mathcal{G}_A$ and $\mathcal{G}_B$. We refer to filters of this type as \textit{isotropic}. This can be further generalised by considering an \textit{anisotropic} graph filter, which offers independent control over the filter intensity in each of the two dimensions. In this case, we define $\G$ as follows. 
+
+\begin{equation}
+    \G_{ba} =  g \left( \begin{bmatrix}
+        \lambda^{(A)}_a \\ \lambda^{(B)}_b 
+    \end{bmatrix}, \; \begin{bmatrix}
+        \beta_a \\ \beta_b 
+    \end{bmatrix} \right)
+\end{equation}
+
+where now $g(\lambdaa \,; \, \betaa)$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters}. Note that the original parameter $\beta$ is now replaced by a vector of parameters $\betaa$ which control the filter intensity in each dimension. 
+
+\begin{table}[t]
+    \def\arraystretch{1.7}
+    \small
+    \begin{center}
+    \begin{tabular}{|l|c|}
+    \hline
+    \textbf{Filter}   & $g(\lambdaa; \,\betaa)$    \\ 
+    \hline
+    1-hop random walk & $(1 + \betaa^\top\lambdaa)^{-1}$ \\
+    \hline
+    Diffusion         & $\exp(-\betaa^\top\lambdaa)$       \\
+    \hline
+    ReLu              & $\max (1 - \betaa^\top\lambdaa, 0)$  \\
+    \hline
+    Sigmoid           & $2 \big( 1 + \exp(\betaa^\top\lambdaa)\big)^{-1}$ \\
+    \hline
+    Bandlimited       & $1, \,\text{if} \; \betaa^\top\lambdaa \leq 1 \; \text{else} \; 0$   \\
+    \hline
+    \end{tabular}
+    \end{center}
+    \caption{Anisotropic graph filter functions}
+    \label{tab:anis_filters}
+    \end{table}
+
+
 
 \section{Graph Signal Reconstruction on Cartesian Product Graphs}
 
 \label{sec:gsr_cpg}
 
-One task that is of particular interest 
+We now turn our attention to the task of signal reconstruction on Cartesian product graphs. 
 
 \subsection{A stationary iterative method}
 
