@@ -29,6 +29,9 @@ For all definitions of a graph product, the new vertex set $\mathcal{V}$ is give
 
 Typically, vertices are are arranged in lexicographic order, in the sense that $(a, b) \leq (a', b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(a, b)$ and $(a', b')$ are to be connected in the new graph.
 
+% visual? 
+
+
 \begin{table}[h]
 \def\arraystretch{1.5}
 \centering
@@ -75,7 +78,7 @@ Each definition of a graph product corresponds to the union of a specific subset
 
     Lexicographic 
     & $\I_A \otimes \A_B + \A_A \otimes \J_A$ 
-    &  $\I_A \otimes \LL_B + \LL_A \otimes \J_B + \D_A \otimes (B \I_B - \J_B)$ \\
+    &  $\I_A \otimes \LL_B + \LL_A \otimes \J_B + \D_A \otimes (|\mathcal{V}_B| \I_B - \J_B)$ \\
 
     \hline
 
@@ -94,6 +97,11 @@ Each definition of a graph product corresponds to the union of a specific subset
     \label{fig:graph_products}
 \end{figure}
 
+% choice of product effect the sparsity or A/cardinality of V
+
+% What is the natural 256 ordering in terms of sparsity
+
+% make small example in terms of vertex order
 
 Given these definitions, it may seem that all the standard graph products are non-commutative in the sense that $\A_A \oplus \A_B  \neq \A_B \oplus \A_A $ etc. However, the graphs $\mathcal{G}_A \, \diamond \, \mathcal{G}_B$ and $\mathcal{G}_B \, \diamond \, \mathcal{G}_A$ are in fact isomorphically identical in the case of the Cartesian, direct and strong products. This is not the case for the Lexicographic product \citep{Imrich2000}. 
 
@@ -170,6 +178,9 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
     \label{tab:product_graph_spectra}
     \end{table}
     
+% remark common degree locally only necessary 
+% subspace concentration 
+
 
 \subsection{GSP with Cartesian product graphs} 
 
@@ -218,8 +229,9 @@ Correspondingly, we can define the IGFT acting on a matrix of spectral component
 Given these definitions, we can define a spectral operator (usually a low-pass filter) $\HH$ which acts on graph signals according to a spectral scaling function $g(\lambda \,; \, \beta)$ such as one of those defined in table \ref{tab:iso_filters}. As with regular non-product graphs, the action of this operator can be understood as first transforming a signal into the frequency domain via the GFT, then scaling the spectral components according to some function, and finally transforming back into the vertex domain via the IGFT. 
 
 \begin{align} 
+    \label{eq:graph_filter}
     \HH &= g(\LL_A \oplus \LL_B) \notag \\ 
-       &= \big( \U_A \otimes \U_B \big) \, g \big( \LAM_A \oplus \LAM_B \big) \, \big( \U_A^\top \otimes \U_B^\top \big) \\
+       &= \big( \U_A \otimes \U_B \big) \, g \big( \LAM_A \oplus \LAM_B \big) \, \big( \U_A^\top \otimes \U_B^\top \big) \notag \\
        &= \big( \U_A \otimes \U_B \big) \, \Diag{\vecc{\G}} \, \big( \U_A^\top \otimes \U_B^\top \big)
 \end{align}
 
@@ -272,7 +284,75 @@ where now $g(\lambdaa \,; \, \betaa)$ is chosen to be an anisotropic graph filte
 
 \label{sec:gsr_cpg}
 
-We now turn our attention to the task of signal reconstruction on Cartesian product graphs. 
+We now turn our attention to the task of signal reconstruction on Cartesian product graphs. In the following, we will replace the factor graph labels $A$ and $B$ with $T$ and $N$ respectively. The reason for this is that one application of particular interest is graph time-series problems, where we seek to model a network of $N$ nodes across a series of $T$ discrete time points. These so called ``time-vertex'' (T-V) problems have garnered significant interest recently in the context of GSP \citep{Grassi2018, Isufi2017, Loukas2016}. T-V signals can be understood as existing on the nodes of a Cartesian product graph $\mathcal{G}_T \, \square \, \mathcal{G}_N$. In particular, we can conceptualise $T$ repeated measurements of a signal defined across the nodes of a $N$-node graph as a single measurement of a signal defined on the nodes of $\mathcal{G}_T \, \square \, \mathcal{G}_N$, where $\mathcal{G}_T$ is a simple path graph.
+
+\vspace{0.5cm}
+
+\note{On the Laplacian spectrum of the path graph}{
+    When considering time-vertex problems, $\mathcal{G}_T$ will generally be described by a  path graph. This special case of a graph has vertices given by $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ and edges given by $\mathcal{E}_T = \{ \, [t, t+1] \, | \, t < T \}$. The Laplacian matrix of the path graph is therefore given by 
+
+    $$
+    \LL_T = \begin{bmatrix}
+        1 & -1 & & & \\
+        -1 & 2 & -1 & &   \\
+        & & \ddots & &   \\
+        & &  -1 & 2 & -1 \\
+        & & &  -1 & 1 \\
+    \end{bmatrix}
+    $$
+
+    The eigenvalues and eigenvectors of this Laplacian are well-known and can be expressed in closed-form \citep{Jiang2012}. In particular, 
+    
+    $$
+    \LL_T = \U_T \LAM_T \U_T^\top
+    $$
+
+    where 
+
+    $$
+    \lambda^{(T)}_t = 2 - 2 \cos \Big(  \, \frac{t - 1}{T} \pi \, \Big)
+    $$
+
+    and 
+
+    $$
+    (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{N}\big(i - 0.5\big)\pi \, \Big)
+    $$
+
+    ($\U_T$ should be appropriately normalised after this computation to ensure each column is orthonormal). Computing the eigendecomposition directly in this fashion reduces the complexity from $O(T^3)$ to $O(T^2)$ which can be significant for large time-series problems. 
+ 
+}
+
+Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in the context of T-V problems, the methods introduced in this section are valid for the Cartesian product between arbitrary undirected factor graphs. 
+
+\subsection{Problem statement}
+
+
+The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is an observed signal $\Y \in \R^{N \times T}$ where only a partial set $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. All other missing elements of $\Y$ are set to zero. Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is itself assumed to be smooth with respect to the graph topology. 
+
+We define the statistical model for the generation of an observation matrix $\Y$ as 
+
+\begin{equation}
+    \Y = \Ss \circ \big(\F + \E \big)
+\end{equation}
+
+where $\Ss \in [0, 1]^{N \times T}$ is referred to as the sensing matrix, and has entries given by 
+
+\begin{equation}
+    \Ss_{nt} = \begin{cases}
+        1 & \text{if} \;\; (n, t) \in \mathcal{S} \\
+        0 & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+The matrix $\E$ represents the model error and is assumed to have an independent normal distribution with unit variance. Therefore, the probability distribution of Y given the latent signal $\F$ is
+
+\begin{equation}
+    \label{eq:Y_given_F}
+    \vecc{\Y} \, | \, \F \sim \mathcal{N}\Big(\vecc{\Ss \circ \F}, \; \Diag{\vecc{\Ss}}\Big)
+\end{equation}
+
+In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). This is expressed as
 
 \subsection{A stationary iterative method}
 
