@@ -27,7 +27,7 @@ For all definitions of a graph product, the new vertex set $\mathcal{V}$ is give
 \end{equation}
 
 
-Typically, vertices are are arranged in lexicographic order, in the sense that $(a, b) \leq (a', b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(a, b)$ and $(a', b')$ are to be connected in the new graph.
+Typically, vertices are are arranged in lexicographic order, in the sense that $(a, \, b) \leq (a',\, b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(a, \, b)$ and $(a',\,  b')$ are to be connected in the new graph.
 
 % visual? 
 
@@ -173,7 +173,7 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
     
     \end{tabular}
     \vspace{0.2cm}
-    \caption[Spectral decomposition of product graphs]{Eigendecomposition of the Laplacian of the standard graph products. Here, $a$ and $b$ are understood to run from 1 to $A$ and 1 to $B$ respectively. $\star$ only for $r_A$ and $r_B$-regular factor graphs. $\dagger$ note that the lower row forms a full spanning set, but the upper row can also be a useful parametrisation for a subspace. } 
+    \caption[Spectral decomposition of product graphs]{Eigendecomposition of the Laplacian of the standard graph products. Here, $a$ and $b$ are understood to run from 1 to $A$ and 1 to $B$ respectively. $\star$ only for $r_A$ and $r_B$-regular factor graphs. $\dagger$ note that the $b$ runs from 2 to $B$ in the lower row. } 
     \vspace{0.3cm}
     \label{tab:product_graph_spectra}
     \end{table}
@@ -222,7 +222,7 @@ Correspondingly, we can define the IGFT acting on a matrix of spectral component
     \end{bmatrix}
     $$
 
-    As is visible, this does not result in a lexicographic ordering of the matrix elements when the graph signal has shape $(A \times B)$. Therefore, to avoid this issue and to be consistent with standard mathematical notation, we will assume that graph signals are represented by matrices  of shape $(B \times A)$ when considering the product between two graphs. For graph signals of this shape, the first index represents traversal of the nodes in $\mathcal{G}_B$, and the second index represents traversal of the nodes in $\mathcal{G}_A$. This ensures that matrix elements are correctly mapped to vector elements when using the column-major $\vecc{\cdot}$ function. 
+    As is visible, this does not result in a lexicographic ordering of the matrix elements when the graph signal has shape $(A \times B)$. Therefore, to avoid this issue and to be consistent with standard mathematical notation, we will assume that graph signals are represented by matrices  of shape $(B \times A)$ when considering the product between two graphs $\mathcal{G}_A \, \square \, \mathcal{G}_B$. For graph signals of this shape, the first index represents traversal of the nodes in $\mathcal{G}_B$, and the second index represents traversal of the nodes in $\mathcal{G}_A$. This ensures that matrix elements are correctly mapped to vector elements when using the column-major $\vecc{\cdot}$ function. 
 
 }
 
@@ -286,7 +286,18 @@ where now $g(\lambdaa \,; \, \betaa)$ is chosen to be an anisotropic graph filte
 
 We now turn our attention to the task of signal reconstruction on Cartesian product graphs. In the following, we will replace the factor graph labels $A$ and $B$ with $T$ and $N$ respectively. The reason for this is that one application of particular interest is graph time-series problems, where we seek to model a network of $N$ nodes across a series of $T$ discrete time points. These so called ``time-vertex'' (T-V) problems have garnered significant interest recently in the context of GSP \citep{Grassi2018, Isufi2017, Loukas2016}. T-V signals can be understood as existing on the nodes of a Cartesian product graph $\mathcal{G}_T \, \square \, \mathcal{G}_N$. In particular, we can conceptualise $T$ repeated measurements of a signal defined across the nodes of a $N$-node graph as a single measurement of a signal defined on the nodes of $\mathcal{G}_T \, \square \, \mathcal{G}_N$, where $\mathcal{G}_T$ is a simple path graph.
 
-\vspace{0.5cm}
+\vspace{1cm}
+
+
+\begin{figure}[b]
+    \begin{center}
+    \includegraphics[width=0.5\linewidth]{Figures/T-V.pdf}
+    \end{center}
+    \caption[A time-vertex Cartesian product graph]{A graphical depiction of a time-vertex Cartesian product graph}
+    \label{fig:TV}
+\end{figure}
+
+
 
 \note{On the Laplacian spectrum of the path graph}{
     When considering time-vertex problems, $\mathcal{G}_T$ will generally be described by a  path graph. This special case of a graph has vertices given by $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ and edges given by $\mathcal{E}_T = \{ \, [t, t+1] \, | \, t < T \}$. The Laplacian matrix of the path graph is therefore given by 
@@ -302,12 +313,6 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
     $$
 
     The eigenvalues and eigenvectors of this Laplacian are well-known and can be expressed in closed-form \citep{Jiang2012}. In particular, 
-    
-    $$
-    \LL_T = \U_T \LAM_T \U_T^\top
-    $$
-
-    where 
 
     $$
     \lambda^{(T)}_t = 2 - 2 \cos \Big(  \, \frac{t - 1}{T} \pi \, \Big)
@@ -316,7 +321,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
     and 
 
     $$
-    (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{N}\big(i - 0.5\big)\pi \, \Big)
+    (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{T}\big(i - 0.5\big)\pi \, \Big)
     $$
 
     ($\U_T$ should be appropriately normalised after this computation to ensure each column is orthonormal). Computing the eigendecomposition directly in this fashion reduces the complexity from $O(T^3)$ to $O(T^2)$ which can be significant for large time-series problems. 
@@ -345,14 +350,112 @@ where $\Ss \in [0, 1]^{N \times T}$ is referred to as the sensing matrix, and ha
     \end{cases}
 \end{equation}
 
-The matrix $\E$ represents the model error and is assumed to have an independent normal distribution with unit variance. Therefore, the probability distribution of Y given the latent signal $\F$ is
+The matrix $\E$ represents the model error and is assumed to have an independent normal distribution with unit variance. Therefore, the probability distribution of $\Y$ given the latent signal $\F$ is
 
 \begin{equation}
     \label{eq:Y_given_F}
     \vecc{\Y} \, | \, \F \sim \mathcal{N}\Big(\vecc{\Ss \circ \F}, \; \Diag{\vecc{\Ss}}\Big)
 \end{equation}
 
-In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). This is expressed as
+Note that the covariance matrix $\Diag{\vecc{\Ss}}$ is semi-positive definite by construction. This naturally reflects the constraint that some elements of $\Y$ are zero with probability 1. In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). For now, in the absence of any further information, we assume that the prior mean for $\F$ is zero across all elements. 
+
+\begin{equation}
+    \vecc{\F} \sim \mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \HH^2\big) 
+\end{equation}
+
+Next, given an observation $\Y$, we use Bayes' rule to find the posterior distribution over $\F$. This is given by
+
+\begin{equation}
+    \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{\pi\big(\vecc{\Y} \, | \, \F \big) \pi(\F) }{\pi(\Y)}.
+\end{equation}
+
+where we use the notation $\pi(\cdot)$ to denote a probability density function.
+
+\begin{theorem}
+    The posterior distribution for $\F$ is given by 
+
+    \begin{equation}
+        \label{eq:F_post}
+            \Vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \Vecc{\Y}, \; \SIG \big)
+        \end{equation}
+        
+        \noindent where 
+        
+        \begin{equation}
+        \label{eq:Sig_post}
+            \SIG = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
+        \end{equation}
+
+\end{theorem}
+
+\begin{proof}
+    Consider the matrix $\Ss_{\epsilon}$ defined in the following manner. 
+    
+    \begin{equation}
+        (\Ss_{\epsilon})_{nt} = \begin{cases}
+            1 & \text{if} \;\; (n, t) \in \mathcal{S} \\
+            \epsilon & \text{otherwise}
+        \end{cases}
+    \end{equation}
+
+    We can use this definition to rewrite equation \ref{eq:Y_given_F} for the probability distribution of $\Y | \F$.
+
+    \begin{equation}
+        \Vecc{\Y} \, | \, \F \, \sim \, \lim_{\epsilon \rightarrow 0} \, \Bigg[ \, \mathcal{N}\Big(\vecc{\Ss_{\epsilon} \circ \F}, \; \Diag{\vecc{\Ss_{\epsilon}}}\Big) \, \Bigg]
+    \end{equation}
+
+    In this way, the negative log-likelihood of an observation $\Y | \F$ is given by 
+
+    \begin{equation}
+        \label{eq:log_prob_1}
+        - \log \pi(\Y | \F) = \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\Ss_{\epsilon} \circ \F - \Y}^\top \Diag{\vecc{\Ss_{\epsilon}}}^{-1} \vecc{\Ss_{\epsilon} \circ \F - \Y}\, \Bigg]
+    \end{equation}
+
+    up to an additive constant which does not depend on $\F$. Note that, since $\Y = \Ss_{\epsilon}  \circ \Y$, we can rewrite $\vecc{\Ss_{\epsilon} \circ \F - \Y}$ as 
+
+    \begin{align}
+        \vecc{\Ss_{\epsilon} \circ \F - \Y} &= \Vecc{\Ss_{\epsilon} \circ  (\F - \Y)}  \notag \\
+        &= \Diag{\vecc{\Ss_{\epsilon}}} \vecc{\F - \Y}
+    \end{align}
+
+    Therefore, equation \ref{eq:log_prob_1} can be rewritten as 
+
+    \begin{align}
+        - \log \pi(\Y | \F) &= \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss_{\epsilon}}} \, \vecc{\F - \Y}\, \Bigg] \notag \\[0.2cm]
+        &= \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss}} \, \vecc{\F - \Y}
+    \end{align}
+
+    Now consider the full log-posterior. Using Bayes rule, this can be written as 
+
+    \begin{multline}
+        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss}} \, \vecc{\F - \Y} \; + \\ \frac{\gamma}{2} \vecc{\F }^\top\HH^{-2} \, \vecc{\F}
+    \end{multline}
+
+    Up to an additive constant not dependent $\F$, this can be written as 
+
+    \begin{equation}
+        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \Big( \vecc{\F}^\top \big( \Diag{\vecc{\Ss}} + \gamma \HH^{-2}\big) \vecc{\F} - 2 \, \vecc{\Y}^\top \F \Big)
+    \end{equation}
+
+    Using the conjugacy of the normal distribution, by direct inspection we can conclude that the posterior covariance is given by 
+
+    \begin{equation}
+        \SIG = \Big( \Diag{\vecc{\Ss}} + \gamma \HH^{-2} \Big)^{-1}
+    \end{equation}
+
+    and that the posterior mean is given by $\SIG \, \vecc{\Y}$. 
+
+\end{proof}
+
+In this chapter, we are primarily interested in computing the posterior mean, which is the solution to the following linear system. 
+
+\begin{equation}
+    \label{eq:lin_system}
+        \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big) \, \vecc{\F} = \vecc{\Y}
+    \end{equation}
+
+We return to the question of sampling and estimating the posterior covariance in chapter \ref{chap:variance}. 
+
 
 \subsection{A stationary iterative method}
 
