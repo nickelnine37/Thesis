@@ -1,3 +1,4 @@
+import os
 import bibtexparser
 
 """
@@ -32,3 +33,19 @@ for item in bib_database.entries:
 
 with open('Bibliography.bib', 'w') as f:
     bibtexparser.dump(bib_database, f)
+
+
+text = ''
+
+for fname in os.listdir('Chapters'):
+
+    with open(f'Chapters/{fname}') as f:
+
+        text += f.read()
+
+
+for item in bib_database.entries:
+
+    if item['ID'] not in text:
+
+        print(f'Warning: {item["ID"]} not cited')
