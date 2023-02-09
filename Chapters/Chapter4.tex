@@ -308,7 +308,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 \vspace{1cm}
 
 
-\begin{figure}[b]
+\begin{figure}[t]
     \begin{center}
     \includegraphics[width=0.5\linewidth]{Figures/T-V.pdf}
     \end{center}
@@ -319,7 +319,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 
 
 \note{On the Laplacian spectrum of the path graph}{
-    When considering time-vertex problems, $\mathcal{G}_T$ will generally be described by a  path graph. This special case of a graph has vertices given by $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ and edges given by $\mathcal{E}_T = \{ \, [t, t+1] \, | \, t < T \}$. The Laplacian matrix of the path graph is therefore given by 
+    When considering time-vertex problems with uniformly spaced time intervals, $\mathcal{G}_T$ will be described by a path graph with equal weights on each edge. This special case of a graph has vertices given by $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ and edges given by $\mathcal{E}_T = \{ \, [t, t+1] \, | \, t < T \}$. The Laplacian matrix of the path graph is therefore given by 
 
     $$
     \LL_T = \begin{bmatrix}
@@ -340,14 +340,33 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
     and 
 
     $$
-    (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{T}\big(i - 0.5\big)\pi \, \Big)
+    (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{T}\big(i - \frac{1}{2}\big)\pi \, \Big)
     $$
 
-    % link between this and FFT?
+    where the columns of $\U$ are appropriately normalised such that the magnitude of each eigenvector is one. Furthermore, this implies that that the graph Fourier transform of a signal $\y \in \R^{T}$ is given by the orthogonal type-II Discrete Cosine Transform (DCT) \citep{Ahmed1974}. This is of significance, as it means we can leverage Fast Cosine Transform (FCT) algorithms \citep{Makhoul1980} which operate in a similar manner to the well-known Fast Fourier Transform (FFT) \citep{Cooley1965}. See chapter 4 of \cite{Rao1990} for an overview of FCT algorithms. 
 
-    ($\U_T$ should be appropriately normalised after this computation to ensure each column is orthonormal). Computing the eigendecomposition directly in this fashion reduces the complexity from $O(T^3)$ to $O(T^2)$ which can be significant for large time-series problems. 
+    \vspace{0.2cm}
+
+    In particular, this reduces both of the following procedures 
+
+    \begin{equation*}
+        \text{GFT}(\y) = \U^\top \y \aand \text{IGFT}(\y) = \U \y
+    \end{equation*}
+
+    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. As is visible, the difference becomes extremely pronounced as $T$ grows large.  
+
+    % \begin{figure}[h]
+        \begin{center}
+        \includegraphics[width=\linewidth]{Figures/DCT.pdf}
+        \end{center}
+        % \caption[Run time comparison for DCT]{A graphical depiction of the four standard graph products}
+        % \label{fig:DCT}
+    % \end{figure} 
+    
  
-}
+} 
+
+
 
 Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in the context of T-V problems, the methods introduced in this section are valid for the Cartesian product between arbitrary undirected factor graphs. 
 
@@ -391,89 +410,31 @@ Next, given an observation $\Y$, we use Bayes' rule to find the posterior distri
     \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{\pi\big(\vecc{\Y} \, | \, \F \big) \pi(\F) }{\pi(\Y)}.
 \end{equation}
 
-where we use the notation $\pi(\cdot)$ to denote a probability density function.
+where we use the notation $\pi(\cdot)$ to denote a probability density function. 
 
-\begin{theorem}
-    The posterior distribution for $\F$ is given by 
+The posterior distribution for $\F$ is given by 
 
-    \begin{equation}
-        \label{eq:F_post}
-            \Vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \Vecc{\Y}, \; \SIG \big)
-        \end{equation}
-        
-        \noindent where 
-        
-        \begin{equation}
-        \label{eq:Sig_post}
-            \SIG = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
-        \end{equation}
-
-\end{theorem}
-
-\begin{proof}
-    Consider the matrix $\Ss_{\epsilon}$ defined in the following manner. 
+\begin{equation}
+    \label{eq:F_post}
+        \Vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \Vecc{\Y}, \; \SIG \big)
+    \end{equation}
     
-    \begin{equation}
-        (\Ss_{\epsilon})_{nt} = \begin{cases}
-            1 & \text{if} \;\; (n, t) \in \mathcal{S} \\
-            \epsilon & \text{otherwise}
-        \end{cases}
-    \end{equation}
+    \noindent where 
+    
+\begin{equation}
+    \label{eq:Sig_post}
+        \SIG = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
+\end{equation}
 
-    We can use this definition to rewrite equation \ref{eq:Y_given_F} for the probability distribution of $\Y | \F$.
+A proof of this can be found in the appendix, theorem \ref{the:F_posterior}. 
 
-    \begin{equation}
-        \Vecc{\Y} \, | \, \F \, \sim \, \lim_{\epsilon \rightarrow 0} \, \Bigg[ \, \mathcal{N}\Big(\vecc{\Ss_{\epsilon} \circ \F}, \; \Diag{\vecc{\Ss_{\epsilon}}}\Big) \, \Bigg]
-    \end{equation}
 
-    In this way, the negative log-likelihood of an observation $\Y | \F$ is given by 
-
-    \begin{equation}
-        \label{eq:log_prob_1}
-        - \log \pi(\Y | \F) = \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\Ss_{\epsilon} \circ \F - \Y}^\top \Diag{\vecc{\Ss_{\epsilon}}}^{-1} \vecc{\Ss_{\epsilon} \circ \F - \Y}\, \Bigg]
-    \end{equation}
-
-    up to an additive constant which does not depend on $\F$. Note that, since $\Y = \Ss_{\epsilon}  \circ \Y$, we can rewrite $\vecc{\Ss_{\epsilon} \circ \F - \Y}$ as 
-
-    \begin{align}
-        \vecc{\Ss_{\epsilon} \circ \F - \Y} &= \Vecc{\Ss_{\epsilon} \circ  (\F - \Y)}  \notag \\
-        &= \Diag{\vecc{\Ss_{\epsilon}}} \vecc{\F - \Y}
-    \end{align}
-
-    Therefore, equation \ref{eq:log_prob_1} can be rewritten as 
-
-    \begin{align}
-        - \log \pi(\Y | \F) &= \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss_{\epsilon}}} \, \vecc{\F - \Y}\, \Bigg] \notag \\[0.2cm]
-        &= \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss}} \, \vecc{\F - \Y}
-    \end{align}
-
-    Now consider the full log-posterior. Using Bayes rule, this can be written as 
-
-    \begin{multline}
-        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss}} \, \vecc{\F - \Y} \; + \\ \frac{\gamma}{2} \vecc{\F }^\top\HH^{-2} \, \vecc{\F}
-    \end{multline}
-
-    Up to an additive constant not dependent $\F$, this can be written as 
-
-    \begin{equation}
-        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \Big( \vecc{\F}^\top \big( \Diag{\vecc{\Ss}} + \gamma \HH^{-2}\big) \vecc{\F} - 2 \, \vecc{\Y}^\top \F \Big)
-    \end{equation}
-
-    Using the conjugacy of the normal distribution, by direct inspection we can conclude that the posterior covariance is given by 
-
-    \begin{equation}
-        \SIG = \Big( \Diag{\vecc{\Ss}} + \gamma \HH^{-2} \Big)^{-1}
-    \end{equation}
-
-    and that the posterior mean is given by $\SIG \, \vecc{\Y}$. 
-
-\end{proof}
 
 In this chapter, we are primarily interested in computing the posterior mean, which is the solution to the following linear system. 
 
 \begin{equation}
     \label{eq:lin_system}
-        \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big) \, \vecc{\F} = \vecc{\Y}
+         \vecc{\F} = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1} \vecc{\Y}
     \end{equation}
 
 We return to the question of sampling from the posterior and estimating the posterior covariance directly in \cref{chap:variance}. 
@@ -784,7 +745,7 @@ From this expansion, we can see that the dominant behaviour for small $\gamma$ i
 O\Bigg(\sqrt{\frac{1 + \gamma}{\gamma}}\big(N^2T + NT^2\big) \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\sqrt{\gamma}} \Bigg)
 \end{equation}
 
-\subsection{Image processing experiments}
+\section{Image processing experiments}
 
 Hello
 
