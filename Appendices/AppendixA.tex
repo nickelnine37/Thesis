@@ -81,3 +81,96 @@
     and that the posterior mean is given by $\SIG \, \vecc{\Y}$. 
 
 \end{proof}
+
+
+\begin{theorem}
+    \label{the:Z_transform_bayes}
+
+    \normalfont
+    
+    Consider the random matrix $\Z$ which is related to the random matrix $\F$ as follows. 
+    
+    $$
+    \F = \U_N \, (\G \circ \Z) \, \U_T^\top 
+    $$
+    
+    \noindent or, equivalently,
+    
+    $$
+    \vecc{\F} = \big(\U_T \otimes \U_N\big) \D_\G \, \vecc{\Z}
+    $$
+    
+    Then the posterior mean for $\Z | \Y$ is given by 
+    
+    $$
+    \text{E}\big[\Z | \Y \big] = \big( \C + \gamma \I_T \otimes \I_N \big)^{-1}\Vecc{\G \circ (\U_N^\top \Y \U_T)} 
+    $$
+    
+    \noindent where
+    
+    $$
+    \C = \D_{\G} \, \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G}
+    $$
+    
+    (Here we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively.)
+    
+    \end{theorem}
+    
+    
+    \begin{proof}
+    
+    The conditional distribution of $\Y | \Z$ is obtained by substituting in the definition of $\F$ in terms of $\Z$ into the original conditional likelihood expression.  
+    
+    $$
+    \vecc{\Y} \, | \, \Z \sim \mathcal{N}\Big(\VECC{\Ss \circ \big(\U_N \, (\G \circ \Z) \, \U_T^\top\big)}, \; \D_{\Ss}\Big)
+    $$
+    
+    Similarly, since the prior specified for $\F$ is $\mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \HH^2\big)$, this implies that the prior over $\Z$ is simply
+    
+    $$
+    \vecc{\Z} \sim \mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \I_{NT} \big) 
+    $$
+    
+    To see this, consider the following
+    
+    
+    \begin{align*}
+    \text{Cov}\big[\vecc{\F}\big] &=  \text{Cov}\big[\big(\U_T \otimes \U_N\big) \D_\G \, \vecc{\Z}\big]  \\[0.2cm]
+    &= \big(\U_T \otimes \U_N\big) \D_\G \text{Cov}\big[\vecc{\Z}\big] \D_\G \big(\U_T^\top \otimes \U_N^\top \big) 
+    \end{align*}
+    
+    \vspace{0.2cm}
+    
+    If $\vecc{\Z}$ has covariance $\gamma^{-1} \I$, then $\vecc{\F}$ has covariance given by 
+    
+    \begin{align*}
+    \text{Cov}\big[\vecc{\F}\big] &= \gamma^{-1} \big(\U_T \otimes \U_N\big) \D_\G^2 \big(\U_T^\top \otimes \U_N^\top \big) \\
+    &= \gamma^{-1} \HH^{2}
+    \end{align*}
+    
+    \noindent by the definition of $\HH$.\\
+    
+    Now consider the transformed posterior 
+    
+    \begin{align*}
+    -\log p(\Z | \Y) &= -\log p(\Y | \Z) -\log p(\Z) \\
+    &= \frac{1}{2} \VECC{\U_N \, (\G \circ \Z) \, \U_T^\top - \Y}^\top \times \\ &  \D_\Ss \,  \VECC{\U_N \, (\G \circ \Z) \, \U_T^\top- \Y} \\ & \quad\quad   +\frac{\gamma}{2} \, \vecc{\Z}^\top \vecc{\Z}
+    \end{align*}
+    
+    Up to an additive constant, this is equal to 
+    
+    \begin{align*}
+    -\log p(\Z | \Y) &= \frac{1}{2} \vecc{\Z}^\top \Big(\C + \gamma \I_{NT}\Big) \vecc{\Z} \\ & \quad - \Vecc{\U_N \, (\G \circ \Z) \, \U_T}^\top \,  \vecc{\Y} \\[0.2cm]
+    &= \frac{1}{2} \vecc{\Z}^\top \Big(\C + \gamma \I_{NT}\Big) \vecc{\Z} \\ & \quad - \vecc{\Z}^\top\Vecc{\G \circ (\U_N^\top \Y \U_T)}
+    \end{align*}
+    
+    By inspection, again, we can see that the posterior mean for $\Z$ is 
+    
+    $$
+    \big( \C + \gamma \I_T \otimes \I_N \big)^{-1}\Vecc{\G \circ (\U_N^\top \Y \U_T)} 
+    $$
+    
+    
+    
+    \end{proof}
+    

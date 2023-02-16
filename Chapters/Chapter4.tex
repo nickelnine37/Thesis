@@ -5,12 +5,21 @@
 \lhead{Chapter 4. \emph{Regression and Reconstruction on Cartesian Product Graphs}}
 
 
+In this chapter we explore a class of reconstruction algorithms as applied to signals defined on the nodes of a Cartesian product graph. In particular, we pose the reconstruction task in terms of Bayesian inference of an underlying signal given a noisy partial observation, and investigate scalable methods for obtaining the posterior mean. We begin in \cref{sec:reg_and_rec_intro} by reviewing the concept of a graph product, and explain why we choose to look specifically at the Cartesian product. We also review how concepts from standard one-dimensional graph signal processing such as the GFT and spectral filtering can be extended to the two dimensional case. In \cref{sec:gsr_cpg} we introduce the statistical model defining GSR on a Cartesian product graph, and derive two alternative methods for solving for the posterior mean. These comprise a Stationary Iterative Method (SIM) and a Conjugate Gradient Method (CGM). In each case, we show how graph spectral considerations can be leveraged to find efficient forms of said algorithms and derive the convergence properties. In \cref{sec:im_proc_exp} we run several experiments on image data (which can be understood as a special case of a Cartesian product graph signal) to verify these properties. 
+
+The key outcomes of this chapter are as follows:
+
+\begin{itemize}
+    \item 
+\end{itemize}
+
+
 
 \section{Graph Products}
 
 \label{sec:reg_and_rec_intro}
 
-In this chapter, we turn our attention to the topic of signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to consistently define a product between two graphs. In this section we formally introduce the concept of a graph product, examine  some prominent examples, and explain why we choose to look specifically at the Cartesian graph product.
+In this chapter, we will be primarily concerned with signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to consistently define a product between two graphs. In this section we formally introduce the concept of a graph product, examine  some prominent examples, and explain why we choose to look specifically at the Cartesian graph product.
 
 \subsection{Basic definitions}
 
@@ -135,6 +144,7 @@ where $\U_A$ and $\U_B$ are the respective orthonormal eigenvector matrices, and
 
 Given these definitions, table \ref{tab:product_graph_spectra} gives information about the spectral decomposition of the standard graph products.
 
+% see the effect of preconditioning matrix on different graph products 
 
 \begin{table}[h]
     \def\arraystretch{1.8}
@@ -319,6 +329,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 
 
 \note{On the Laplacian spectrum of the path graph}{
+    \label{box}
     When considering time-vertex problems with uniformly spaced time intervals, $\mathcal{G}_T$ will be described by a path graph with equal weights on each edge. This special case of a graph has vertices given by $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ and edges given by $\mathcal{E}_T = \{ \, [t, t+1] \, | \, t < T \}$. The Laplacian matrix of the path graph is therefore given by
 
     $$
@@ -362,6 +373,10 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
     % \caption[Run time comparison for DCT]{A graphical depiction of the four standard graph products}
     % \label{fig:DCT}
     % \end{figure} 
+
+    % write algorithm explicitly
+    % what is aliasing in this context? 
+    % Nyquist for GFT? 
 
 
 }
@@ -442,29 +457,47 @@ We return to the question of sampling from the posterior and estimating the post
 Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this paper aim to overcome these problems.
 
 
-Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
+Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each are part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
 
 
 \subsection{A stationary iterative method}
 
 \label{sec:SIM}
 
-In this section, we demonstrate a technique for obtaining the posterior mean by adopting a classic approach to solving linear systems, known as \textit{matrix splitting}, which sits within the family of Stationary Iterative Methods (SIMs) \citep{Saad2003}. The general splitting strategy is to break the coefficient matrix into the form $\M - \N$, where $\M$ is a non-singular matrix that is easy to solve in the context of a linear system. Commonly used examples of this are the Jacobi, Gauss-Seidel and successive over-relaxation methods, each of which represent a different strategy for splitting the coefficient matrix \citep{Saad2003}. However, whilst these techniques are well-studied, they are not appropriate for use in this case. This is because, for each of these methods, the coefficient matrix must be split according to its diagonal and off-diagonal elements. Consequently, this would require the evaluation of $\HH^{-2}$ directly which, as we have discussed, may be severely ill-conditioned or undefined.
+In this section, we demonstrate a technique for obtaining the posterior mean by adopting a classic approach to solving linear systems, known as \textit{matrix splitting}, which sits within the family of Stationary Iterative Methods (SIMs) \citep{Saad2003}. The general splitting strategy is to break the coefficient matrix into the form $\M - \N$, such that 
 
-
-Instead, we must construct a custom splitting that avoids direct evaluation of $\HH^{-2}$, and such that $\M^{-1}$ can be computed easily by taking advantage of the properties of the Kronecker product. The main novelty of this subsection is the selection of an appropriate splitting and an investigation of the consequences of that choice. For the system defined in equation (\ref{eq:lin_system}), the coefficient matrix can be split up in the following way:
 
 \begin{equation}
-    \Diag{\vecc{\Ss}} + \gamma  \HH^{-2} =  \M - \N
+    \vecc{\F} = (\M - \N)^{-1} \vecc{\Y}
 \end{equation}
 
-\noindent where
+By noting that
+
+\begin{align}
+    \M \vecc{\F} &= \N \vecc{\F} + \vecc{\Y} \\
+    \vecc{\F} &= \M^{-1}\N \vecc{\F} + \M^{-1} \vecc{\Y}
+\end{align}
+
+we devise an iterative scheme given by 
+
+\begin{equation}
+    \label{eq:sim_update}
+    \vecc{\F_{k+1}} = \M^{-1}\N \vecc{\F_{k}} + \M^{-1} \vecc{\Y}
+\end{equation}
+
+
+When $\M$ is a simple matrix that is easy to invert, this update function can be vastly more efficient to compute. Common approaches to finding a suitable value for $\M$ and $\N$ include the Jacobi, Gauss-Seidel and successive over-relaxation methods, each of which represent a different strategy for splitting the coefficient matrix \citep{Saad2003}. However, whilst these techniques are well-studied, they are not appropriate for use in the case of graph signal reconstruction. This is because, for each of these methods, the coefficient matrix is split according to its diagonal and off-diagonal elements in some way. Consequently, this would require the evaluation of $\HH^{-2}$ directly which, as we have discussed, may be large, severely ill-conditioned and possibly ill-defined. 
+
+
+Instead, we require a custom splitting that avoids direct evaluation of $\HH^{-2}$, and allows the right hand side of \cref{eq:sim_update} to be computed efficiently. The main contribution of this subsection is the identification of appropriate values for $\M$ and $\N$, and an investigation of the consequences of that choice. 
+
+In the folowing, we set 
 
 \begin{equation}
     \M = \gamma \HH^{-2} + \I_{NT}, \aand \N = \Diag{\vecc{\Ss'}}.
 \end{equation}
 
-Here, $\Ss'$ denotes a binary matrix representing the complement to the set of selected nodes.
+where $\Ss'$ is the binary matrix representing the complement of the set of selected nodes, i.e.
 
 \begin{equation}
     \Ss'_{nt} = \begin{cases}
@@ -473,75 +506,73 @@ Here, $\Ss'$ denotes a binary matrix representing the complement to the set of s
     \end{cases}
 \end{equation}
 
-This gives a valid splitting since $\M^{-1}$ is guaranteed to exist. This can also easily be computed since we already have the eigendecomposition of $\HH$. Noting the decomposed definition of $\HH$ given in \cref{eq:graph_filter}, this can be written as
+In this way, the update equation is given by 
+
+\begin{equation}
+    \label{eq:sim_update2}
+    \vecc{\F_{k+1}} = \big(\HH^{-2} + \I \, \big)^{-1}  \Diag{\vecc{\Ss'}} \vecc{\F_{k}} + \big(\HH^{-2} + \I \, \big)^{-1} \vecc{\Y}
+\end{equation}
+
+
+
+Note that this splitting is valid since $\big(\HH^{-2} + \I \, \big)^{-1}$ is guaranteed to exist. It can also be readily computed as we already have the eigendecomposition of $\HH$. Noting the decomposed definition of $\HH$ given in \cref{eq:graph_filter}, this can be written as
 
 \begin{align}
     \label{eq:inv}
-    \M^{-1} & = \Big( \HH^{-2} + \I_{NT}\Big)^{-1} \notag                                                                                         \\
-            & = \Big( \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\G}}^{-1}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I_{NT} \Big)^{-1} \notag   \\
-            & = \big(\U_T \otimes \U_N\big)\, \Big(  \Diag{\vecc{\G}}^{-1}\,    + \I_{NT} \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
+    \M^{-1} & = \Big( \HH^{-2} + \I \, \Big)^{-1} \notag \\
+            & = \Big( \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\G}}^{-1}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I \, \Big)^{-1} \notag   \\
+            & = \big(\U_T \otimes \U_N\big)\, \Big(  \Diag{\vecc{\G}}^{-1}\,    + \I \, \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
             & = \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\J}}\,  \big(\U_T^\top \otimes \U_N^\top\big)
 \end{align}
 
 \noindent where $\J \in \R^{N \times T}$ has elements defined by
 
 \begin{equation}
+    \label{eq:Jnt}
     \J_{nt} = \frac{\G_{nt}^2}{\G_{nt}^2 + \gamma}.
 \end{equation}
 
-Therefore, the above splitting leads to a consistent linear stationary iterative method of first degree, with an update equation given by
+Note that the update formula can be computed with $O(N^2T + NT^2)$ complexity at each step.  
 
-\begin{equation}
-    \label{eq:split_update}
-    \vecc{\F_{k+1}} = \M^{-1} \N \,  \vecc{\F_k} + \M^{-1} \, \vecc{\Y}
-\end{equation}
-
-One calls a given splitting of the coefficient matrix convergent if the iteration matrix has a spectral radius satisfying $\rho\left(\M^{-1}\N\right) < 1$. Furthermore, the error propagation can be defined as follows, where this contraction condition can be explicitly shown to achieve convergence. Denoting the difference between the estimate at the $k$-th iteration and the true solution as $\E_k$, we can see that the error is updated according to the following equation.
 
 \begin{align}
-    \label{eq:E}
-    \vecc{\E_{k+1}} & = \vecc{\F_{k+1}} - \vecc{\F_{k}} \notag                                                                                     \\
-                    & = \M^{-1} \N \,  \vecc{\F_k} + \M^{-1} \, \vecc{\Y} - \big(\M^{-1} \N \,  \vecc{\F_{k-1}} + \M^{-1} \, \vecc{\Y} \big)\notag \\
-                    & = \M^{-1} \N \big(\vecc{\F_k} - \vecc{\F_{k-1}} \big) \notag                                                                 \\
-                    & = \M^{-1} \N \,  \vecc{\E_k}
+    \label{eq:update3}
+    \F_{k+1} & = \U_N \, \big( \J  \circ \big( \U_N^\top \, (\Ss' \circ \F_{k})\, \U_T \big) \big) \, \U_T^\top + \F_0 \\
+    \label{eq:update4}
+    \text{with} \quad\quad\quad \F_0 & = \U_N \, \big( \J  \circ \big( \U_N^\top \, \Y \, \U_T \big) \big) \, \U_T^\top 
 \end{align}
 
-From this it is clear to see that convergence will be achieved so long as the maximum eigenvalue of $\M^{-1} \N$ is less than 1, since, if this condition holds then,
 
-\begin{equation}
-    \lim_{k \rightarrow \infty} \vecc{\E_k} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_0} = \mathbf{0} .
-\end{equation}
+Furthermore, this is reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
 
-By directly inspecting equation (\ref{eq:inv}), it is clear that the spectral radius of $\M^{-1}$ will be the maximum entry in the matrix $\J$. By definition, $g(\cdot)$ has a maximum value of one on the non-negative reals, achieved when its argument is zero. Since the graph Laplacian is guaranteed to have at least one zero eigenvalue, the maximum entry in the matrix $\J$, and therefore the spectral radius of $\M^{-1}$, is surely given by
+
+It is well-know that a given splitting will be convergent if the largest eigenvalue $\lambda_{\text{max}}$ of the matrix $\M^{-1}\N$ has an absolute value of less than one. This attribute, $\rho = |\lambda_{\text{max}}|$, is known as the spectral radius. 
+
+Whilst the spectral radius of $\M^{-1}\N$ cannot be computed directly, we can derive an upper bound based on the properties of $\M$ and $\N$ individually. 
+
+Consider the spectral radius of $\M^{-1}$. By directly inspecting \cref{eq:inv}, it is clear that $\rho(\M^{-1})$ will be the maximum entry in the matrix $\J$ since $\M^{-1}$ is already diagonalised in the basis $\U_T \otimes \U_N$. Consider now the definition of $\J$ given in \cref{eq:Jnt}. By definition, $g(\cdot)$ has a maximum value of one on the non-negative reals, achieved when its argument is zero. Since the graph Laplacian is guaranteed to have at least one zero eigenvalue, the maximum entry in the matrix $\J$, and therefore the spectral radius of $\M^{-1}$, is surely given by
 
 \begin{equation}
     \rho(\M^{-1}) = \frac{1}{1 + \gamma}
 \end{equation}
 
-The spectral radius of $\N$ can be extracted directly as 1, since it is a diagonal binary matrix. Since both $\M^{-1}$ and $\N$ are positive semi-definite, we can apply the theorem
+Next, consider the spectral radius of $\N$. This can be extracted directly as 1, since it is a diagonal binary matrix. Since both $\M^{-1}$ and $\N$ are positive semi-definite, we can apply the theorem
 
 \begin{equation}
     \label{eq:psd}
     \rho(\A\B) \leq \rho(\A) \, \rho(\B)
 \end{equation}
 
-\citep{Bhatia1997}. Therefore, the spectral radius of $\M^{-1}\N$ is guaranteed to be less than or equal to $1 / (1 + \gamma)$.  Since $\gamma$ is strictly positive, this is less than one and, as such, convergence is guaranteed.
+\citep{Bhatia1997}. Therefore, the spectral radius of $\M^{-1}\N$ is guaranteed to be less than or equal to $1 / (1 + \gamma)$.  Since $\gamma$ is strictly positive, this is less than one and, as such, convergence is guaranteed. We return to the question of convergence more thoroughly in \cref{sec:SIM_convergence}. 
 
-Finally, we can leverage properties of the Kronecker product to write an efficient matrix-update equation. By substituting in the expression for $\M^{-1}$ given in equation (\ref{eq:inv}), and applying it to the update formula given in equation (\ref{eq:split_update}), an update procedure with per-step time complexity is $O(N^2T + NT^2)$ is generated. This is given by
-
-\begin{align}
-    \F_0     & = \U_N \, \big( \J  \circ \big( \U_N^\top \, \Y \, \U_T \big) \big) \, \U_T^\top \notag                 \\
-    \F_{k+1} & = \U_N \, \big( \J  \circ \big( \U_N^\top \, (\Ss' \circ \F_{k})\, \U_T \big) \big) \, \U_T^\top + \F_0
-\end{align}
-
-or, equivalently,
+Finally, the update formulas given in \cref{eq:update3,eq:update4} can be written equivalently as 
 
 \begin{align}
     \Delta \F_0     & = \U_N \, \big( \J  \circ \big( \U_N^\top \, \Y \, \U_T \big) \big) \, \U_T^\top \notag                 \\
     \Delta \F_{k+1} & = \U_N \, \big( \J  \circ \big( \U_N^\top \, (\Ss' \circ \Delta \F_{k})\, \U_T \big) \big) \, \U_T^\top
 \end{align}
 
-The complete procedure is given in \hyperlink{al1}{\textbf{algorithm 1}}.
+In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is sufficiently small. The complete procedure is given in \hyperlink{al1}{\textbf{algorithm 1}}.
 
 \begin{algorithm}[t]
     \hypertarget{al1}{}
@@ -590,11 +621,35 @@ The complete procedure is given in \hyperlink{al1}{\textbf{algorithm 1}}.
 
 \subsection{A conjugate gradient method}
 
-The second approach we consider for computing the posterior mean is to use the Conjugate Gradient Method (CGM). First proposed in 1952, the CGM is part of the Krylov subspace family, and is perhaps the most prominent iterative algorithm for solving linear systems \citep{Hestenes1952, Kelley1995}. The CGM works best when the coefficient matrix has a low condition number (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. In our case, preconditioning will be essential for convergence. To see why, consider the matrix $\HH^{-2}$ within the linear system of equation (\ref{eq:lin_system}), along with the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-frequency eigenvalues of the graph Laplacian, which can result in a severely ill-conditioned system. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite.
+The second approach we consider for computing the posterior mean is to use the Conjugate Gradient Method (CGM). First proposed in 1952, the CGM is part of the Krylov subspace family, and is perhaps the most prominent iterative algorithm for solving linear systems \citep{Hestenes1952}. In computational terms, the method only requires repeated forward multiplication of vectors by the coefficient matrix which, in the standard CGM, bust be PSD. It is therefore effective in applications where this process can be performed efficiently. 
 
-Therefore, the primary contribution of this subsection is to find a preconditioner that is both efficient to compute and effective at reducing the condition number of the coefficient matrix. References such as \citep{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard methods include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
+In brief, the CGM seeks to solve the linear system $\A \x = \bb$ by minimising, at the $k$-th iteration, some measure of error in the affine space $\x_0 + \mathcal{K}_k$ where $\mathcal{K}_k$ is the $k$-th Krylov subspace given by  
 
-In order to derive an effective preconditioner, first consider the transformed variable $\Z$, related to $\F$ in the following way.
+$$
+\mathcal{K}_k = \text{span}\big(\rr_0, \; \A \rr_0, \, ..., \, \A^{k-1} \rr_0 \big)
+$$
+
+The residual $\rr_k$ is given by 
+
+$$
+\rr_k = \bb - \A \x
+$$
+
+and the $k$-th iterate of the CGM minimises 
+
+$$
+\phi(\x) = \frac{1}{2} \x^\top \A \x  - \x^\top \bb
+$$
+
+over $\x_0 + \mathcal{K}_k$ \citep{Kelley1995}. 
+
+The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PHI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PHI^\top$ and the left by $\PHI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
+
+In our case, where the coefficient matrix is given by $\Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-frequency eigenvalues of the graph Laplacian, meaning elements of $\Diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
+
+References such as \citep{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard examples include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
+
+In the following, we derive an effective symmetric preconditioner that allows forward multiplication of the coefficient matrix to be performed efficiently. First consider the transformed variable $\Z$, related to $\F$ in the following way.
 
 \begin{equation}
     \label{eq:Z_transform}
@@ -603,11 +658,12 @@ In order to derive an effective preconditioner, first consider the transformed v
 
 Here, $\Z$ can be interpreted as set of frequency coefficients, which are subsequently scaled according to the graph filter function, and then reverse Fourier transformed back into the node domain. Matrices $\Z$ which are distributed according to a spherically symmetric distribution, result in signals $\F$ which are smooth with respect to the graph topology. Since this transform filters out the problematic high-frequency Fourier components, the system defined by this transformed variable $\Z$ is naturally far better conditioned.
 
-By substituting this expression for $\F$ back into the likelihood in equation (\ref{eq:Y_given_F}), and the prior of equation (\ref{eq:F_prior}), one can derive a new expression for the posterior mean of $\Z$. This is given by the solution to the following linear system
+By substituting this expression for $\F$ back into the likelihood in equation (\ref{eq:Y_given_F}), and the prior of equation (\ref{eq:F_prior}), one can derive a new expression for the posterior mean of $\Z$. This is done explicitly in \cref{the:Z_transform_bayes}. The end result is that the new linear system for the transformed variable $\Z$ is given by
+
 
 \begin{equation}
     \label{eq:Z_post}
-    \big( \C + \gamma \I_T \otimes \I_N \big) \, \vecc{\Z} = \Vecc{\G \circ (\U_N^\top \Y \U_T)}
+    \vecc{\Z} = \big( \C + \gamma \I_T \otimes \I_N \big) ^{-1} \Vecc{\G \circ (\U_N^\top \Y \U_T)}
 \end{equation}
 
 \noindent where $\C$ is the symmetric PSD matrix
@@ -618,9 +674,15 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
     \C = \D_{\G} \, \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G}
 \end{equation}
 
-\noindent where we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. For a full derivation of this, consult the supplementary materials. The conditioning of the matrix $\C + \gamma \I$ is greatly improved from the untransformed problem.
+\noindent where we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix $\C + \gamma \I$ is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:CGM_convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
 
-Another way of interpreting the effect of the transformation defined in equation (\ref{eq:Z_transform}) is as a two-sided symmetric preconditioner to the original linear system. The transformed problem defined in equation (\ref{eq:Z_post}) can be recovered by preconditioning the system in equation (\ref{eq:lin_system}) in the following way.
+$$
+\gamma \RR + \G \circ \Bigg(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\Bigg) 
+$$
+
+This has $O(N^2T + NT^2)$ complexity at each step which may be  reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
+
+The linear system defined \cref{eq:Z_post} can be understood as a two-sided symmetrically preconditioned version of the original linear system given in \cref{eq:lin_system}. In particular, the new expression can be constructed by modifying the original system in the following way.
 
 \begin{equation}
     \Big(\PHI^\top  \big(\D_{\Ss} + \gamma  \HH^{-2}\big) \, \PHI  \Big) \Big(\PHI^{-1}\, \vecc{ \F } \Big) = \PHI^\top \, \vecc{\Y},
@@ -632,7 +694,7 @@ Another way of interpreting the effect of the transformation defined in equation
     \PHI =   \big(\U_T \otimes \U_N\big) \, \D_{\G}.
 \end{equation}
 
-Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In \hyperlink{al2}{\textbf{algorithm 2}}, we outline a conjugate gradient method based on this new formulation. Just as in section \ref{sec:SIM}, this process takes advantage of several identities involving Kronecker products and vectorization, to give $O(N^2T + NT^2)$ complexity per iteration.
+Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In \hyperlink{al2}{\textbf{algorithm 2}}, we outline a conjugate gradient method based on this new formulation. Just as in section \ref{sec:SIM}, this process takes advantage of several identities involving Kronecker products and vectorization, to give $O(N^2T + NT^2)$ complexity per iteration. Note also that, in the case of a time-vertex problem where $\mathcal{G}_{T}$ is given by a path graph, this complexity can be further reduced to $O(N^2T + NT \log T)$. 
 
 \begin{algorithm}[t]
     \hypertarget{al2}{}
@@ -685,14 +747,56 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
 \end{algorithm}
 
 
-\subsection{Convergence properties}
+\section{Convergence properties}
 
 \label{sec:convergence}
 
 
-In this section, we contribute theoretical upper bounds for the time-complexity of both methods, and then analyse their practical performance in numerical case studies.
+In this section, we describe theoretical bounds for the convergence rate of both the SIM and the CGM in terms of the hyperparameter $\gamma$. 
 
-For the stationary iterative method, equation (\ref{eq:E}) demonstrates that the magnitude of the error $\vecc{\E_k}$ is reduced at each iteration. In particular, the smallest possible rate of error reduction occurs when $\vecc{\E_0} = k\mathbf{1}$, i.e. it is proportional to the first eigenvector of the graph Laplacian, which is constant over all nodes. In this scenario, the worst-case error reduction follows
+\subsection{Convergence of the SIM}
+\label{sec:SIM_convergence}
+
+First, denote the difference between the true solution $\vecc{F} = $at the $k$-th iteration as $\E_k$, we can see that the error is updated according to the following equation.
+
+\begin{align}
+    \label{eq:E}
+    \vecc{\E_{k}} & = \vecc{\F_{k}} - \vecc{\F_{k-1}} \notag  \\
+    & = \M^{-1} \N \,  \vecc{\F_{k - 1}} + \M^{-1} \, \vecc{\Y} - \big(\M^{-1} \N \,  \vecc{\F_{k-2}} + \M^{-1} \, \vecc{\Y} \big)\notag \\
+    & = \M^{-1} \N \big(\vecc{\F_{k-1}} - \vecc{\F_{k-2}} \big) \notag \\
+    & = \M^{-1} \N \,  \vecc{\E_{k-1}} \notag \\
+    & = \big(\M^{-1} \N\big)^{k-1} \,  \vecc{\E_1}
+\end{align}
+ 
+From this it is clear to see that convergence will be achieved so long as the maximum eigenvalue of $\M^{-1} \N$ is less than 1, since, if this condition holds then,
+
+\begin{equation}
+    \lim_{k \rightarrow \infty} \vecc{\E_{k+1}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_1} = \mathbf{0} .
+\end{equation}
+
+
+For the stationary iterative method, equation (\ref{eq:E}) describes how the magnitude of the error, $\vecc{\E_k}$, is reduced at each iteration. Convergence is guaranteed as long as the spectral radius of $\M^{-1}\N$, denoted $\rho$, is less than one which we have demonstrated must be true. In particular, the error at iteration $k+1$ will take on the following value. 
+
+\begin{align}
+    \vecc{\E_{k+1}} &= \big(\M^{-1}\N\big)^{k} \vecc{\E_1} \notag \\ 
+    &=  \big(\U \D_\J \U^\top \D_{\Ss'}\big)^{k} \vecc{\E_1}
+\end{align}
+
+where we have used the shorthand $\U = \U_T \otimes \U_N$, $\D_\J = \Diag{\vecc{\J}}$ and $\D_{\Ss'} = \Diag{\vecc{\Ss'}}$. The slowest possible rate of convergence will be achieved when $\vecc{\E_1}$ is proportional to the eigenvector of $\U \D_\J \U^\top \D_{\Ss'}$ with the largest associated eigenvalue, namely the spectral radius $\rho(\U \D_\J \U^\top \D_{\Ss'})$. In this case, we have that 
+
+\begin{equation}
+    \vecc{\E_{k+1}} = \rho(\U \D_\J \U^\top \D_{\Ss'})^{k} \vecc{\E_1}
+\end{equation}
+
+Consider the value of $\vecc{\E_1}$ that maximises the norm of the error for some value of $k$, subject to the constraint that $||\vecc{\E_1}||^2 = 1$. 
+
+\begin{align}
+    \mathbf{e}^\star &= \underset{\vecc{\E_1}}{\text{argmax}} \quad || \, \vecc{\E_{k+1}} \,||^2 \notag \\
+    &= \underset{\vecc{\E_1}}{\text{argmax}} \quad \frac{\big(\M^{-1}\N \big)^{k} \vecc{\E_1}}{\vecc{\E_1}^\top \vecc{\E_1}}
+\end{align}
+
+
+In particular, the smallest possible rate of error reduction occurs when $\vecc{\E_0} = k\mathbf{1}$, i.e. it is proportional to the first eigenvector of the graph Laplacian, which is constant over all nodes. In this scenario, the worst-case error reduction follows
 
 \begin{equation}
     \label{eq:sim_error_series}
@@ -717,6 +821,9 @@ $$
     \label{eq:OSIM}
     O\Bigg(\frac{N^2T + NT^2}{\log\,(1 + \gamma)} \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\gamma} \Bigg)
 \end{equation}
+
+\subsection{Convergence of the CGM}
+\label{sec:CGM_convergence}
 
 The conjugate gradient method, by contrast, is known to have a theoretical time complexity of $O(\sqrt{\kappa})$,  where $\kappa$ is the condition number of the coefficient matrix  \cite{Kelley1995}. In our case, the coefficient matrix is given in equation (\ref{eq:Z_post}) as $\C + \gamma \I$, and its associated condition number can be bounded.
 
@@ -747,7 +854,11 @@ From this expansion, we can see that the dominant behaviour for small $\gamma$ i
     O\Bigg(\sqrt{\frac{1 + \gamma}{\gamma}}\big(N^2T + NT^2\big) \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\sqrt{\gamma}} \Bigg)
 \end{equation}
 
+Furthermore, in the case of a time-vertex problem, or a
+
 \section{Image processing experiments}
+
+\label{sec:im_proc_exp}
 
 \begin{figure}[t]
     \hypertarget{butterflies}{}
@@ -763,7 +874,7 @@ From this expansion, we can see that the dominant behaviour for small $\gamma$ i
     \hypertarget{runtime}{}
     \label{fig:runtime}
     \begin{center}
-        \includegraphics[width=0.7\linewidth]{Figures/runtime_cr.pdf}
+        \includegraphics[width=\linewidth]{Figures/SIM_CGM_time.pdf}
     \end{center}
     \caption{\small{ The total runtime in seconds for the SIM and CGM compared to a naive Gaussian elimination approach is shown as a function of the total number of nodes using a quad-core Intel i7-7700HQ CPU. } }
 \end{figure}
