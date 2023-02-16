@@ -510,18 +510,18 @@ In this way, the update equation is given by
 
 \begin{equation}
     \label{eq:sim_update2}
-    \vecc{\F_{k+1}} = \big(\HH^{-2} + \I \, \big)^{-1}  \Diag{\vecc{\Ss'}} \vecc{\F_{k}} + \big(\HH^{-2} + \I \, \big)^{-1} \vecc{\Y}
+    \vecc{\F_{k+1}} = \big(\gamma \HH^{-2} + \I \, \big)^{-1}  \Diag{\vecc{\Ss'}} \vecc{\F_{k}} + \big(\gamma \HH^{-2} + \I \, \big)^{-1} \vecc{\Y}
 \end{equation}
 
 
 
-Note that this splitting is valid since $\big(\HH^{-2} + \I \, \big)^{-1}$ is guaranteed to exist. It can also be readily computed as we already have the eigendecomposition of $\HH$. Noting the decomposed definition of $\HH$ given in \cref{eq:graph_filter}, this can be written as
+Note that this splitting is valid since $\big(\gamma\HH^{-2} + \I \, \big)^{-1}$ is guaranteed to exist. It can also be readily computed as we already have the eigendecomposition of $\HH$. Noting the decomposed definition of $\HH$ given in \cref{eq:graph_filter}, this can be written as
 
 \begin{align}
     \label{eq:inv}
-    \M^{-1} & = \Big( \HH^{-2} + \I \, \Big)^{-1} \notag \\
-            & = \Big( \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\G}}^{-1}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I \, \Big)^{-1} \notag   \\
-            & = \big(\U_T \otimes \U_N\big)\, \Big(  \Diag{\vecc{\G}}^{-1}\,    + \I \, \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
+    \M^{-1} & = \Big( \gamma \HH^{-2} + \I \, \Big)^{-1} \notag \\
+            & = \Big( \gamma \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\G}}^{-2}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I \, \Big)^{-1} \notag   \\
+            & = \big(\U_T \otimes \U_N\big)\, \Big( \gamma \, \Diag{\vecc{\G}}^{-2}\,    + \I \, \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
             & = \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\J}}\,  \big(\U_T^\top \otimes \U_N^\top\big)
 \end{align}
 
@@ -694,7 +694,7 @@ The linear system defined \cref{eq:Z_post} can be understood as a two-sided symm
     \PHI =   \big(\U_T \otimes \U_N\big) \, \D_{\G}.
 \end{equation}
 
-Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In \hyperlink{al2}{\textbf{algorithm 2}}, we outline a conjugate gradient method based on this new formulation. Just as in section \ref{sec:SIM}, this process takes advantage of several identities involving Kronecker products and vectorization, to give $O(N^2T + NT^2)$ complexity per iteration. Note also that, in the case of a time-vertex problem where $\mathcal{G}_{T}$ is given by a path graph, this complexity can be further reduced to $O(N^2T + NT \log T)$. 
+Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In \hyperlink{al2}{\textbf{algorithm 2}}, we outline a conjugate gradient method based on this new formulation. 
 
 \begin{algorithm}[t]
     \hypertarget{al2}{}
@@ -757,59 +757,148 @@ In this section, we describe theoretical bounds for the convergence rate of both
 \subsection{Convergence of the SIM}
 \label{sec:SIM_convergence}
 
-First, denote the difference between the true solution $\vecc{F} = $at the $k$-th iteration as $\E_k$, we can see that the error is updated according to the following equation.
+In the SIM, we have that 
+
+$$
+\M \vecc{\F} =  \M \vecc{\F} + \vecc{\Y}
+$$
+
+where $\vecc{\F}$ represents the solution to the linear system, and an update formula given by 
+
+$$
+\M \vecc{\F_k} = \N \vecc{\F_{k-1}} + \vecc{\Y}
+$$
+
+Subtracting the former from the latter gives
 
 \begin{align}
-    \label{eq:E}
-    \vecc{\E_{k}} & = \vecc{\F_{k}} - \vecc{\F_{k-1}} \notag  \\
-    & = \M^{-1} \N \,  \vecc{\F_{k - 1}} + \M^{-1} \, \vecc{\Y} - \big(\M^{-1} \N \,  \vecc{\F_{k-2}} + \M^{-1} \, \vecc{\Y} \big)\notag \\
-    & = \M^{-1} \N \big(\vecc{\F_{k-1}} - \vecc{\F_{k-2}} \big) \notag \\
-    & = \M^{-1} \N \,  \vecc{\E_{k-1}} \notag \\
-    & = \big(\M^{-1} \N\big)^{k-1} \,  \vecc{\E_1}
+    \M \vecc{\F_k} - \M \vecc{\F} &= \N \vecc{\F_{k-1}} + \vecc{\Y}  \notag \\
+    \vecc{\E_k} &= \M^{-1} \N \vecc{\E_{k-1}} \notag \\
+     &= \big( \M^{-1} \N \big)^{k} \vecc{\E_{0}}
 \end{align}
- 
-From this it is clear to see that convergence will be achieved so long as the maximum eigenvalue of $\M^{-1} \N$ is less than 1, since, if this condition holds then,
+
+where we denote $\vecc{\E_k} = \vecc{\F_k} - \vecc{\F}$. 
+
+From this it is clear to see that convergence will be achieved so long as the spectral radius $\rho$ of the matrix $\M^{-1} \N$ is less than 1, since, if this condition holds then,
 
 \begin{equation}
     \lim_{k \rightarrow \infty} \vecc{\E_{k+1}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_1} = \mathbf{0} .
 \end{equation}
 
-
-For the stationary iterative method, equation (\ref{eq:E}) describes how the magnitude of the error, $\vecc{\E_k}$, is reduced at each iteration. Convergence is guaranteed as long as the spectral radius of $\M^{-1}\N$, denoted $\rho$, is less than one which we have demonstrated must be true. In particular, the error at iteration $k+1$ will take on the following value. 
-
-\begin{align}
-    \vecc{\E_{k+1}} &= \big(\M^{-1}\N\big)^{k} \vecc{\E_1} \notag \\ 
-    &=  \big(\U \D_\J \U^\top \D_{\Ss'}\big)^{k} \vecc{\E_1}
-\end{align}
-
-where we have used the shorthand $\U = \U_T \otimes \U_N$, $\D_\J = \Diag{\vecc{\J}}$ and $\D_{\Ss'} = \Diag{\vecc{\Ss'}}$. The slowest possible rate of convergence will be achieved when $\vecc{\E_1}$ is proportional to the eigenvector of $\U \D_\J \U^\top \D_{\Ss'}$ with the largest associated eigenvalue, namely the spectral radius $\rho(\U \D_\J \U^\top \D_{\Ss'})$. In this case, we have that 
-
-\begin{equation}
-    \vecc{\E_{k+1}} = \rho(\U \D_\J \U^\top \D_{\Ss'})^{k} \vecc{\E_1}
-\end{equation}
-
-Consider the value of $\vecc{\E_1}$ that maximises the norm of the error for some value of $k$, subject to the constraint that $||\vecc{\E_1}||^2 = 1$. 
-
-\begin{align}
-    \mathbf{e}^\star &= \underset{\vecc{\E_1}}{\text{argmax}} \quad || \, \vecc{\E_{k+1}} \,||^2 \notag \\
-    &= \underset{\vecc{\E_1}}{\text{argmax}} \quad \frac{\big(\M^{-1}\N \big)^{k} \vecc{\E_1}}{\vecc{\E_1}^\top \vecc{\E_1}}
-\end{align}
-
-
-In particular, the smallest possible rate of error reduction occurs when $\vecc{\E_0} = k\mathbf{1}$, i.e. it is proportional to the first eigenvector of the graph Laplacian, which is constant over all nodes. In this scenario, the worst-case error reduction follows
-
-\begin{equation}
-    \label{eq:sim_error_series}
-    \vecc{\E_k} =  \frac{1}{ (1 + \gamma)^k} \, \vecc{\E_0}
-\end{equation}
-
-This implies that the number of iterations, $n$, required to reduce the error to a fraction $\epsilon$ follows
+Consider the magnitude of the error vector at iteration $k$. 
 
 $$
-    \epsilon = \frac{1}{\,(1 + \gamma)^n} \quad \rightarrow \quad n = \frac{-\log \epsilon}{\log\,(1 + \gamma)}
+e_k = || \, \big( \M^{-1} \N \big)^{k} \vecc{\E_0} \,||
 $$
 
-Therefore, for a given requirement in error reduction, the complexity of \hyperlink{al1}{\textbf{algorithm 1}} is bounded by
+In the worst case scenario, where the initial error $\vecc{\E_0}$ is equal to the first eigenvector of $\M^{-1} \N$, which has eigenvalue $\rho$, it will be the case that
+
+
+$$
+e_k = \rho^k
+$$
+
+This implies that the number of iterations, $n$, required to reduce the magnitude of the error term to some small value $\epsilon$ is given by 
+
+$$
+    n = \frac{\log \epsilon}{\log\rho}
+$$
+
+
+In our case, we have 
+
+$$
+\M = \big(\U \D_\J \U^\top\big)^{-1}, \aand \N = \D_{\Ss'}.
+$$
+
+
+where we have used the shorthand $\U = \U_T \otimes \U_N$, $\D_\J = \Diag{\vecc{\J}}$ and $\D_{\Ss'} = \Diag{\vecc{\Ss'}}$. We would like to understand how to spectral radius $\rho(\M^{-1}\N)$ varies as a function of both the graph filter parameter(s) $\beta$ and the regularisation parameter $\gamma$. 
+
+\vspace{0.8cm}
+
+\textbf{Upper bound: the weak filter limit}
+
+Consider the limiting case of a weak filter, where all spectral components are allowed to pass through unaffected. In this limit, the spectral scaling matrix $\G$ will contain all ones. Given \cref{eq:Jnt}, this further implies the every entry in $\J$ becomes $1 / (1 + \gamma)$. Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters}, we can consider this as the limit where $\beta \rightarrow 0$. 
+
+
+\begin{align}
+    \lim_{\beta \rightarrow 0} \rho(\M^{-1}\N) &= \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) \notag \\
+    &= \frac{1}{1 + \gamma} \rho\Big(\U \I \U^\top \D_{\Ss'} \Big) \notag \\
+    &= \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big) \notag \\
+    &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} \\
+\end{align}
+
+We can conclude that in the limit of a weak filter, where $\beta \rightarrow 0$, that the spectral radius of $\M^{-1}\N$ is exactly  $1 / (1 + \gamma)$. 
+
+\vspace{0.8cm}
+
+
+
+\textbf{Lower bound: the strong filter limit}
+
+Consider now the limiting case of a strong filter, where every spectral component is filtered out except the the first eigenvector of the graph Laplacian (which is proportional to $\mathbf{1}$), with eigenvalue $\lambda_1 = 0$, which passes through the filter unaffected. In this case, the spectral scaling matrix $\G$ has entries that are zero for all elements except (1, 1) which has the value 1. Similarly, the matrix $\J$ has the value $1 / (1 + \gamma)$ at element (1, 1) and zeros elsewhere. In a similar spirit to the weak filter case, we can associate this with the limit as $\beta \rightarrow \infty$.  The spectral radius of $\M^{-1}\N$ in this limit is 
+
+\begin{align*}
+    \lim_{\beta \rightarrow \infty} \rho(\M^{-1}\N) &= \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) \\ 
+    &= \frac{1}{1 + \gamma} \rho\Big(\U \mathbf{\Delta} \U^\top \D_{\Ss'} \Big)
+\end{align*}
+
+where 
+
+$$
+\mathbf{\Delta} = \begin{bmatrix}
+    1 & 0 & 0 & \dots \\
+    0 & 0 & 0 &  \\
+    \vdots & & & \ddots
+\end{bmatrix} 
+$$
+
+Note that, in this case, 
+
+\begin{equation*}
+    \U \mathbf{\Delta} \U^\top = \uu_1 \uu_1^\top  = \frac{1}{NT} \OO
+\end{equation*}
+
+where $ \OO$ is a matrix of ones. Therefore the spectral radius is given by 
+
+\begin{align*}
+    \lim_{\beta \rightarrow \infty} \rho(\M^{-1}\N) &= \frac{1}{NT (1 + \gamma) } \times \rho \left( \begin{bmatrix}
+        \vecc{\Ss'}^\top \\ \vecc{\Ss'}^\top \\ \dots \\ \vecc{\Ss'}^\top
+    \end{bmatrix} \right)
+\end{align*}
+
+Since the matrix in brackets is simply the vector $\vecc{\Ss'}^\top$ repeated in every row, it must have eigenvalue 0 with multiplicity $NT - 1$. Therefore, the only non-zero eigenvalue, which is $\rho$, is given by the trace. This is $\sum \vecc{\Ss'}_i = |\mathcal{S}'|$, i.e. the total number of unobserved values in the graph signal. 
+
+\begin{equation}
+    \label{eq:beta_lim_inf}
+    \lim_{\beta \rightarrow \infty} \rho(\M^{-1}\N) = \frac{1}{1 + \gamma}  \frac{|\mathcal{S}'|}{NT}
+\end{equation}
+
+This is proportional to both $1 / (1 + \gamma)$ and the fraction of all values that were unobserved. 
+
+\vspace{0.8cm}
+
+
+\textbf{Values of $\beta$ between 0 and $\infty$}
+
+Note that \cref{eq:beta_lim_0} provides a hard upper bound for the value of $\rho$. Since $\gamma > 0$, the SIM is therefore guaranteed to converge for all inputs. On the other hand, \cref{eq:beta_lim_inf} gives a reduced value of $\rho$ which is valid in the limit of a strong filter. For intermediate values of $\beta$ between 0 and $\infty$ the true value of $\rho$, denoted as $\rho(\beta)$, will therefore be between $\rho(0)$ and $\rho(\infty)$.
+
+\begin{align}
+\rho(\infty) &< \rho(\beta) < \rho(0)  \notag \\[0.1cm]
+ \frac{1}{1 + \gamma} \, \frac{|\mathcal{S}'|}{NT} &< \rho(\beta) < \frac{1}{1 + \gamma}
+\end{align}
+
+The true dependence of $\rho$ on $\beta$ is likely to be complex since a variety of different filter functions are possible. But in general, we should expect that higher values of $\beta$ bring the true value of $\rho$ closer to the value given by the strong filter limit. If this is the case, then the fraction of observed nodes will also become relevant to the convergence rate. 
+
+
+\vspace{0.8cm}
+
+
+\textbf{A hard upper bound on complexity}
+
+
+
+For a given requirement in error reduction, the complexity of \hyperlink{al1}{\textbf{algorithm 1}} is bounded by
 
 $$
     \frac{m}{\log\,(1 + \gamma)} = m \, \Big( \, \frac{1}{\gamma} + \frac{1}{2} - \frac{\gamma}{12} + \frac{\gamma^2}{24} - ... \Big)
