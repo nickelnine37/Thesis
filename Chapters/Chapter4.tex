@@ -500,6 +500,7 @@ In the folowing, we set
 where $\Ss'$ is the binary matrix representing the complement of the set of selected nodes, i.e.
 
 \begin{equation}
+    \label{eq:S_}
     \Ss'_{nt} = \begin{cases}
         1 & \text{if} \;\; (n, t) \notin \mathcal{S} \\
         0 & \text{otherwise}
@@ -754,13 +755,13 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
 
 In this section, we describe theoretical bounds for the convergence rate of both the SIM and the CGM in terms of the hyperparameter $\gamma$. 
 
-\subsection{Convergence of the SIM}
+\subsection{Convergence and the SIM}
 \label{sec:SIM_convergence}
 
 In the SIM, we have that 
 
 $$
-\M \vecc{\F} =  \M \vecc{\F} + \vecc{\Y}
+\M \vecc{\F} =  \N \vecc{\F} + \vecc{\Y}
 $$
 
 where $\vecc{\F}$ represents the solution to the linear system, and an update formula given by 
@@ -772,75 +773,56 @@ $$
 Subtracting the former from the latter gives
 
 \begin{align}
-    \M \vecc{\F_k} - \M \vecc{\F} &= \N \vecc{\F_{k-1}} + \vecc{\Y}  \notag \\
+    \M \vecc{\F_k} - \M \vecc{\F} &= \N \vecc{\F_{k-1}} - \N \vecc{\F}  \notag \\
     \vecc{\E_k} &= \M^{-1} \N \vecc{\E_{k-1}} \notag \\
      &= \big( \M^{-1} \N \big)^{k} \vecc{\E_{0}}
 \end{align}
 
-where we denote $\vecc{\E_k} = \vecc{\F_k} - \vecc{\F}$. 
-
-From this it is clear to see that convergence will be achieved so long as the spectral radius $\rho$ of the matrix $\M^{-1} \N$ is less than 1, since, if this condition holds then,
+where we denote the error at the $k$-th iteration as $\vecc{\E_k} = \vecc{\F_k} - \vecc{\F}$. From this it is clear to see that convergence will be achieved so long as the spectral radius $\rho$ of the matrix $\M^{-1} \N$ is less than 1, since, if this condition holds then,
 
 \begin{equation}
-    \lim_{k \rightarrow \infty} \vecc{\E_{k+1}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_1} = \mathbf{0} .
+    \lim_{k \rightarrow \infty} \vecc{\E_{k+1}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_0} = \mathbf{0} .
 \end{equation}
 
-Consider the magnitude of the error vector at iteration $k$. 
+In general, the number of iterations required to achieve some specified reduction in the magnitude of the error is given by
 
-$$
-e_k = || \, \big( \M^{-1} \N \big)^{k} \vecc{\E_0} \,||
-$$
-
-In the worst case scenario, where the initial error $\vecc{\E_0}$ is equal to the first eigenvector of $\M^{-1} \N$, which has eigenvalue $\rho$, it will be the case that
-
-
-$$
-e_k = \rho^k
-$$
-
-This implies that the number of iterations, $n$, required to reduce the magnitude of the error term to some small value $\epsilon$ is given by 
-
-$$
-    n = \frac{\log \epsilon}{\log\rho}
-$$
+\begin{equation}
+    \label{eq:n_SIM}
+    n \propto  -\frac{1}{\log\rho}
+\end{equation}
 
 
-In our case, we have 
+\citep{Demmel1997}. In our case, the particular values of $\M$ and $\N$ are given by
 
 $$
 \M = \big(\U \D_\J \U^\top\big)^{-1}, \aand \N = \D_{\Ss'}.
 $$
 
 
-where we have used the shorthand $\U = \U_T \otimes \U_N$, $\D_\J = \Diag{\vecc{\J}}$ and $\D_{\Ss'} = \Diag{\vecc{\Ss'}}$. We would like to understand how to spectral radius $\rho(\M^{-1}\N)$ varies as a function of both the graph filter parameter(s) $\beta$ and the regularisation parameter $\gamma$. 
+where we have used the shorthand $\U = \U_T \otimes \U_N$, $\D_\J = \Diag{\vecc{\J}}$ and $\D_{\Ss'} = \Diag{\vecc{\Ss'}}$. The matrix $\J$, given in \cref{eq:Jnt}, has entries that depend on both the the regularisation parameter $\gamma$ and the spectral scaling matrix $\G$, which is itself a function of the graph filter parameter(s) $\beta$. In the following, we examine how the spectral radius $\rho(\M^{-1}\N)$ varies as a function of $\beta$, $\gamma$, and the number of missing observations $|\mathcal{S}'|$, which determines the structure of $\D_{\Ss'}$ [see \cref{eq:S_}]. 
 
-\vspace{0.8cm}
 
-\textbf{Upper bound: the weak filter limit}
+\subsubsection{Upper bound: the weak filter limit}
 
-Consider the limiting case of a weak filter, where all spectral components are allowed to pass through unaffected. In this limit, the spectral scaling matrix $\G$ will contain all ones. Given \cref{eq:Jnt}, this further implies the every entry in $\J$ becomes $1 / (1 + \gamma)$. Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters}, we can consider this as the limit where $\beta \rightarrow 0$. 
+Consider the limiting case of a weak filter, where all spectral components are allowed to pass through unaffected. In this limit, every element of the spectral scaling matrix $\G$ will be equal to one. Given \cref{eq:Jnt}, this further implies the every entry in $\J$ becomes $1 / (1 + \gamma)$. Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters}, we can conceptualise this as the limit where $\beta \rightarrow 0$. The spectral radius of the update matrix in this case is given by
 
 
 \begin{align}
-    \lim_{\beta \rightarrow 0} \rho(\M^{-1}\N) &= \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) \notag \\
-    &= \frac{1}{1 + \gamma} \rho\Big(\U \I \U^\top \D_{\Ss'} \Big) \notag \\
+    \lim_{\beta \rightarrow 0} \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \I \U^\top \D_{\Ss'} \Big) \notag \\
     &= \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big) \notag \\
-    &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} \\
+    &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} 
 \end{align}
 
 We can conclude that in the limit of a weak filter, where $\beta \rightarrow 0$, that the spectral radius of $\M^{-1}\N$ is exactly  $1 / (1 + \gamma)$. 
 
-\vspace{0.8cm}
 
 
-
-\textbf{Lower bound: the strong filter limit}
+\subsubsection{Lower bound: the strong filter limit}
 
 Consider now the limiting case of a strong filter, where every spectral component is filtered out except the the first eigenvector of the graph Laplacian (which is proportional to $\mathbf{1}$), with eigenvalue $\lambda_1 = 0$, which passes through the filter unaffected. In this case, the spectral scaling matrix $\G$ has entries that are zero for all elements except (1, 1) which has the value 1. Similarly, the matrix $\J$ has the value $1 / (1 + \gamma)$ at element (1, 1) and zeros elsewhere. In a similar spirit to the weak filter case, we can associate this with the limit as $\beta \rightarrow \infty$.  The spectral radius of $\M^{-1}\N$ in this limit is 
 
 \begin{align*}
-    \lim_{\beta \rightarrow \infty} \rho(\M^{-1}\N) &= \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) \\ 
-    &= \frac{1}{1 + \gamma} \rho\Big(\U \mathbf{\Delta} \U^\top \D_{\Ss'} \Big)
+    \lim_{\beta \rightarrow \infty} \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \mathbf{\Delta} \U^\top \D_{\Ss'} \Big)
 \end{align*}
 
 where 
@@ -876,51 +858,111 @@ Since the matrix in brackets is simply the vector $\vecc{\Ss'}^\top$ repeated in
 
 This is proportional to both $1 / (1 + \gamma)$ and the fraction of all values that were unobserved. 
 
-\vspace{0.8cm}
 
 
-\textbf{Values of $\beta$ between 0 and $\infty$}
+\subsubsection{Values of $\beta$ between 0 and $\infty$}
 
 Note that \cref{eq:beta_lim_0} provides a hard upper bound for the value of $\rho$. Since $\gamma > 0$, the SIM is therefore guaranteed to converge for all inputs. On the other hand, \cref{eq:beta_lim_inf} gives a reduced value of $\rho$ which is valid in the limit of a strong filter. For intermediate values of $\beta$ between 0 and $\infty$ the true value of $\rho$, denoted as $\rho(\beta)$, will therefore be between $\rho(0)$ and $\rho(\infty)$.
 
 \begin{align}
-\rho(\infty) &< \rho(\beta) < \rho(0)  \notag \\[0.1cm]
- \frac{1}{1 + \gamma} \, \frac{|\mathcal{S}'|}{NT} &< \rho(\beta) < \frac{1}{1 + \gamma}
+    \label{eq:rho_bounds}
+\rho(\infty) \, & \leq \, \rho(\beta) \, \leq \, \rho(0)  \notag \\[0.1cm]
+ \frac{m}{1 + \gamma} \, &\leq \, \rho (\beta) \, \leq \, \frac{1}{1 + \gamma}
 \end{align}
 
-The true dependence of $\rho$ on $\beta$ is likely to be complex since a variety of different filter functions are possible. But in general, we should expect that higher values of $\beta$ bring the true value of $\rho$ closer to the value given by the strong filter limit. If this is the case, then the fraction of observed nodes will also become relevant to the convergence rate. 
+where the missingness $m = |\mathcal{S}'|/ NT$. The true dependence of $\rho$ on $\beta$ is difficult to determine ahead of time since a variety of different filter functions are possible. But, under minor assumptions of continuity, we should assume that higher values of $\beta$ reduce the true value of $\rho$ closer to the bound given in the strong filter limit. If this is the case, then the fraction of observed nodes will also become relevant to the convergence rate. 
+
+To verify this behaviour we ran several small experiments. In particular, we use a $16 \times 16$ grid of pixel data, with $\gamma = 0.05$, and compute directly the value of $\rho$ over a range of values for $\beta$ and $m$ for size different graph filters. The results are shown in \cref{fig:beta_rho_plot}. In the upper plot, we fix $m = 0.5$ and vary $\beta$ from zero to 20. As is visible, the value for $\rho$ decreases significantly across this range, and gets close to the strong filter limit for several of the filter types. In the lower plot, we fix $\beta=5$ and vary the value of $m$ from 0 to 1. Again, this has a significant effect on the value of $\rho$. These results demonstrate that both $\beta$ and $m$ can have a significant effect on the rate of convergence in practice. 
+
+\begin{figure}[t]
+    % \begin{center} 
+    \includegraphics[width=0.88\linewidth]{Figures/beta-rho-plot.pdf}
+    \includegraphics[width=0.88\linewidth]{Figures/m-rho-plot.pdf}    
+    % \end{center}
+    \caption{\small{ The emprical  value of $\rho$ measured at different values of $\beta$ for six differnet filter types on a product graph defined by a $16 \times 16$ grid. In the upper plot, ver vary $\beta$ from 0 to 20 keeping $m$ fixed at 0.5. Here, the upper and lower bounds given by the weak and strong filter limit respectively are indicated in gray. In the lower plot we vary $m$ from 0 to 1. }}
+    \label{fig:beta_rho_plot}
+\end{figure}
+
+\newpage
 
 
-\vspace{0.8cm}
+\subsubsection{Characterising computational complexity}
+
+The number of steps required to reduce the magnitude of the error vector to some small value $\epsilon$ as a function of $\rho$ is given in \cref{eq:n_SIM}. Note that this applies in the case when the initial error vector $\vecc{\E_0}$ is proportional to the first eigenvector of $\M^{-1}\N$ and, as such, provides an upper bound.  
 
 
-\textbf{A hard upper bound on complexity}
+Given the bounds on $\rho$ expressed in \cref{eq:rho_bounds}, it follows that the upper bound on the number of steps $n$ required for convergence is given by 
+
+\begin{equation}
+    \frac{-\log \epsilon}{\log(1 + \gamma) - \log m} \, \leq \, n \, \leq \, \frac{-\log \epsilon}{\log(1 + \gamma)}
+\end{equation}
+
+Note the taylor series expansions of these bounds around $\gamma=0$. 
+
+\begin{equation}
+    \label{eq:WFL_its}
+    \frac{-\log \epsilon}{\log(1 + \gamma)} = - \log \epsilon \left( \frac{1}{\gamma} + \frac{1}{2} - \frac{\gamma}{12} + O(\gamma^2) \right) 
+\end{equation}
+
+\begin{equation}
+    \label{eq:SFL_its}
+    \frac{-\log \epsilon}{\log(1 + \gamma) - \log m} = - \log \epsilon \left( -\frac{1}{\log m} - \frac{\gamma}{(\log m)^2} + O(\gamma^2)\right) 
+\end{equation}
+
+From this, it is clear that the convergence behaviour at small $\gamma$ is very different in these two cases. In particular, in the weak filter limit given in \cref{eq:WFL_its}, the number of iterations becomes dominated by the term $\gamma^{-1}$ which increases to infinity as $\gamma \rightarrow 0$. However, in the strong filter limit given in \cref{eq:SFL_its}, no such term exists meaning the number of iterations required for convergence is bounded as $\gamma \rightarrow 0$. This behaviour is depicted explicitly in \cref{fig:gamma_its}. 
 
 
+\begin{figure}[t]
+    % \begin{center} 
+    \includegraphics[width=0.8\linewidth]{Figures/it_gamma_plot.pdf}
+    % \end{center}
+    \caption{\small{ The number of iterations required to reduce the initial error magnitude by a factor of $10^{-8}$ is shown in the weak and strong filter limit as a function of $\gamma$. Here, $m$ is set to 0.5.}}
+    \label{fig:gamma_its}
+\end{figure} 
 
-For a given requirement in error reduction, the complexity of \hyperlink{al1}{\textbf{algorithm 1}} is bounded by
+In conclusion, there is a hard upper bound for the computational complexity of the SIM which is given by
 
-$$
-    \frac{m}{\log\,(1 + \gamma)} = m \, \Big( \, \frac{1}{\gamma} + \frac{1}{2} - \frac{\gamma}{12} + \frac{\gamma^2}{24} - ... \Big)
-$$
-
-\noindent where $m$ is the number of multiplications required to complete each iteration. From the Taylor series expansion, we can see that the dominant behaviour for small $\gamma$ is $O(\gamma^{-1})$. Therefore, for small $\gamma$, the overall run-time complexity of the SIM is given by
 
 \begin{equation}
     \label{eq:OSIM}
     O\Bigg(\frac{N^2T + NT^2}{\log\,(1 + \gamma)} \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\gamma} \Bigg)
 \end{equation}
 
+
+However, the true complexity as a function of $\gamma$ may be substantially lower than this in reality, in the case where the graph filter is strong and the fraction of missing values is low. In the limiting case, the computation complexity does not vary as a function of $\gamma$, but rather of the fraction of the data that is missing, $m$. 
+
+
+\begin{equation}
+    \label{eq:OSIM2}
+    O\Bigg(\frac{N^2T + NT^2}{\log\,(1 + \gamma) - \log m} \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{- \log m} \Bigg)
+\end{equation}
+
 \subsection{Convergence of the CGM}
 \label{sec:CGM_convergence}
 
-The conjugate gradient method, by contrast, is known to have a theoretical time complexity of $O(\sqrt{\kappa})$,  where $\kappa$ is the condition number of the coefficient matrix  \cite{Kelley1995}. In our case, the coefficient matrix is given in equation (\ref{eq:Z_post}) as $\C + \gamma \I$, and its associated condition number can be bounded.
+In the conjugate gradient method, by contrast, the number of steps required to achieve some termination condition is well-known to follow $O(\sqrt{\kappa})$, where $\kappa$ is the condition number of the coefficient matrix \cite{Kelley1995}. In our case, the coefficient matrix is given in equation (\ref{eq:Z_post}) as $\C + \gamma \I$, and its associated condition number can be bounded in a similar fashion to $\rho$ in the SIM.
 
-Consider the definition for $\C$ given in equation (\ref{eq:Q}). Note that it can be described as the product of matrices, $\C = \C_1 \C_2 \C_1$ where
+Consider the definition for $\C$ given in equation (\ref{eq:Q}). Given this, we can write the condition number as 
 
-$$
-    \C_1 = \D_{\G}, \quad \C_2 = \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big)
-$$
+\begin{equation}
+     \kappa \left(  \, \D_\G \U \D_{\Ss} \U^\top \D_\G + \gamma \I \; \right)
+\end{equation}
+
+As in \cref{sec:SIM_convergence}, we will consider the limit of $\kappa$ as $\beta$ goes to both zero and infinity.  
+
+\subsubsection{Upper bound: the weak filter limit}
+
+Consider the limiting case of a weak filter where the parameter $\beta$ characterising the filter function approaches zero. In this case, the spectral scaling matrix $\G$ is full of ones and, as such, the diagonal matrix $\D_\G$ will be equal to the identity. Therefore 
+
+\begin{align}
+    \lim_{\beta \rightarrow 0} \quad \kappa \left(  \, \D_\G \U \D_{\Ss} \U^\top \D_\G + \gamma \I \; \right) &= \kappa  \left(  \, \U \D_{\Ss} \U^\top + \gamma \I \; \right) \notag \\[0.2cm]
+    &= \kappa  \left(  \, \U \left( \D_{\Ss} + \gamma \I \right) \U^\top \; \right) \notag \\[0.3cm]
+    &= \frac{1 + \gamma}{\gamma}
+\end{align}
+
+In this scenario, the number of steps required to achieve some level of precision will be proportional to $\sqrt{(1 + \gamma) / \gamma}$. This gives a hard limit on the computational complexity of the CGM as applied to graph signal reconstruction since, as we will show, non-zero values of $\beta$ will result in 
+
+
 
 The spectral radius $\rho(\C_1)$, is clearly 1, since the maximum output of $g(\cdot)$ on the domain $\R^{+}$, and correspondingly the maximum element contained in the matrix $\G$, is 1. Similarly, $\rho(\C_2)$ is also 1. This is clear to see since it is already diagonalised in the basis $\U_T \otimes \U_N$, with the matrix $\Ss$ being binary.  Taking these facts together, and making use of equation (\ref{eq:psd}), we see that the maximum eigenvalue of the matrix $\C$ is 1. On the other hand, the minimum possible eigenvalue of $\C$ is zero. This could occur if, say, $\G$ represented a band-limited frequency response, i.e. $\G$ contains zero elements. Clearly, this means $\C$ transforms non-trivial vectors to zero.
 
