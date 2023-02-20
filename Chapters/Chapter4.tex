@@ -5,13 +5,8 @@
 \lhead{Chapter 4. \emph{Regression and Reconstruction on Cartesian Product Graphs}}
 
 
-In this chapter we explore a class of reconstruction algorithms as applied to signals defined on the nodes of a Cartesian product graph. In particular, we pose the reconstruction task in terms of Bayesian inference of an underlying signal given a noisy partial observation, and investigate scalable methods for obtaining the posterior mean. We begin in \cref{sec:reg_and_rec_intro} by reviewing the concept of a graph product, and explain why we choose to look specifically at the Cartesian product. We also review how concepts from standard one-dimensional graph signal processing such as the GFT and spectral filtering can be extended to the two dimensional case. In \cref{sec:gsr_cpg} we introduce the statistical model defining GSR on a Cartesian product graph, and derive two alternative methods for solving for the posterior mean. These comprise a Stationary Iterative Method (SIM) and a Conjugate Gradient Method (CGM). In each case, we show how graph spectral considerations can be leveraged to find efficient forms of said algorithms and derive the convergence properties. In \cref{sec:im_proc_exp} we run several experiments on image data (which can be understood as a special case of a Cartesian product graph signal) to verify these properties. 
+In this chapter we explore a class of reconstruction algorithms as applied to signals defined on the nodes of a Cartesian product graph. In particular, we pose the reconstruction task in terms of Bayesian inference of an underlying signal given a noisy partial observation, and investigate scalable methods for obtaining the posterior mean. We begin in \cref{sec:reg_and_rec_intro} by reviewing the concept of a graph product, and explain why we choose to look specifically at the Cartesian product. We also review how concepts from standard one-dimensional graph signal processing such as the GFT and spectral filtering can be extended to the two dimensional case. In \cref{sec:gsr_cpg} we introduce the statistical model defining GSR on a Cartesian product graph, and derive two alternative methods for solving for the posterior mean. These comprise a Stationary Iterative Method (SIM) and a Conjugate Gradient Method (CGM). In each case, we show how graph spectral considerations can be leveraged to increase their convergence rate, and make use of the properties of the Kronecker product to complete each iteration efficiently. Finally, in section \ref{sec:convergence}, we analyse the convergence properties of each method in depth and derive how the rate of convergence is affected by the hyperparameters. In particular, we show how the optimal choice of method depends on the value of said hyperparameters 
 
-The key outcomes of this chapter are as follows:
-
-\begin{itemize}
-    \item 
-\end{itemize}
 
 
 
@@ -86,13 +81,13 @@ Each definition of a graph product corresponds to the union of a specific subset
          & $\D_A \otimes \LL_B + \LL_A \otimes \D_B - \LL_A \otimes \LL_B + \LL_A \oplus \LL_B$   \\
 
         Lexicographic
-         & $\I_A \otimes \A_B + \A_A \otimes \J_A$
-         & $\I_A \otimes \LL_B + \LL_A \otimes \J_B + \D_A \otimes (|\mathcal{V}_B| \I_B - \J_B)$ \\
+         & $\I_A \otimes \A_B + \A_A \otimes \OO_A$
+         & $\I_A \otimes \LL_B + \LL_A \otimes \OO_B + \D_A \otimes (|\mathcal{V}_B| \I_B - \OO_B)$ \\
 
         \hline
     \end{tabular}
     \vspace{0.2cm}
-    \caption[The adjacency and Laplacian matrices for the standard graph products]{The adjacency and Laplacian matrices for the standard graph products. Here, $\D_A$ and $\D_B$ are the diagonal degree matrices, i.e $\D_A = \diag{\A_A \mathbf{1}}$. $\I_A$ and $\J_A$ are the $(A \times A)$ identity matrix and matrix of ones respectively. }
+    \caption[The adjacency and Laplacian matrices for the standard graph products]{The adjacency and Laplacian matrices for the standard graph products. Here, $\D_A$ and $\D_B$ are the diagonal degree matrices, i.e $\D_A = \diag{\A_A \mathbf{1}}$. $\I_A$ and $\OO_A$ are the $(A \times A)$ identity matrix and matrix of ones respectively. }
     \vspace{0.3cm}
     \label{tab:grap_product_matrices}
 \end{table}
@@ -240,7 +235,7 @@ Correspondingly, we can define the IGFT acting on a matrix of spectral component
 
 }
 
-Given these definitions, we can define a spectral operator (usually a low-pass filter) $\HH$ which acts on graph signals according to a spectral scaling function $g(\lambda \,; \, \beta)$ such as one of those defined in table \ref{tab:iso_filters}. As with regular non-product graphs, the action of this operator can be understood as first transforming a signal into the frequency domain via the GFT, then scaling the spectral components according to some function, and finally transforming back into the vertex domain via the IGFT.
+Given these definitions, we can define a spectral operator (usually a low-pass filter) $\HH$ which acts on graph signals according to a spectral scaling function $g(\lambda \,; \, \beta)$ such as one of those defined in table \ref{tab:iso_filters}. As with regular non-product graphs, the action of this operator can be understood as first transforming a signal into the Laplacian frequency domain via the GFT, then scaling the spectral components according to some function, and finally transforming back into the vertex domain via the IGFT.
 
 \begin{align}
     \label{eq:graph_filter}
@@ -648,7 +643,7 @@ over $\x_0 + \mathcal{K}_k$ \citep{Kelley1995}.
 
 The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PHI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PHI^\top$ and the left by $\PHI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
 
-In our case, where the coefficient matrix is given by $\Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-frequency eigenvalues of the graph Laplacian, meaning elements of $\Diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
+In our case, where the coefficient matrix is given by $\Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-Laplacian frequency eigenvalues of the graph Laplacian, meaning elements of $\Diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
 
 References such as \citep{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard examples include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
 
@@ -659,7 +654,7 @@ In the following, we derive an effective symmetric preconditioner that allows fo
     \F = \U_N \, (\G \circ \Z) \, \U_T^\top
 \end{equation}
 
-Here, $\Z$ can be interpreted as set of frequency coefficients, which are subsequently scaled according to the graph filter function, and then reverse Fourier transformed back into the node domain. Matrices $\Z$ which are distributed according to a spherically symmetric distribution, result in signals $\F$ which are smooth with respect to the graph topology. Since this transform filters out the problematic high-frequency Fourier components, the system defined by this transformed variable $\Z$ is naturally far better conditioned.
+Here, $\Z$ can be interpreted as set of Laplacian frequency coefficients, which are subsequently scaled according to the graph filter function, and then reverse Fourier transformed back into the node domain. Matrices $\Z$ which are distributed according to a spherically symmetric distribution, result in signals $\F$ which are smooth with respect to the graph topology. Since this transform filters out the problematic high-Laplacian frequency Fourier components, the system defined by this transformed variable $\Z$ is naturally far better conditioned.
 
 By substituting this expression for $\F$ back into the likelihood in equation (\ref{eq:Y_given_F}), and the prior of equation (\ref{eq:F_prior}), one can derive a new expression for the posterior mean of $\Z$. This is done explicitly in \cref{the:Z_transform_bayes}. The end result is that the new linear system for the transformed variable $\Z$ is given by
 
@@ -677,10 +672,10 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
     \C = \D_{\G} \, \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G}
 \end{equation}
 
-\noindent where we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix $\C + \gamma \I$ is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:CGM_convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
+\noindent where we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix $\C + \gamma \I$ is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
 
 $$
-\gamma \RR + \G \circ \Bigg(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\Bigg) 
+\MAT{\big(\C + \gamma \I \big)\vecc{\RR}} = \gamma \RR + \G \circ \Bigg(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\Bigg) 
 $$
 
 This has $O(N^2T + NT^2)$ complexity at each step which may be  reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
@@ -751,7 +746,7 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
 
 \subsection{Verifying basic properties}
 
-
+In this subsection, we seek to verify several basic properties of the CGM and SIM. First, we 
 
 
 \begin{figure}[t]
@@ -864,12 +859,12 @@ $$
 Now consider the spectral radius of the update matrix in the SIM. Given this limiting value of $\D_\J$, this can be directly evaluated as
 
 \begin{align}
-    \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \I \U^\top \D_{\Ss'} \Big) \notag \\
+    \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \U^\top \D_{\Ss'} \Big) \notag \\
     &= \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big) \notag \\
     &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} 
 \end{align}
 
-Next, consider the condition number $\kappa$ of the coefficient matrix in the CGM. Since, in this limit, $\D_\G = \I$, it can be directly evaluated as 
+Next, consider the condition number $\kappa$ of the coefficient matrix in the CGM. Again, this can be directly evaluated as 
 
 
 \begin{align}
@@ -878,14 +873,14 @@ Next, consider the condition number $\kappa$ of the coefficient matrix in the CG
     &= \frac{1 + \gamma}{\gamma}
 \end{align}
 
- Given \cref{eq:n_SIM,eq:n_CGM}, we can write the scaling rate for the number of iterations in the SIM and CGM respectively. 
+ Given \cref{eq:n_SIM,eq:n_CGM}, we can characterise the number of iterations required to reach some convergence criterion in the weak filter limit for the SIM and CGM respectively as
 
 \begin{alignat}{2}
     \lim_{\beta \rightarrow 0} \;  n_{\text{SIM}} \, & \propto \;\;  \frac{1}{\log(1 + \gamma)} \;\; \\[0.5cm]
     \lim_{\beta \rightarrow 0} \;  n_{\text{CGM}} \, & \propto \;\;\;  \sqrt{\frac{1}{\gamma} + 1} \; 
 \end{alignat}
 
-In both cases, the fraction of unobserved values, $m$, has no effect on the convergence rate. When $\gamma$ is high, both methods converge quickly. However, they both see the number of iterations increase to infinity as $\gamma \rightarrow 0$. To characterise this more precisely, consider the Taylor expansion of each expression around $\gamma =0$.  
+Several similarities exist between these two expressions. In both cases, the fraction of unobserved values, $m$, has no effect on the convergence rate. When $\gamma$ is high, both methods converge quickly. However, they both see the number of iterations increase to infinity as $\gamma \rightarrow 0$. To characterise this more precisely, consider the Taylor expansion of each expression around $\gamma =0$.  
 
 
 \begin{align}
@@ -893,12 +888,12 @@ In both cases, the fraction of unobserved values, $m$, has no effect on the conv
     \lim_{\beta \rightarrow 0} \;  n_{\text{CGM}} &\propto \, \gamma^{-1/2} \, + \, \frac{\gamma^{1/2}}{2} \, + \, O\left(\gamma^{3/2}\right) 
 \end{align}
 
-The dominant behaviour for small $\gamma$ follows $O(\gamma^{-1})$ for the SIM and $O(\gamma^{-1/2})$ for the CGM. This implies the CGM will be generally preferable when $\gamma$ is small.  
+The dominant behaviour for small $\gamma$ follows $O(\gamma^{-1})$ for the SIM and $O(\gamma^{-1/2})$ for the CGM. This implies that, in the limit of a weak filter, the CGM will be generally preferable, especially when $\gamma$ is small.  
 
 
 \subsection{Lower bound on convergence: the strong filter limit}
 
-Consider now the limiting case of a strong filter, where every spectral component is filtered out except the the first frequency component $\uu_1 \propto \mathbf{1}$ (also known as the bias), with eigenvalue $\lambda_1 = 0$, which passes through the filter unaffected. Given the definitions of the graph filter functions given in \cref{tab:iso_filters,tab:anis_filters}, we can associate this with the limit as $\beta \rightarrow \infty$. Here, the graph filter operates on a generic graph signal $\vecc{\Y}$ as follows. 
+Consider now the limiting case of a strong filter, where every spectral component is filtered out except the the first Laplacian frequency component $\uu_1 \propto \mathbf{1}$ (also known as the bias), with eigenvalue $\lambda_1 = 0$, which passes through the filter unaffected. Given the definitions of the graph filter functions given in \cref{tab:iso_filters,tab:anis_filters}, we can associate this with the limit as $\beta \rightarrow \infty$. Here, the graph filter operates on a generic graph signal $\vecc{\Y}$ as follows. 
 
 $$
 \HH \vecc{\Y} = \frac{\sum_{n, t} \Y_{nt}}{NT} \mathbf{1}
@@ -936,14 +931,12 @@ where $ \OO$ is a matrix of ones. Therefore the spectral radius is given by
     \end{bmatrix} \right)
 \end{align*}
 
-Since the matrix in brackets is just the vector $\vecc{\Ss'}^\top$ repeated in every row it is surely of rank one, and therefore must have an eigenvalue of 0 with multiplicity $NT - 1$. This implies the the only non-zero eigenvalue is given by its trace, which is $\sum \vecc{\Ss'}_i = |\mathcal{S}'|$, i.e. the total number of unobserved values in the graph signal. 
+Since the matrix in brackets is just the vector $\vecc{\Ss'}^\top$ repeated in every row it is surely of rank one, and therefore must have an eigenvalue of 0 with multiplicity $NT - 1$. This implies the the only non-zero eigenvalue (and therefore the spectral radius $\rho$) is given by its trace, which is $\sum \vecc{\Ss'}_i = |\mathcal{S}'|$. Denoting  $m=|\mathcal{S}'|/NT$, this can be expressed as 
 
 \begin{equation}
     \label{eq:beta_lim_inf}
     \lim_{\beta \rightarrow \infty} \; \rho(\U \D_\J \U^\top \D_{\Ss'}) \, = \, \frac{1}{1 + \gamma} \frac{|\mathcal{S}'|}{NT} \, = \, \frac{m}{1 + \gamma}
 \end{equation}
-
-where $m=|\mathcal{S}'|/NT$.
 
 In the case of the CGM, we have that
 
@@ -959,68 +952,65 @@ In the case of the CGM, we have that
     \end{bmatrix} \D_{\Ss}  \Big[ \uu_1, \, \mathbf{0}, \, \dots, \,\mathbf{0} \Big]
     + \gamma \I \; \right) \notag \\[0.2cm]
     &= \kappa  \left(  \, \frac{1}{NT}  \begin{bmatrix}
-        |\mathcal{S}'| & 0 & 0 & \dots \\
+        |\mathcal{S}| & 0 & 0 & \dots \\
         0 & 0 & 0 &  \\
         \vdots & & & \ddots
     \end{bmatrix}   + \gamma \I \; \right) \notag \\[0.3cm]
-    &= \frac{m + \gamma}{\gamma}
+    &= \frac{1 - m + \gamma}{\gamma}
 \end{align}
 
 Given \cref{eq:n_SIM,eq:n_CGM}, we can write the scaling rate for the number of iterations in the SIM and CGM respectively. 
 
 \begin{align}
+    \label{eq:n_SIM_SFL}
     \lim_{\beta \rightarrow \infty} \;  n_{\text{SIM}} \, & \propto \;\;  \frac{1}{\log(1 + \gamma) - \log m} \;\; \\[0.5cm]
-    \lim_{\beta \rightarrow \infty} \;  n_{\text{CGM}} \, & \propto \;\, \sqrt{\frac{m + \gamma}{\gamma}}
+    \lim_{\beta \rightarrow \infty} \;  n_{\text{CGM}} \, & \propto \;\, \sqrt{\frac{1 - m + \gamma}{\gamma}}
+    \label{eq:n_CGM_SFL}
 \end{align}
  
 
-Note that, in the case of a strong filter, the number of iterations required for convergence of the CGM, $n_\text{CGM}$, still goes to infinity as $\gamma \rightarrow 0$. However, this behaviour is no longer present for $n_\text{SIM}$, which tends towards a constant value of $-1/\log m$. Taking a Taylor series expansion of both expressions about $\gamma=0$ demonstrates the asymptotic behaviour in terms of $\gamma$. 
+Note that, in the case of a strong filter, the number of iterations required for convergence of the CGM, $n_\text{CGM}$, still goes to infinity as $\gamma \rightarrow 0$. However, this behaviour is no longer present for $n_\text{SIM}$, which tends towards a constant value of $-1/\log m$. Taking a Taylor series expansion of both expressions about $\gamma=0$ demonstrates the asymptotic behaviour in terms of $\gamma$ more clearly. 
 
 
 \begin{align}
     \lim_{\beta \rightarrow \infty} \;  n_{\text{SIM}} \, & \propto \;\;  -\frac{1}{\log m} - \frac{\gamma}{\log^2 m} + O\left(\gamma^2\right) \\[0.5cm]
-    \lim_{\beta \rightarrow \infty} \;  n_{\text{CGM}} \, & \propto \, \left(\frac{\gamma}{m} \right)^{-1/2} \, + \, \frac{1}{2}\left(\frac{\gamma}{m}\right)^{1/2} \, + \, O\left(\gamma^{3/2}\right) 
+    \lim_{\beta \rightarrow \infty} \;  n_{\text{CGM}} \, & \propto \, \left(\frac{\gamma}{1 - m} \right)^{-1/2} \, + \, \frac{1}{2}\left(\frac{\gamma}{1 - m}\right)^{1/2} \, + \, O\left(\gamma^{3/2}\right) 
 \end{align}
 
-In particular, the CGM still runs with complexity proportional to $\gamma^{-1/2}$, whereas the SIM does not involve $\gamma$ to a negative power. This behaviour is depicted in \cref{fig:conv_SIM_CGM}. Note that, for the CGM, the possible convergence behaviour as a function of $\gamma$ is restricted to a narrow window. On the other hand, the SIM has a much wider range of possible paths as a function of $\gamma$. 
-
-
-\begin{figure}[t]
-    % \begin{center} 
-    \includegraphics[width=0.95\linewidth]{Figures/conv_SIM_CGM_compared.pdf}    
-    % \end{center}
-    \caption{\small{The number of iterations required for convergence. Here, we set $m=0.5$. The shaded regions show the possile paths each algorithm could take, with the boundary given by their respective weak and strong filter limits. Note that the $y$-values represented in this plot are \textit{proportional} to the number of iterations needed to converge. The constant of proportionality will depend on the initial estimate $\F_0$ and the convergence criteria. As such, each region could be shifted up or down in the log-log plot. }}
-    \label{fig:conv_SIM_CGM}
-\end{figure}
-
-
+In particular, at small $\gamma$, the CGM still runs with complexity proportional to $\gamma^{-1/2}$ whereas the SIM does not involve $\gamma$ to a negative power at all. This implies that, in the strong filter limit, the SIM will be preferable when $\gamma$ is small. Note that $m$ cannot scale arbitrarily close to zero or one, since it will surely be between $1/NT$ and $1 - 1/NT$. 
 
 
 
 \subsection{Choosing a method in practice}
 
-A natural question to ask is 
+We have shown that the CGM will be preferable in the limit of a weak filter, when $\beta \rightarrow 0$, and that the SIM will be preferable in the limit of a strong filter, when $\beta \rightarrow \infty$. For filters that are neither very strong nor very weak, i.e. intermediate values of $\beta$, it is natural to ask which method can be expected to perform better. This decision will be more significant when $\gamma$ is small since, when it is large, both methods converge quickly.
 
-Note that \cref{eq:beta_lim_0} provides a hard upper bound for the value of $\rho$. Since $\gamma > 0$, the SIM is therefore guaranteed to converge for all inputs. On the other hand, \cref{eq:beta_lim_inf} gives a reduced value of $\rho$ which is valid in the limit of a strong filter. For intermediate values of $\beta$ between 0 and $\infty$ the true value of $\rho$, denoted as $\rho(\beta)$, will therefore be between $\rho(0)$ and $\rho(\infty)$.
+For any fixed value of $m$, the SIM has a broad range of possible bounding convergence rates as a function of $\gamma$. The possible range for the CGM, by contrast, is restricted to a much narrower window. This behaviour is depicted explicitly in \cref{fig:conv_SIM_CGM_compared}. 
 
-\begin{align}
-    \label{eq:rho_bounds}
-\rho(\infty) \, & \leq \, \rho(\beta) \, \leq \, \rho(0)  \notag \\[0.1cm]
- \frac{m}{1 + \gamma} \, &\leq \, \rho (\beta) \, \leq \, \frac{1}{1 + \gamma}
-\end{align}
+Given \cref{eq:n_SIM_SFL,eq:n_CGM_SFL}, under minor assumptions of continuity we should assume that higher values of $\beta$ monotonically decrease the number of steps required for convergence in both the SIM and CGM. To test this hypothesis, we ran a small experiment on synthetic data residing on a grid. In particular, we use a $16 \times 16$ grid of pixel data, and generate an observation matrix $\Y$ via white Gaussian noise and select 50\% of the pixels to be removed uniformly at random. We then count the total number of iterations required for convergence for both the SIM and the CGM over a range of values of $\gamma$. This was done for four values of $\beta$. We find that for higher values of $\beta$, the SIM achieves a better rate of convergence as $\gamma$ is decreased, whereas for low values of $\beta$, the CGM has superior scaling behaviour. These experiments confirm the results of the previous subsections. 
 
-where the missingness $m = |\mathcal{S}'|/ NT$. The true dependence of $\rho$ on $\beta$ is difficult to determine ahead of time since a variety of different filter functions are possible. But, under minor assumptions of continuity, we should assume that higher values of $\beta$ reduce the true value of $\rho$ closer to the bound given in the strong filter limit. If this is the case, then the fraction of observed nodes will also become relevant to the convergence rate. 
-
-To verify this behaviour we ran several small experiments. In particular, we use a $16 \times 16$ grid of pixel data, with $\gamma = 0.05$, and compute directly the value of $\rho$ over a range of values for $\beta$ and $m$ for size different graph filters. The results are shown in \cref{fig:beta_rho_plot}. In the upper plot, we fix $m = 0.5$ and vary $\beta$ from zero to 20. As is visible, the value for $\rho$ decreases significantly across this range, and gets close to the strong filter limit for several of the filter types. In the lower plot, we fix $\beta=5$ and vary the value of $m$ from 0 to 1. Again, this has a significant effect on the value of $\rho$. These results demonstrate that both $\beta$ and $m$ can have a significant effect on the rate of convergence in practice. 
 
 \begin{figure}[t]
     % \begin{center} 
-    \includegraphics[width=0.88\linewidth]{Figures/beta-rho-plot.pdf}
-    \includegraphics[width=0.88\linewidth]{Figures/m-rho-plot.pdf}    
+    \includegraphics[width=0.9\linewidth]{Figures/experimental_its_for_conv.pdf}
     % \end{center}
-    \caption{\small{ The emprical  value of $\rho$ measured at different values of $\beta$ for six differnet filter types on a product graph defined by a $16 \times 16$ grid. In the upper plot, ver vary $\beta$ from 0 to 20 keeping $m$ fixed at 0.5. Here, the upper and lower bounds given by the weak and strong filter limit respectively are indicated in gray. In the lower plot we vary $m$ from 0 to 1. }}
-    \label{fig:beta_rho_plot}
+    \caption{\small{ The emprical number of steps required to reach some comparable convergence criteria is shown for a range of values of $\beta$ and $\gamma$ for both the SIM and CGM. Note that in all cases, $m=0.5$. }}
+    \label{fig:it_gamma_plot}
 \end{figure}
+
+ 
+
+
+
+% \begin{figure}[t]
+%     % \begin{center} 
+%     \includegraphics[width=0.88\linewidth]{Figures/beta-rho-plot.pdf}
+%     % \end{center}
+%     \caption{\small{ The emprical value of $\rho$ measured at different values of $\beta$ for six differnet filter types on a product graph defined by a $16 \times 16$ grid. Here,  $\beta$ is varied from 0 to 20 keeping $m$ fixed at 0.5. The upper and lower bounds given by the weak and strong filter limit respectively are indicated in gray. }}
+%     \label{fig:beta_rho_plot}
+% \end{figure}
+
+
 
 \newpage
 
@@ -1182,46 +1172,68 @@ To verify this behaviour we ran several small experiments. In particular, we use
 % Furthermore, in the case of a time-vertex problem, or a
 
 
+\section{Conclusions}
+
+In this chapter we have introduced a Bayesian model for the reconstruction of signals defined over the nodes of a Cartesian product graph. In particular, we show that the posterior mean of the smooth underlying signal, $\F$, is obtained by solving a linear system of size $NT \times NT$, given in \cref{eq:lin_system}. While a naive approach to computing this would have time complexity of $O(N^3T^3)$, we can utilise classic iterative methods in conjunction with the properties of the Kronecker product to solve the linear system with complexity $O(N^2T + NT^2)$ per iterative step. Furthermore, we show that this can be reduced to $O(N^2T + NT \log T)$ when considering time-vertex problems, and to $O(NT \log NT)$ when operating on a grid by making use of the Fast Cosine Transform (FCT). 
+
+The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed overview of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, the general rule of thumb is that the SIM should be used when using a strong graph filter in the prior specification for $\F$, and the SGM when using a weak filter. This decision is of low relevance when $\gamma$ is large, as both methods converge quickly in this domain, however it may be of great significance when $\gamma$ is small. 
 
 
-\section{Image processing experiments}
+\begin{table*}[h]
+    \centering
+    \def\arraystretch{1.5}
+    \begin{tabular}{@{}cccccccc@{}}
+    \toprule
+    & \multicolumn{2}{c}{\textbf{SIM}} & \phantom{abc}& \multicolumn{2}{c}{\textbf{CGM}} & \phantom{abc} \\
+    \cmidrule{2-3} \cmidrule{5-6}
+                               & All $\gamma$   & Small $\gamma$   &&  All $\gamma$   & Small $\gamma$ \\ \midrule \rule{0pt}{1cm}
+    $\beta \rightarrow 0$      & $ \displaystyle \frac{1}{\log(1 + \gamma)}$   & $\displaystyle \gamma^{-1}$    &&    $\displaystyle \sqrt{\frac{1 + \gamma}{\gamma}}$ & $\displaystyle \gamma^{-1/2}$    \\ \rule{0pt}{6ex}
+    $\beta \rightarrow \infty$ & $\displaystyle \frac{1}{\log(1 + \gamma) - \log m}$ & $\displaystyle -\frac{1}{\log m}$    &&  $\displaystyle \sqrt{\frac{1 - m + \gamma}{\gamma}}$ & $\displaystyle \left(\frac{\gamma}{1 - m} \right)^{-1/2}$ \\[0.5cm] \bottomrule 
+    \end{tabular}
+    \caption{The scaling behaviour of the number of steps required for convergence is shown as a function of $\gamma$ and $m$. The upper row gives the behaviour in the limit of a weak filter, and the lower row gives the behaviour in the limit of a strong filter. We also show the dominant term in the taylor expansion about $\gamma=0$ (``small $\gamma$" columns) which give a clearer picture of the asymptotic behaviour as $\gamma \rightarrow 0$. }
+    \label{tab:conv_SIM_CGM} 
+    \end{table*}
 
-\label{sec:im_proc_exp}
+    
 
+% \section{Image processing experiments}
 
-\begin{figure}[t]
-    \hypertarget{runtime}{}
-    \label{fig:runtime}
-    \begin{center}
-        \includegraphics[width=\linewidth]{Figures/SIM_CGM_time.pdf}
-    \end{center}
-    \caption{\small{ The total runtime in seconds for the SIM and CGM compared to a naive Gaussian elimination approach is shown as a function of the total number of nodes using a quad-core Intel i7-7700HQ CPU. } }
-\end{figure}
-
-\begin{figure}[t]
-    \hypertarget{complexity}{}
-    \label{fig:complexity}
-    \begin{center}
-        \includegraphics[width=0.7\linewidth]{Figures/complexity.pdf}
-    \end{center}
-    \caption{\small{The number of iterations required to reach a certain level of precision is shown experimentally, along with the theoretical upper bound, for the SIM and CGM} }
-\end{figure}
+% \label{sec:im_proc_exp}
 
 
+% \begin{figure}[t]
+%     \hypertarget{runtime}{}
+%     \label{fig:runtime}
+%     \begin{center}
+%         \includegraphics[width=\linewidth]{Figures/SIM_CGM_time.pdf}
+%     \end{center}
+%     \caption{\small{ The total runtime in seconds for the SIM and CGM compared to a naive Gaussian elimination approach is shown as a function of the total number of nodes using a quad-core Intel i7-7700HQ CPU. } }
+% \end{figure}
 
-% By comparing equations (\ref{eq:OSIM}) and (\ref{eq:OCGM}), we can see that the conjugate gradient method should be preferable at small $\gamma$.
+% \begin{figure}[t]
+%     \hypertarget{complexity}{}
+%     \label{fig:complexity}
+%     \begin{center}
+%         \includegraphics[width=0.7\linewidth]{Figures/complexity.pdf}
+%     \end{center}
+%     \caption{\small{The number of iterations required to reach a certain level of precision is shown experimentally, along with the theoretical upper bound, for the SIM and CGM} }
+% \end{figure}
 
-In this section, we run several small experiments to corroborate the properties of the CGM and SIM. In particular, we verify a) that both algorithms result in the same output for a given problem; b) that the runtime of the SIM and CGM increases at a significantly lower rate than naive Gaussian elimination as nodes are added; and c) that the number of iterations required for convergence as a function of $\gamma$ is less than or equal to the upper bounds derived in section \ref{sec:convergence}.
 
-In order to perform these checks, we use a small image denoising/reconstruction task. In particular, we use a grey-scale image of width 571 and height of 856 pixels which has been zero-centred and normalised. Note that an image can be considered a graph signal, with each pixel site representing a node connected to the other pixels immediately adjacent. Furthermore, the data itself lies on a two-dimensional lattice which is a special case of a product graph, with each sub-graph in the product being a simple chain, in this case with $N=856$ and $T=571$ respectively. Therefore, images can serve as a simple test case for checking the behaviour of product graph algorithms. Note that the purpose of this section is not to compare graph signal reconstruction to existing algorithms specialised for image denoising/reconstruction, but to examine the computational properties of GSR.
 
-First, we simulate a graph signal reconstruction task across a range of noise levels and missing data distributions. In particular, we add white Gaussian noise to the raw image with a Signal to Noise Ratio (SNR) of -10, 0 and 10 dB. We also remove pixels according to two rules. First, pixels are removed uniformly at random, and second, we remove entire rows and columns uniformly at random such that a fixed total percentage $p$ of the pixels is missing. We do this for $p$ equal to 0.01, 0.1, 0.25 and 0.5 giving 24 unique trials which are shown in \hyperlink{butterflies}{\textbf{figure 2}}. We find that both the SIM and the CGM converge quickly and result in identical predicted outputs, as expected. Furthermore, the statistical model seems relatively robust to noise and missing data of both types, visually performing adequately at the level of $p=0.5$ with SNR=-10dB, which is typically considered a challenging image reconstruction task.
+% % By comparing equations (\ref{eq:OSIM}) and (\ref{eq:OCGM}), we can see that the conjugate gradient method should be preferable at small $\gamma$.
 
-Next, we measured the total runtime of the SIM and the CGM as the number of nodes was increased, and compared this to a more naive approach to solving equation (\ref{eq:lin_system}) which is direct Gaussian elimination. In particular, we fixed the SNR at 0dB and the missingness to $p=0.5$, with missing pixels chosen uniformly at random, and created square images of increasing size from $10^2$ to $10^7$ total pixels. The results are shown in \hyperlink{runtime}{\textbf{figure 3}}. As is visible, the runtime of the SIM and CGM scales at a significantly slower rate that a naive approach, remaining tractable at well above $10^7$ nodes.
+% In this section, we run several small experiments to corroborate the properties of the CGM and SIM. In particular, we verify a) that both algorithms result in the same output for a given problem; b) that the runtime of the SIM and CGM increases at a significantly lower rate than naive Gaussian elimination as nodes are added; and c) that the number of iterations required for convergence as a function of $\gamma$ is less than or equal to the upper bounds derived in section \ref{sec:convergence}.
 
-Finally, we test the effect that varying the hyperparameter $\gamma$ has on the number of iterations required for convergence. To do this, we fixed the SNR at 0dB and the missingness to $p=0.5$, with missing pixels chosen uniformly at random. Next, we varied $\gamma$ in logarithmically spaced increments from $10^{-6}$ to $10^1$. For each unique value of $\gamma$, we ran both the SIM and the CGM and counted the number of steps required for each algorithm to reach a specific level of precision ($10^{-8}$ across all elements). The results are shown in \hyperlink{complexity}{\textbf{figure 4}}. We also plot the theoretical upper bound derived in the previous subsection for each method.
+% In order to perform these checks, we use a small image denoising/reconstruction task. In particular, we use a grey-scale image of width 571 and height of 856 pixels which has been zero-centred and normalised. Note that an image can be considered a graph signal, with each pixel site representing a node connected to the other pixels immediately adjacent. Furthermore, the data itself lies on a two-dimensional lattice which is a special case of a product graph, with each sub-graph in the product being a simple chain, in this case with $N=856$ and $T=571$ respectively. Therefore, images can serve as a simple test case for checking the behaviour of product graph algorithms. Note that the purpose of this section is not to compare graph signal reconstruction to existing algorithms specialised for image denoising/reconstruction, but to examine the computational properties of GSR.
 
-As is visible, both methods converge within the bounds of their theoretical worst-case complexity. As expected, the CGM takes significantly fewer iterations than the SIM to converge at small $\gamma$. It is also visible that the CGM seems to outperform the theoretical worst-case scaling of $\gamma^{-0.5}$, converging with a rate closer to $\gamma^{-0.3}$ over the majority of the range, and even showing signs of reducing further at very small $\gamma$. The SIM on the other hand empirically converges slightly faster but close to the theoretical worst-case rate of $\gamma^{-1}$. Interestingly, the SIM converges faster than the CGM at relatively high $\gamma$, with the cross-over occurring at around $\gamma=0.5$. Although the absolute number of iterations required for convergence in this domain is low (between 1 and 10), this could still be significant for very large problems, meaning it still has some value as a solution.
+% First, we simulate a graph signal reconstruction task across a range of noise levels and missing data distributions. In particular, we add white Gaussian noise to the raw image with a Signal to Noise Ratio (SNR) of -10, 0 and 10 dB. We also remove pixels according to two rules. First, pixels are removed uniformly at random, and second, we remove entire rows and columns uniformly at random such that a fixed total percentage $p$ of the pixels is missing. We do this for $p$ equal to 0.01, 0.1, 0.25 and 0.5 giving 24 unique trials which are shown in \hyperlink{butterflies}{\textbf{figure 2}}. We find that both the SIM and the CGM converge quickly and result in identical predicted outputs, as expected. Furthermore, the statistical model seems relatively robust to noise and missing data of both types, visually performing adequately at the level of $p=0.5$ with SNR=-10dB, which is typically considered a challenging image reconstruction task.
+
+% Next, we measured the total runtime of the SIM and the CGM as the number of nodes was increased, and compared this to a more naive approach to solving equation (\ref{eq:lin_system}) which is direct Gaussian elimination. In particular, we fixed the SNR at 0dB and the missingness to $p=0.5$, with missing pixels chosen uniformly at random, and created square images of increasing size from $10^2$ to $10^7$ total pixels. The results are shown in \hyperlink{runtime}{\textbf{figure 3}}. As is visible, the runtime of the SIM and CGM scales at a significantly slower rate that a naive approach, remaining tractable at well above $10^7$ nodes.
+
+% Finally, we test the effect that varying the hyperparameter $\gamma$ has on the number of iterations required for convergence. To do this, we fixed the SNR at 0dB and the missingness to $p=0.5$, with missing pixels chosen uniformly at random. Next, we varied $\gamma$ in logarithmically spaced increments from $10^{-6}$ to $10^1$. For each unique value of $\gamma$, we ran both the SIM and the CGM and counted the number of steps required for each algorithm to reach a specific level of precision ($10^{-8}$ across all elements). The results are shown in \hyperlink{complexity}{\textbf{figure 4}}. We also plot the theoretical upper bound derived in the previous subsection for each method.
+
+% As is visible, both methods converge within the bounds of their theoretical worst-case complexity. As expected, the CGM takes significantly fewer iterations than the SIM to converge at small $\gamma$. It is also visible that the CGM seems to outperform the theoretical worst-case scaling of $\gamma^{-0.5}$, converging with a rate closer to $\gamma^{-0.3}$ over the majority of the range, and even showing signs of reducing further at very small $\gamma$. The SIM on the other hand empirically converges slightly faster but close to the theoretical worst-case rate of $\gamma^{-1}$. Interestingly, the SIM converges faster than the CGM at relatively high $\gamma$, with the cross-over occurring at around $\gamma=0.5$. Although the absolute number of iterations required for convergence in this domain is low (between 1 and 10), this could still be significant for very large problems, meaning it still has some value as a solution.
 
 
 
