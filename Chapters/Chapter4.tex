@@ -5,7 +5,7 @@
 \lhead{Chapter 4. \emph{Regression and Reconstruction on Cartesian Product Graphs}}
 
 
-In this chapter we explore a class of reconstruction algorithms as applied to signals defined on the nodes of a Cartesian product graph. In particular, we pose the reconstruction task in terms of Bayesian inference of an underlying signal given a noisy partial observation, and investigate scalable methods for obtaining the posterior mean. We begin in \cref{sec:reg_and_rec_intro} by reviewing the concept of a graph product, and explain why we choose to look specifically at the Cartesian product. We also review how concepts from standard one-dimensional graph signal processing such as the GFT and spectral filtering can be extended to the two dimensional case. In \cref{sec:gsr_cpg} we introduce the statistical model defining GSR on a Cartesian product graph, and derive two alternative methods for solving for the posterior mean. These comprise a Stationary Iterative Method (SIM) and a Conjugate Gradient Method (CGM). In each case, we show how graph spectral considerations can be leveraged to increase their convergence rate, and make use of the properties of the Kronecker product to complete each iteration efficiently. Finally, in section \ref{sec:convergence}, we analyse the convergence properties of each method in depth and derive how the rate of convergence is affected by the hyperparameters. In particular, we show how the optimal choice of method depends on the value of said hyperparameters 
+In this chapter we explore a class of reconstruction algorithms as applied to signals defined on the nodes of a Cartesian product graph. In particular, we pose the reconstruction task in terms of Bayesian inference of an underlying signal given a noisy partial observation, and investigate scalable methods for obtaining the posterior mean. We begin in \cref{sec:reg_and_rec_intro} by reviewing the concept of a graph product, and explain why we choose to look specifically at the Cartesian product. We also review how concepts from standard one-dimensional graph signal processing such as the GFT and spectral filtering can be extended to the two dimensional case. In \cref{sec:gsr_cpg} we introduce the statistical model defining GSR on a Cartesian product graph, and derive two alternative methods for solving for the posterior mean. These comprise a Stationary Iterative Method (SIM) and a Conjugate Gradient Method (CGM). In each case, we show how graph spectral considerations can be leveraged to increase their convergence rate, and make use of the properties of the Kronecker product to complete each iteration efficiently. Finally, in section \ref{sec:convergence}, we analyse the convergence properties of each method in depth and derive how the rate of convergence is affected by the hyperparameters. In particular, we show how the optimal choice of method depends on the value of said hyperparameters and offer some rules-of-thumb for selecting a method in practice. 
 
 
 
@@ -387,7 +387,7 @@ Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in
 
 The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is an observed signal $\Y \in \R^{N \times T}$ where only a partial set $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. All other missing elements of $\Y$ are set to zero. Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is itself assumed to be smooth with respect to the graph topology.
 
-We define the statistical model for the generation of an observation matrix $\Y$ as
+We define the statistical model for the generation of an observation matrix $\Y$ as follows. 
 
 \begin{equation}
     \Y = \Ss \circ \big(\F + \E \big)
@@ -454,7 +454,7 @@ We return to the question of sampling from the posterior and estimating the post
 Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this paper aim to overcome these problems.
 
 
-Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each are part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
+Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each are part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
 
 
 \subsection{A stationary iterative method}
@@ -746,7 +746,7 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
 
 \subsection{Verifying basic properties}
 
-In this subsection, we seek to verify several basic properties of the CGM and SIM. First, we 
+In this subsection, we seek to verify several basic properties of the CGM and SIM. First, we want to show that both methods converge to the same prediction for the smooth underlying signal $\F$ an check that the solution is 
 
 
 \begin{figure}[t]
@@ -876,8 +876,10 @@ Next, consider the condition number $\kappa$ of the coefficient matrix in the CG
  Given \cref{eq:n_SIM,eq:n_CGM}, we can characterise the number of iterations required to reach some convergence criterion in the weak filter limit for the SIM and CGM respectively as
 
 \begin{alignat}{2}
+    \label{eq:n_SIM_WFL}
     \lim_{\beta \rightarrow 0} \;  n_{\text{SIM}} \, & \propto \;\;  \frac{1}{\log(1 + \gamma)} \;\; \\[0.5cm]
     \lim_{\beta \rightarrow 0} \;  n_{\text{CGM}} \, & \propto \;\;\;  \sqrt{\frac{1}{\gamma} + 1} \; 
+    \label{eq:n_CGM_WFL}
 \end{alignat}
 
 Several similarities exist between these two expressions. In both cases, the fraction of unobserved values, $m$, has no effect on the convergence rate. When $\gamma$ is high, both methods converge quickly. However, they both see the number of iterations increase to infinity as $\gamma \rightarrow 0$. To characterise this more precisely, consider the Taylor expansion of each expression around $\gamma =0$.  
@@ -983,20 +985,54 @@ In particular, at small $\gamma$, the CGM still runs with complexity proportiona
 
 \subsection{Choosing a method in practice}
 
-We have shown that the CGM will be preferable in the limit of a weak filter, when $\beta \rightarrow 0$, and that the SIM will be preferable in the limit of a strong filter, when $\beta \rightarrow \infty$. For filters that are neither very strong nor very weak, i.e. intermediate values of $\beta$, it is natural to ask which method can be expected to perform better. This decision will be more significant when $\gamma$ is small since, when it is large, both methods converge quickly.
+We have shown that the CGM will be preferable in the limit of a weak filter, when $\beta \rightarrow 0$, and that the SIM will be preferable in the limit of a strong filter, when $\beta \rightarrow \infty$. For filters that are neither asymptotically strong or weak, i.e. positive finite values of $\beta$, it is natural to ask which method can be expected to perform better. This decision will be more significant when $\gamma$ is small since, when it is large, both methods converge quickly. A visual overview of the convergence behaviour is given in \cref{fig:conv_SIM_CGM_compared}. 
 
-For any fixed value of $m$, the SIM has a broad range of possible bounding convergence rates as a function of $\gamma$. The possible range for the CGM, by contrast, is restricted to a much narrower window. This behaviour is depicted explicitly in \cref{fig:conv_SIM_CGM_compared}. 
+\vspace{0.5cm}
 
-Given \cref{eq:n_SIM_SFL,eq:n_CGM_SFL}, under minor assumptions of continuity we should assume that higher values of $\beta$ monotonically decrease the number of steps required for convergence in both the SIM and CGM. To test this hypothesis, we ran a small experiment on synthetic data residing on a grid. In particular, we use a $16 \times 16$ grid of pixel data, and generate an observation matrix $\Y$ via white Gaussian noise and select 50\% of the pixels to be removed uniformly at random. We then count the total number of iterations required for convergence for both the SIM and the CGM over a range of values of $\gamma$. This was done for four values of $\beta$. We find that for higher values of $\beta$, the SIM achieves a better rate of convergence as $\gamma$ is decreased, whereas for low values of $\beta$, the CGM has superior scaling behaviour. These experiments confirm the results of the previous subsections. 
+\begin{figure}[hb]
+    \begin{center} 
+    \includegraphics[width=0.85\linewidth]{Figures/conv_SIM_CGM_compared.pdf}
+    \end{center}
+    \caption{\small{ Here, we have plotted the functions given in \cref{eq:n_SIM_WFL,eq:n_CGM_WFL} } and \cref{eq:n_SIM_SFL,eq:n_CGM_SFL} to give a visual sense of the scaling rate of each method. Note that, since these functions are \textit{proportional} to the true number of iterations, the real values may be shifted up or down in this log-log plot.}
+    \label{fig:conv_SIM_CGM_compared}
+\end{figure}
 
+In order to test the true convergence behaviour in practice, we ran a small experiment on synthetic data residing on a grid. In particular, we use a $16 \times 16$ grid of pixel data, and generated an observation matrix $\Y$ via white Gaussian noise. Next, for three different values of $m$, we chose pixels to be removed uniformly at random. We then counted the total number of iterations required to reconstruct the signal to a tolerance of $10^{-8}$ for both the SIM and the CGM, over a range of values of $\gamma$. This was done for four values of $\beta$, with a diffusion graph filter (see \cref{tab:iso_filters}). The results are shown in \cref{fig:it_gamma_plot}. 
 
-\begin{figure}[t]
-    % \begin{center} 
+\vspace{0.5cm}
+
+\begin{figure}[hb]
+    \begin{center} 
     \includegraphics[width=0.9\linewidth]{Figures/experimental_its_for_conv.pdf}
-    % \end{center}
+    \end{center}
     \caption{\small{ The emprical number of steps required to reach some comparable convergence criteria is shown for a range of values of $\beta$ and $\gamma$ for both the SIM and CGM. Note that in all cases, $m=0.5$. }}
     \label{fig:it_gamma_plot}
 \end{figure}
+
+\vspace{0.5cm}
+
+As is visible, the optimal choice of method will depend strongly on the choice of hyperparameters. Given these experiments, we give some ``rules-of-thumb'' for making this choice under various hyperparameter settings. This is summarised in \cref{tab:decision_SIM_CGM}. 
+
+
+\begin{table*}[h]
+    \centering
+    \footnotesize
+    \def\arraystretch{1.5}
+    \begin{tabular}{@{}lccccccccccccc@{}}
+    \toprule
+    & \multicolumn{3}{c}{Small $\gamma$} & \phantom{ab} & \multicolumn{3}{c}{Medium $\gamma$} & \phantom{ab} & \multicolumn{3}{c}{Large $\gamma$} \\
+    \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
+    & S $m$   & M $m$  & L $m$ &&  S $m$   & M $m$  & L $m$ && S $m$   & M $m$  & L $m$ && \\ \midrule \rule{0pt}{1cm}
+    Small $\beta$  & SIM & CGM & CGM && SIM & CGM & CGM &&  SIM & CGM & CGM    \\ \rule{0pt}{6ex}
+    Medium $\beta$ & SIM & SIM & CGM && SIM & CGM & CGM &&  SIM & CGM & CGM    \\ \rule{0pt}{6ex}
+    Large $\beta$  & SIM & SIM & CGM && SIM & SIM & CGM &&  SIM & CGM & CGM   \\[0.5cm] \bottomrule 
+    \end{tabular}
+    \caption{This table gives a rough rule of thumb for which iterative method should be chosen under various hyperparameter settings. S, M and L $m$ refers to small, medium and large $m$. Note that small and large $m$ mean close to zero or one respectively, small and large $\gamma$ mean around $10^{-6}$ and around one respectively, and small and large $\beta$ mean values which cause the filter function to approach the weak and strong filter limits respectively. }
+    \label{tab:decision_SIM_CGM} 
+\end{table*}
+
+
+
 
  
 
@@ -1171,20 +1207,21 @@ Given \cref{eq:n_SIM_SFL,eq:n_CGM_SFL}, under minor assumptions of continuity we
 
 % Furthermore, in the case of a time-vertex problem, or a
 
+\newpage 
 
 \section{Conclusions}
 
 In this chapter we have introduced a Bayesian model for the reconstruction of signals defined over the nodes of a Cartesian product graph. In particular, we show that the posterior mean of the smooth underlying signal, $\F$, is obtained by solving a linear system of size $NT \times NT$, given in \cref{eq:lin_system}. While a naive approach to computing this would have time complexity of $O(N^3T^3)$, we can utilise classic iterative methods in conjunction with the properties of the Kronecker product to solve the linear system with complexity $O(N^2T + NT^2)$ per iterative step. Furthermore, we show that this can be reduced to $O(N^2T + NT \log T)$ when considering time-vertex problems, and to $O(NT \log NT)$ when operating on a grid by making use of the Fast Cosine Transform (FCT). 
 
-The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed overview of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, the general rule of thumb is that the SIM should be used when using a strong graph filter in the prior specification for $\F$, and the SGM when using a weak filter. This decision is of low relevance when $\gamma$ is large, as both methods converge quickly in this domain, however it may be of great significance when $\gamma$ is small. 
+The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed overview of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, we have provided some rules-of-thumb for making a choice of iterative method in practive, which is summaries in \cref{tab:decision_SIM_CGM}. This decision is of less importance when $\gamma$ is large, as both methods converge quickly in this domain, however it may be of great significance when $\gamma$ is small. 
 
 
 \begin{table*}[h]
     \centering
     \def\arraystretch{1.5}
-    \begin{tabular}{@{}cccccccc@{}}
+    \begin{tabular}{@{}cccccc}
     \toprule
-    & \multicolumn{2}{c}{\textbf{SIM}} & \phantom{abc}& \multicolumn{2}{c}{\textbf{CGM}} & \phantom{abc} \\
+    & \multicolumn{2}{c}{\textbf{SIM}} & \phantom{abc}& \multicolumn{2}{c}{\textbf{CGM}} \\
     \cmidrule{2-3} \cmidrule{5-6}
                                & All $\gamma$   & Small $\gamma$   &&  All $\gamma$   & Small $\gamma$ \\ \midrule \rule{0pt}{1cm}
     $\beta \rightarrow 0$      & $ \displaystyle \frac{1}{\log(1 + \gamma)}$   & $\displaystyle \gamma^{-1}$    &&    $\displaystyle \sqrt{\frac{1 + \gamma}{\gamma}}$ & $\displaystyle \gamma^{-1/2}$    \\ \rule{0pt}{6ex}
@@ -1192,7 +1229,9 @@ The key output of this chapter is two algorithms, namely the Stationary Iterativ
     \end{tabular}
     \caption{The scaling behaviour of the number of steps required for convergence is shown as a function of $\gamma$ and $m$. The upper row gives the behaviour in the limit of a weak filter, and the lower row gives the behaviour in the limit of a strong filter. We also show the dominant term in the taylor expansion about $\gamma=0$ (``small $\gamma$" columns) which give a clearer picture of the asymptotic behaviour as $\gamma \rightarrow 0$. }
     \label{tab:conv_SIM_CGM} 
-    \end{table*}
+\end{table*}
+
+
 
     
 
