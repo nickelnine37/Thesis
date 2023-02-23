@@ -57,7 +57,7 @@ $$
 |\mathcal{V}| = |\mathcal{V}_A| |\mathcal{V}_B| |\mathcal{V}_C| \aand |\mathcal{E}| =  |\mathcal{E}_A| |\mathcal{V}_B| |\mathcal{V}_C| + |\mathcal{V}_A| |\mathcal{E}_B| |\mathcal{V}_C| + |\mathcal{V}_A| |\mathcal{V}_B| |\mathcal{E}_C|
 $$
 
-Happily, the adjacency matrix of a Cartesian product graph $\A$ has a simple representation in terms of the factor adjacency matrices (here $\A_A$, $\A_B$ and $\A_C$). 
+Happily, the adjacency matrix of a Cartesian product graph $\A$ has a straightforward representation in terms of the factor adjacency matrices (here $\A_A$, $\A_B$ and $\A_C$). Specifically, it is given by the Kronecker sum
 
 \begin{align}
     \A &= \A_A \oplus \A_B \oplus \A_C \notag \\
@@ -91,7 +91,19 @@ We can perform eigendecomposition on each of the individual graph Laplacians as 
     \LL^{(i)} = \U^{\,(i)} \LAM^{(i)} (\U^{\,(i)})^\top
 \end{equation}
 
-\noindent where $ \U^{(i)}$ is an orthogonal matrix such that each column is an eigenvector of $\LL^{(i)}$, and $\LAM^{(i)}$ is a diagonal matrix containing the corresponding eigenvalues, which are typically listed in ascending order. Given this, the Laplacian of the product graph can be decomposed as follows. 
+\noindent where $ \U^{(i)}$ is an orthogonal matrix such that each column is an eigenvector of $\LL^{(i)}$, and $\LAM^{(i)}$ is a diagonal matrix containing the corresponding eigenvalues, which are typically listed in ascending order. 
+
+$$
+\LAM^{(i)} = 
+\begin{bmatrix}
+    \lambda_1^{(i)}, &                 &        &                 \\
+                     & \lambda_2^{(i)} &        &                 \\
+                     &                 & \ddots &                 \\
+                     &                 &        & \lambda_{N_i}^{(i)} \\
+\end{bmatrix}
+$$
+
+Given this, the Laplacian of the product graph can be decomposed as follows. 
 
 \begin{align}
     \LL &= \bigoplus_{i=1}^d \U^{\,(i)} \LAM^{(i)} (\U^{\,(i)})^\top \notag \\[0.2cm]
@@ -107,6 +119,65 @@ $$
 
 Here, we have used the notation $\bigotimes_{i=1}^d  \U^{\,(i)}$ to denote the chained Kronecker product of matrices $\{\U^{\,(i)}  \}$. 
 
+\note{Tensor signals: notation and vectorisaion} {
+
+A signal $\y$ residing on the nodes of a $d$-dimensional product graph has a natural representation as a rank-$d$ tensor which, for our purposes, can be conceptualised as a multi-dimensional array with $d$ independent axes. If the $i$-th factor graph has $N_i$ vertices, then $\y$ will be of shape $(N_1 \times N_2 \times ... \times N_d)$. An individual element of this tensor graph signal can be specified via a vector index $\mathbf{n} = [n_1,\, n_2,\, ...,\, n_d]$, where $1\leq n_i \leq N_i$. 
+
+\vspace{0.5cm}
+
+In the following, a tensor should be considered an element of a vector space, whereas square matrices such as $\LL, \U$ and $\LAM$, of shape $(N \times N)$ where $N = \prod N_i$, should be considered operators. These operators provide a linear map $\R^{N} \rightarrow \R^{N}$. For an operator to act on a graph signal we need a consistent way to map tensors of shape $(N_1 \times N_2 \times ... \times N_d)$ to vectors of length $N$. We refer to this process as \textit{vectorisation}. In order for the vectorisation process to be consistent with the operators, it should result in a vectors whose elements are arranged in \textit{lexicographic order}. A diagram showing the desired vectorisation operation for a rank-3 tensor is given below. 
+
+\vspace{0.5cm}
+
+\includegraphics[width=\linewidth]{Figures/Tensor_Digaram.pdf}
+
+\vspace{0.5cm}
+
+This vectorisation process is sometimes referred to as \textit{row-major} since, in the 2D case, the index representing the row varies before the column index. Note that this is the default in languages such as C and Python's NumPy library \citep{harris2020}, but not in languages such as Fortran and Matlab in which the memory layout is instead organised in \textit{column-major} order. 
+
+\vspace{0.5cm}
+
+To calculate the vector element index $k$ which a tensor element with index $\mathbf{n} = [n_1,\, n_2,\, ...,\, n_d]$ is mapped to in row-major order, we can apply the following formula.  
+
+\begin{equation}
+    \label{eq:vec}
+    k = 1 + \sum_{i=1}^d \Big( \prod_{j=i+1}^d N_i \Big) \, (n_i - 1)
+\end{equation}
+
+The reverse operation, i.e. mapping a vector element index $k$ to a tensor index $\mathbf{n}$ can be achieved by running the algorithm given below, 
+
+\vspace{0.5cm}
+
+\hrule
+
+\vspace{0.2cm}
+
+\begin{algorithmic}
+\vspace{0.15cm}
+\Require{The target vector element index $k$} 
+\vspace{0.1cm}
+\Require{The shape of the output tensor $(N_1, N_2, ..., N_d)$} 
+\vspace{0.25cm}
+\For{$i$ \textbf{from} $d$ \textbf{to} 1}
+\vspace{0.25cm}
+\State{$n_i \leftarrow  k \mod N_i$}
+\vspace{0.15cm}
+\State{$k \leftarrow \lfloor k / N_i \rfloor$} 
+\vspace{0.15cm}
+\EndFor
+\vspace{0.25cm}
+\Ensure{$(n_1 + 1, n_2 + 1, ..., n_d + 1)$}
+\end{algorithmic}
+
+\vspace{0.2cm}
+\hrule
+
+\vspace{0.5cm}
+
+Given these two operations, two arrays of any consistent shape can be mapped between one another by first vectorising according to \cref{eq:vec}, and then converting to a tensor using the given algorithm.
+
+}
+
 A graph signal $\y$ existing on the nodes of a $d$-dimensional product graph can be represented as either a $d$-dimensional array (tensor) of shape $(N_1 \times N_2 \times ... \times N_d)$, or a vector of length $N = \prod_{i=1}^d N_i$. In the next section we discuss these two representations and how to convert between them in practice. For now, assume the signal is a length-$N$ vector. We can define its Graph Fourier Transform (GFT) and the corresponding inverse (IGFT) as follows. 
 
 \begin{alignat}{2}
@@ -116,9 +187,37 @@ A graph signal $\y$ existing on the nodes of a $d$-dimensional product graph can
     \text{IGFT}(\y) & = \U \y && = \Big(  \bigotimes_{i=1}^d  \U^{\,(i)} \Big) \; \y 
 \end{alignat}
 
-Given these definitions, we can naturally define the concept of a graph filter. A graph filter acts on a signal $\y$ by scaling the amplitude of its spectral components according to some function of the corresponding frequency $g(\lambda; \beta)$. Most commonly, a low-pass graph filter, such as one provided in table \ref{tab:filters}, is used, such that the high frequency components of a signal are attenuated. 
+The concept of a graph filter for signals defined on a Cartesian product graph follows naturally from this definition. In particular, in the simplest case, we can consider an isotropic graph filter function, such as one of those defined in \cref{tab:iso_filters}, applied to the product graph Laplacian. 
 
+\begin{align}
+    \HH &= g\left(\bigoplus_{i=1}^d  \LL^{(i)}; \beta\right) \notag \\[0.2cm]
+        &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) g\left(\bigoplus_{i=1}^d \LAM^{(i)}; \beta \right) \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
+        &= \U \, \Diag{\vecrm{\G}} \, \U^\top
+\end{align}
 
+where $\G$ now represents the spectral scaling \textit{tensor}, which has elements given by 
+
+\begin{equation}
+    \G_{\mathbf{n}} = g\left(\sum_{i=1}^d \lambda^{i}_{n_i}; \, \beta\right)
+\end{equation}
+
+This can be further generalised to a anisotropic graph filter function, where the intensity of the filtering operation is not restricted to be equal in each dimension. In this case, the spectral scaling tensor is given by 
+
+\begin{equation}
+    \G_{\mathbf{n}} = g(\lambdaa_{\mathbf{n}}; \betaa)
+\end{equation}
+
+where 
+
+$$
+\mathbf{n} = \begin{bmatrix}
+    n_1 \\ n_2 \\ \vdots \\ n_d
+\end{bmatrix}
+\aand \lambdaa_{\mathbf{n}} = 
+\begin{bmatrix}
+    \lambda^{(1)}_{n_1} \\ \lambda^{(2)}_{n_2} \\ \vdots \\ \lambda^{(d)}_{n_d}    
+\end{bmatrix}
+$$
 
 \section{Fast computation with \textit{d}-dimensional Kronecker products}
 
