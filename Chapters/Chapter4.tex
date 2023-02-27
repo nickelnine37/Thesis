@@ -251,7 +251,7 @@ pairs of eigenvalues, such that
 
 \begin{equation}
     \label{eq:Gba}
-    \G_{ba} = g(\lambda^{(A)}_a + \lambda^{(B)}_b; \beta)
+    \G_{ba} = g\left(\lambda^{(A)}_a + \lambda^{(B)}_b; \beta\right)
 \end{equation}
 
 
@@ -261,14 +261,10 @@ We observe that defining the filtering operation in this manner implies that the
 
 \begin{equation}
     \label{eq:Gba2}
-    \G_{ba} =  g \left( \begin{bmatrix}
-            \lambda^{(A)}_a \\ \lambda^{(B)}_b
-        \end{bmatrix}, \; \begin{bmatrix}
-            \beta_a \\ \beta_b
-        \end{bmatrix} \right)
+    \G_{ba} =  g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)
 \end{equation}
 
-where now $g(\lambdaa \,; \, \betaa)$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters}. Note that the original parameter $\beta$ is now replaced by a vector of parameters $\betaa$ which control the filter intensity in each dimension.
+where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. Filters of this kind appear often in image processing literature \citep{Aubert2006}, however, their use in graph signal processing is so far limited. \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
 
 
 \begin{table}[t]
@@ -277,22 +273,22 @@ where now $g(\lambdaa \,; \, \betaa)$ is chosen to be an anisotropic graph filte
     \begin{center}
         \begin{tabular}{|l|c|}
             \hline
-            \textbf{Filter}   & $g(\lambdaa; \,\betaa)$                                            \\
+            \textbf{Filter}   & $g(\lambda_a, \lambda_b; \,\beta_a, \beta_b)$                                            \\
             \hline
-            1-hop random walk & $(1 + \betaa^\top\lambdaa)^{-1}$                                   \\
+            1-hop random walk & $(1 + \beta_a \lambda_a + \beta_b \lambda_b)^{-1}$                                   \\
             \hline
-            Diffusion         & $\exp(-\betaa^\top\lambdaa)$                                       \\
+            Diffusion         & $\exp(-\beta_a \lambda_a - \beta_b \lambda_b)$                                       \\
             \hline
-            ReLu              & $\max (1 - \betaa^\top\lambdaa, 0)$                                \\
+            ReLu              & $\max (1 - \beta_a \lambda_a - \beta_b \lambda_b, 0)$                                \\
             \hline
-            Sigmoid           & $2 \big( 1 + \exp(\betaa^\top\lambdaa)\big)^{-1}$                  \\
+            Sigmoid           & $2 \big( 1 + \exp(\beta_a \lambda_a + \beta_b \lambda_b)\big)^{-1}$                  \\
             \hline
-            Bandlimited       & $1, \,\text{if} \; \betaa^\top\lambdaa \leq 1 \; \text{else} \; 0$ \\
+            Bandlimited       & $1, \,\text{if} \; \beta_a \lambda_a + \beta_b \lambda_b\leq 1 \; \text{else} \; 0$ \\
             \hline
         \end{tabular}
     \end{center}
-    \caption{Anisotropic graph filter functions}
-    \label{tab:anis_filters}
+    \caption{Anisotropic graph filter functions in two dimensions}
+    \label{tab:anis_filters_2d}
 \end{table}
 
 
@@ -383,6 +379,8 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in the context of T-V problems, the methods introduced in this section are valid for the Cartesian product between arbitrary undirected factor graphs.
 
 \subsection{Problem statement}
+
+\label{sec:problem_statement_2d}
 
 
 The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is an observed signal $\Y \in \R^{N \times T}$ where only a partial set $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. All other missing elements of $\Y$ are set to zero. Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is itself assumed to be smooth with respect to the graph topology.
@@ -591,9 +589,7 @@ In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is 
         \vspace{0.15cm}
         \State{Decompose $\LL_N$ into $\U_N \LAM_L \U_N^\top$ and $\LL_T$ into $\U_T \LAM_T \U_T^\top$}
         \vspace{0.15cm}
-        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left( \begin{bmatrix}
-                        \lambda^{(T)}_t \\ \lambda^{(N)}_n
-                    \end{bmatrix}, \; \betaa \right)$ }
+        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)$ }
         \vspace{0.15cm}
         \State{Compute $\J \in \R^{N \times T}$ as $\J_{nt} = \G_{nt}^2 / (\G_{nt}^2 + \gamma)$ }
         \vspace{0.15cm}
@@ -712,11 +708,10 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
         \vspace{0.05cm}
         \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
         \vspace{0.25cm}
-        \State{Decompose $\LL_N$ into $\U_N \Lambda_L \U_N^\top$ and $\LL_T$ into $\U_T \LAM_T \U_T^\top$}
+        \State{Decompose $\LL_N$ into $\U_N \LAM_L \U_N^\top$ and $\LL_T$ into $\U_T \LAM_T \U_T^\top$}
         \vspace{0.15cm}
-        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left( \begin{bmatrix}
-                        \lambda^{(T)}_t \\ \lambda^{(N)}_n
-                    \end{bmatrix}, \; \betaa \right)$ }    \vspace{0.15cm}
+        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)$ }
+        \vspace{0.15cm}
         \State{Initialise $\Z \in \R^{N \times T}$ randomly}
         \vspace{0.15cm}
         \State{$\RR \leftarrow \G \circ (\U_N^\top \Y \U_T) - \gamma \Z - \G \circ \Big( \, \U_N^\top \big(\Ss \circ (\U_N \, (\G \circ \Z) \, \U_T^\top) \big)  \, \U_T\Big)$}
@@ -850,7 +845,7 @@ $$
 \HH \vecc{\Y} = \vecc{\Y}
 $$
 
-Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters}, we can conceptualise this as the limit where the parameter characterising the graph filter $\beta \rightarrow 0$ (or, more generally, the limit as $\betaa \rightarrow [0, 0]$ for an anisotropic graph filter). In this limit, every element of the spectral scaling matrix $\G$ will be equal to one. Given \cref{eq:Jnt}, this further implies the every entry in the matrix $\J$ becomes $1 / (1 + \gamma)$. Therefore, 
+Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters_2d}, we can conceptualise this as the limit where the parameter characterising the graph filter $\beta \rightarrow 0$ (or, more generally, the limit as $\betaa \rightarrow [0, 0]$ for an anisotropic graph filter). In this limit, every element of the spectral scaling matrix $\G$ will be equal to one. Given \cref{eq:Jnt}, this further implies the every entry in the matrix $\J$ becomes $1 / (1 + \gamma)$. Therefore, 
 
 $$
 \lim_{\beta \rightarrow 0} \; \D_\G = \I, \aand \lim_{\beta \rightarrow 0} \; \D_\J = \frac{1}{1 + \gamma} \I
@@ -895,7 +890,7 @@ The dominant behaviour for small $\gamma$ follows $O(\gamma^{-1})$ for the SIM a
 
 \subsection{Lower bound on convergence: the strong filter limit}
 
-Consider now the limiting case of a strong filter, where every spectral component is filtered out except the the first Laplacian frequency component $\uu_1 \propto \mathbf{1}$ (also known as the bias), with eigenvalue $\lambda_1 = 0$, which passes through the filter unaffected. Given the definitions of the graph filter functions given in \cref{tab:iso_filters,tab:anis_filters}, we can associate this with the limit as $\beta \rightarrow \infty$. Here, the graph filter operates on a generic graph signal $\vecc{\Y}$ as follows. 
+Consider now the limiting case of a strong filter, where every spectral component is filtered out except the the first Laplacian frequency component $\uu_1 \propto \mathbf{1}$ (also known as the bias), with eigenvalue $\lambda_1 = 0$, which passes through the filter unaffected. Given the definitions of the graph filter functions given in \cref{tab:iso_filters,tab:anis_filters_2d}, we can associate this with the limit as $\beta \rightarrow \infty$. Here, the graph filter operates on a generic graph signal $\vecc{\Y}$ as follows. 
 
 $$
 \HH \vecc{\Y} = \frac{\sum_{n, t} \Y_{nt}}{NT} \mathbf{1}
