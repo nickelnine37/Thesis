@@ -12,13 +12,13 @@
     The posterior distribution for $\F$ is given by 
 
     \begin{equation}
-            \Vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \Vecc{\Y}, \; \SIG \big)
+            \vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \vecc{\Y}, \; \SIG \big)
         \end{equation}
         
         \noindent where 
         
         \begin{equation}
-            \SIG = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
+            \SIG = \Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
         \end{equation}
 
 \end{theorem}
@@ -36,46 +36,46 @@
     We can use this definition to rewrite equation \ref{eq:Y_given_F} for the probability distribution of $\Y | \F$.
 
     \begin{equation}
-        \Vecc{\Y} \, | \, \F \, \sim \, \lim_{\epsilon \rightarrow 0} \, \Bigg[ \, \mathcal{N}\Big(\vecc{\Ss_{\epsilon} \circ \F}, \; \Diag{\vecc{\Ss_{\epsilon}}}\Big) \, \Bigg]
+        \vecc{\Y} \, | \, \F \, \sim \, \lim_{\epsilon \rightarrow 0} \, \Bigg[ \, \mathcal{N}\Big(\vecc{\Ss_{\epsilon} \circ \F}, \; \diag{\vecc{\Ss_{\epsilon}}}\Big) \, \Bigg]
     \end{equation}
 
     In this way, the negative log-likelihood of an observation $\Y | \F$ is given by 
 
     \begin{equation}
         \label{eq:log_prob_1}
-        - \log \pi(\Y | \F) = \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\Ss_{\epsilon} \circ \F - \Y}^\top \Diag{\vecc{\Ss_{\epsilon}}}^{-1} \vecc{\Ss_{\epsilon} \circ \F - \Y}\, \Bigg]
+        - \log \pi(\Y | \F) = \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\Ss_{\epsilon} \circ \F - \Y}^\top \diag{\vecc{\Ss_{\epsilon}}}^{-1} \vecc{\Ss_{\epsilon} \circ \F - \Y}\, \Bigg]
     \end{equation}
 
     up to an additive constant which does not depend on $\F$. Note that, since $\Y = \Ss_{\epsilon}  \circ \Y$, we can rewrite $\vecc{\Ss_{\epsilon} \circ \F - \Y}$ as 
 
     \begin{align}
-        \vecc{\Ss_{\epsilon} \circ \F - \Y} &= \Vecc{\Ss_{\epsilon} \circ  (\F - \Y)}  \notag \\
-        &= \Diag{\vecc{\Ss_{\epsilon}}} \vecc{\F - \Y}
+        \vecc{\Ss_{\epsilon} \circ \F - \Y} &= \vecc{\Ss_{\epsilon} \circ  (\F - \Y)}  \notag \\
+        &= \diag{\vecc{\Ss_{\epsilon}}} \vecc{\F - \Y}
     \end{align}
 
     Therefore, equation \ref{eq:log_prob_1} can be rewritten as 
 
     \begin{align}
-        - \log \pi(\Y | \F) &= \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss_{\epsilon}}} \, \vecc{\F - \Y}\, \Bigg] \notag \\[0.2cm]
-        &= \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss}} \, \vecc{\F - \Y}
+        - \log \pi(\Y | \F) &= \lim_{\epsilon \rightarrow 0} \, \Bigg[  \frac{1}{2} \vecc{\F - \Y}^\top \diag{\vecc{\Ss_{\epsilon}}} \, \vecc{\F - \Y}\, \Bigg] \notag \\[0.2cm]
+        &= \frac{1}{2} \vecc{\F - \Y}^\top \diag{\vecc{\Ss}} \, \vecc{\F - \Y}
     \end{align}
 
     Now consider the full log-posterior. Using Bayes rule, this can be written as 
 
     \begin{multline}
-        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \vecc{\F - \Y}^\top \Diag{\vecc{\Ss}} \, \vecc{\F - \Y} \; + \\ \frac{\gamma}{2} \vecc{\F }^\top\HH^{-2} \, \vecc{\F}
+        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \vecc{\F - \Y}^\top \diag{\vecc{\Ss}} \, \vecc{\F - \Y} \; + \\ \frac{\gamma}{2} \vecc{\F }^\top\HH^{-2} \, \vecc{\F}
     \end{multline}
 
     Up to an additive constant not dependent $\F$, this can be written as 
 
     \begin{equation}
-        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \Big( \vecc{\F}^\top \big( \Diag{\vecc{\Ss}} + \gamma \HH^{-2}\big) \vecc{\F} - 2 \, \vecc{\Y}^\top \F \Big)
+        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \Big( \vecc{\F}^\top \big( \diag{\vecc{\Ss}} + \gamma \HH^{-2}\big) \vecc{\F} - 2 \, \vecc{\Y}^\top \F \Big)
     \end{equation}
 
     Using the conjugacy of the normal distribution, by direct inspection we can conclude that the posterior covariance is given by 
 
     \begin{equation}
-        \SIG = \Big( \Diag{\vecc{\Ss}} + \gamma \HH^{-2} \Big)^{-1}
+        \SIG = \Big( \diag{\vecc{\Ss}} + \gamma \HH^{-2} \Big)^{-1}
     \end{equation}
 
     and that the posterior mean is given by $\SIG \, \vecc{\Y}$. 
@@ -103,7 +103,7 @@
     Then the posterior mean for $\Z | \Y$ is given by 
     
     $$
-    \text{E}\big[\Z | \Y \big] = \big( \C + \gamma \I_T \otimes \I_N \big)^{-1}\Vecc{\G \circ (\U_N^\top \Y \U_T)} 
+    \text{E}\big[\Z | \Y \big] = \big( \C + \gamma \I_T \otimes \I_N \big)^{-1}\vecc{\G \circ (\U_N^\top \Y \U_T)} 
     $$
     
     \noindent where
@@ -112,7 +112,7 @@
     \C = \D_{\G} \, \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G}
     $$
     
-    (Here we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively.)
+    (Here we have abbreviated $\diag{\vecc{\G}}$ and $\diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively.)
     
     \end{theorem}
     
@@ -122,7 +122,7 @@
     The conditional distribution of $\Y | \Z$ is obtained by substituting in the definition of $\F$ in terms of $\Z$ into the original conditional likelihood expression.  
     
     $$
-    \vecc{\Y} \, | \, \Z \sim \mathcal{N}\Big(\VECC{\Ss \circ \big(\U_N \, (\G \circ \Z) \, \U_T^\top\big)}, \; \D_{\Ss}\Big)
+    \vecc{\Y} \, | \, \Z \sim \mathcal{N}\Big(\vecc{\Ss \circ \big(\U_N \, (\G \circ \Z) \, \U_T^\top\big)}, \; \D_{\Ss}\Big)
     $$
     
     Similarly, since the prior specified for $\F$ is $\mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \HH^2\big)$, this implies that the prior over $\Z$ is simply
@@ -154,20 +154,20 @@
     
     \begin{align*}
     -\log p(\Z | \Y) &= -\log p(\Y | \Z) -\log p(\Z) \\
-    &= \frac{1}{2} \VECC{\U_N \, (\G \circ \Z) \, \U_T^\top - \Y}^\top \times \\ &  \D_\Ss \,  \VECC{\U_N \, (\G \circ \Z) \, \U_T^\top- \Y} \\ & \quad\quad   +\frac{\gamma}{2} \, \vecc{\Z}^\top \vecc{\Z}
+    &= \frac{1}{2} \vecc{\U_N \, (\G \circ \Z) \, \U_T^\top - \Y}^\top \times \\ &  \D_\Ss \,  \vecc{\U_N \, (\G \circ \Z) \, \U_T^\top- \Y} \\ & \quad\quad   +\frac{\gamma}{2} \, \vecc{\Z}^\top \vecc{\Z}
     \end{align*}
     
     Up to an additive constant, this is equal to 
     
     \begin{align*}
-    -\log p(\Z | \Y) &= \frac{1}{2} \vecc{\Z}^\top \Big(\C + \gamma \I_{NT}\Big) \vecc{\Z} \\ & \quad - \Vecc{\U_N \, (\G \circ \Z) \, \U_T}^\top \,  \vecc{\Y} \\[0.2cm]
-    &= \frac{1}{2} \vecc{\Z}^\top \Big(\C + \gamma \I_{NT}\Big) \vecc{\Z} \\ & \quad - \vecc{\Z}^\top\Vecc{\G \circ (\U_N^\top \Y \U_T)}
+    -\log p(\Z | \Y) &= \frac{1}{2} \vecc{\Z}^\top \Big(\C + \gamma \I_{NT}\Big) \vecc{\Z} \\ & \quad - \vecc{\U_N \, (\G \circ \Z) \, \U_T}^\top \,  \vecc{\Y} \\[0.2cm]
+    &= \frac{1}{2} \vecc{\Z}^\top \Big(\C + \gamma \I_{NT}\Big) \vecc{\Z} \\ & \quad - \vecc{\Z}^\top\vecc{\G \circ (\U_N^\top \Y \U_T)}
     \end{align*}
     
     By inspection, again, we can see that the posterior mean for $\Z$ is 
     
     $$
-    \big( \C + \gamma \I_T \otimes \I_N \big)^{-1}\Vecc{\G \circ (\U_N^\top \Y \U_T)} 
+    \big( \C + \gamma \I_T \otimes \I_N \big)^{-1}\vecc{\G \circ (\U_N^\top \Y \U_T)} 
     $$
     
     

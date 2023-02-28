@@ -204,13 +204,13 @@ This motivates the following definitions for the Graph Fourier Transform (GFT) a
 
 
 \begin{equation}
-    \text{GFT}(\Y) = \MAT{\big( \U_A^\top \otimes \U_B^\top \big) \, \vecc{\Y}} = \U_B^\top \Y \U_A
+    \text{GFT}(\Y) = \mat{\big( \U_A^\top \otimes \U_B^\top \big) \, \vecc{\Y}} = \U_B^\top \Y \U_A
 \end{equation}
 
 Correspondingly, we can define the IGFT acting on a matrix of spectral components $\Z \in \R^{B \times A}$ as follows.
 
 \begin{equation}
-    \text{IGFT}(\Z) = \MAT{\big( \U_A \otimes \U_B \big)\,\vecc{\Z}} = \U_B \Z \U_A^\top
+    \text{IGFT}(\Z) = \mat{\big( \U_A \otimes \U_B \big)\,\vecc{\Z}} = \U_B \Z \U_A^\top
 \end{equation}
 
 
@@ -241,7 +241,7 @@ Given these definitions, we can define a spectral operator (usually a low-pass f
     \label{eq:graph_filter}
     \HH & = g(\LL_A \oplus \LL_B) \notag                                                                                          \\
         & = \big( \U_A \otimes \U_B \big) \, g \big( \LAM_A \oplus \LAM_B \big) \, \big( \U_A^\top \otimes \U_B^\top \big) \notag \\
-        & = \big( \U_A \otimes \U_B \big) \, \Diag{\vecc{\G}} \, \big( \U_A^\top \otimes \U_B^\top \big)
+        & = \big( \U_A \otimes \U_B \big) \, \diag{\vecc{\G}} \, \big( \U_A^\top \otimes \U_B^\top \big)
 \end{align}
 
 % remark which section of the thesis the properties of G are explained
@@ -404,10 +404,10 @@ The matrix $\E$ represents the model error and is assumed to have an independent
 
 \begin{equation}
     \label{eq:Y_given_F}
-    \vecc{\Y} \, | \, \F \sim \mathcal{N}\Big(\vecc{\Ss \circ \F}, \; \Diag{\vecc{\Ss}}\Big)
+    \vecc{\Y} \, | \, \F \sim \mathcal{N}\Big(\vecc{\Ss \circ \F}, \; \diag{\vecc{\Ss}}\Big)
 \end{equation}
 
-Note that the covariance matrix $\Diag{\vecc{\Ss}}$ is semi-positive definite by construction. This naturally reflects the constraint that some elements of $\Y$ are zero with probability 1. In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). For now, in the absence of any further information, we assume that the prior mean for $\F$ is zero across all elements.
+Note that the covariance matrix $\diag{\vecc{\Ss}}$ is semi-positive definite by construction. This naturally reflects the constraint that some elements of $\Y$ are zero with probability 1. In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). For now, in the absence of any further information, we assume that the prior mean for $\F$ is zero across all elements.
 
 \begin{equation}
     \label{eq:F_prior}
@@ -426,14 +426,14 @@ The posterior distribution for $\F$ is given by
 
 \begin{equation}
     \label{eq:F_post}
-    \Vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \Vecc{\Y}, \; \SIG \big)
+    \vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \vecc{\Y}, \; \SIG \big)
 \end{equation}
 
 \noindent where
 
 \begin{equation}
     \label{eq:Sig_post}
-    \SIG = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
+    \SIG = \Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
 \end{equation}
 
 A proof of this can be found in the appendix, theorem \ref{the:F_posterior}.
@@ -444,7 +444,7 @@ In this chapter, we are primarily interested in computing the posterior mean, wh
 
 \begin{equation}
     \label{eq:lin_system}
-    \vecc{\F} = \Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1} \vecc{\Y}
+    \vecc{\F} = \Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1} \vecc{\Y}
 \end{equation}
 
 We return to the question of sampling from the posterior and estimating the posterior covariance directly in \cref{chap:variance}.
@@ -489,7 +489,7 @@ Instead, we require a custom splitting that avoids direct evaluation of $\HH^{-2
 In the folowing, we set 
 
 \begin{equation}
-    \M = \gamma \HH^{-2} + \I_{NT}, \aand \N = \Diag{\vecc{\Ss'}}.
+    \M = \gamma \HH^{-2} + \I_{NT}, \aand \N = \diag{\vecc{\Ss'}}.
 \end{equation}
 
 where $\Ss'$ is the binary matrix representing the complement of the set of selected nodes, i.e.
@@ -506,7 +506,7 @@ In this way, the update equation is given by
 
 \begin{equation}
     \label{eq:sim_update2}
-    \vecc{\F_{k+1}} = \big(\gamma \HH^{-2} + \I \, \big)^{-1}  \Diag{\vecc{\Ss'}} \vecc{\F_{k}} + \big(\gamma \HH^{-2} + \I \, \big)^{-1} \vecc{\Y}
+    \vecc{\F_{k+1}} = \big(\gamma \HH^{-2} + \I \, \big)^{-1}  \diag{\vecc{\Ss'}} \vecc{\F_{k}} + \big(\gamma \HH^{-2} + \I \, \big)^{-1} \vecc{\Y}
 \end{equation}
 
 
@@ -516,9 +516,9 @@ Note that this splitting is valid since $\big(\gamma\HH^{-2} + \I \, \big)^{-1}$
 \begin{align}
     \label{eq:inv}
     \M^{-1} & = \Big( \gamma \HH^{-2} + \I \, \Big)^{-1} \notag \\
-            & = \Big( \gamma \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\G}}^{-2}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I \, \Big)^{-1} \notag   \\
-            & = \big(\U_T \otimes \U_N\big)\, \Big( \gamma \, \Diag{\vecc{\G}}^{-2}\,    + \I \, \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
-            & = \big(\U_T \otimes \U_N\big)\, \Diag{\vecc{\J}}\,  \big(\U_T^\top \otimes \U_N^\top\big)
+            & = \Big( \gamma \big(\U_T \otimes \U_N\big)\, \diag{\vecc{\G}}^{-2}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I \, \Big)^{-1} \notag   \\
+            & = \big(\U_T \otimes \U_N\big)\, \Big( \gamma \, \diag{\vecc{\G}}^{-2}\,    + \I \, \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
+            & = \big(\U_T \otimes \U_N\big)\, \diag{\vecc{\J}}\,  \big(\U_T^\top \otimes \U_N^\top\big)
 \end{align}
 
 \noindent where $\J \in \R^{N \times T}$ has elements defined by
@@ -615,6 +615,8 @@ In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is 
 
 \subsection{A conjugate gradient method}
 
+\label{sec:CGM}
+
 The second approach we consider for computing the posterior mean is to use the Conjugate Gradient Method (CGM). First proposed in 1952, the CGM is part of the Krylov subspace family, and is perhaps the most prominent iterative algorithm for solving linear systems \citep{Hestenes1952}. In computational terms, the method only requires repeated forward multiplication of vectors by the coefficient matrix which, in the standard CGM, bust be PSD. It is therefore effective in applications where this process can be performed efficiently. 
 
 In brief, the CGM seeks to solve the linear system $\A \x = \bb$ by minimising, at the $k$-th iteration, some measure of error in the affine space $\x_0 + \mathcal{K}_k$ where $\mathcal{K}_k$ is the $k$-th Krylov subspace given by  
@@ -639,7 +641,7 @@ over $\x_0 + \mathcal{K}_k$ \citep{Kelley1995}.
 
 The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PHI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PHI^\top$ and the left by $\PHI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
 
-In our case, where the coefficient matrix is given by $\Big(\Diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-Laplacian frequency eigenvalues of the graph Laplacian, meaning elements of $\Diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
+In our case, where the coefficient matrix is given by $\Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-Laplacian frequency eigenvalues of the graph Laplacian, meaning elements of $\diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
 
 References such as \citep{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard examples include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
 
@@ -657,7 +659,7 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
 
 \begin{equation}
     \label{eq:Z_post}
-    \vecc{\Z} = \big( \C + \gamma \I_T \otimes \I_N \big) ^{-1} \Vecc{\G \circ (\U_N^\top \Y \U_T)}
+    \vecc{\Z} = \big( \C + \gamma \I_T \otimes \I_N \big) ^{-1} \vecc{\G \circ (\U_N^\top \Y \U_T)}
 \end{equation}
 
 \noindent where $\C$ is the symmetric PSD matrix
@@ -668,10 +670,10 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
     \C = \D_{\G} \, \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G}
 \end{equation}
 
-\noindent where we have abbreviated $\Diag{\vecc{\G}}$ and $\Diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix $\C + \gamma \I$ is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
+\noindent where we have abbreviated $\diag{\vecc{\G}}$ and $\diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix $\C + \gamma \I$ is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
 
 $$
-\MAT{\big(\C + \gamma \I \big)\vecc{\RR}} = \gamma \RR + \G \circ \Bigg(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\Bigg) 
+\mat{\big(\C + \gamma \I \big)\vecc{\RR}} = \gamma \RR + \G \circ \Bigg(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\Bigg) 
 $$
 
 This has $O(N^2T + NT^2)$ complexity at each step which may be  reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
@@ -805,7 +807,7 @@ $$
 where we use the shorthands
 
 $$
-\U = \U_T \otimes \U_N, \quad \D_\J = \Diag{\vecc{\J}}, \aand \D_{\Ss'} = \Diag{\vecc{\Ss'}}. 
+\U = \U_T \otimes \U_N, \quad \D_\J = \diag{\vecc{\J}}, \aand \D_{\Ss'} = \diag{\vecc{\Ss'}}. 
 $$
 
 
