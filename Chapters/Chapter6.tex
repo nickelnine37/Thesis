@@ -6,7 +6,7 @@
 
 \label{chap:nd_gsp}
 
-Multiway Graph Signal Processing (MWGSP) is an emerging field of research that seeks to generalise existing GSP algorithms, designed for use on graphs of one or two dimensions, to an arbitrary number of dimensions \citep{Stanley2020}. This introduces the concept 
+Multiway Graph Signal Processing (MWGSP) is an emerging field of research that seeks to generalise existing GSP algorithms, designed for use on graphs of one or two dimensions, to an arbitrary number of dimensions \citep{Stanley2020}. The majority of graph signal processing algorithms have been developed for graphs without 
 
 The roles of tensors and is long-established in the 
 
@@ -38,7 +38,7 @@ In \cref{sec:graph_products_defined} we gave the general definition of a product
     \mathcal{G} \; = \; \mathcal{G}_A \, \square \; \mathcal{G}_B \, \square \; \mathcal{G}_C \; = \; \{\mathcal{V}, \, \mathcal{E}\}
 \end{equation}
 
-The new vertex set, $\mathcal{V}$, is given by the Cartesian product of the individual vertex sets. 
+The new vertex set, $\mathcal{V}$, is given by the Cartesian product of the individual vertex sets, arranged in lexicographic order. 
 
 \begin{equation}
     \mathcal{V} = \mathcal{V}_A \times \mathcal{V}_B \times \mathcal{V}_C = \{(a, \, b, \, c) \in \mathbb{N}^3 \, | \, a \leq A, \; b \leq B, \text{and} \;  c \leq C\}
@@ -73,7 +73,7 @@ $$
 |\mathcal{V}| = |\mathcal{V}_A| |\mathcal{V}_B| |\mathcal{V}_C| \aand |\mathcal{E}| =  |\mathcal{E}_A| |\mathcal{V}_B| |\mathcal{V}_C| + |\mathcal{V}_A| |\mathcal{E}_B| |\mathcal{V}_C| + |\mathcal{V}_A| |\mathcal{V}_B| |\mathcal{E}_C|
 $$
 
-Happily, the adjacency matrix of a Cartesian product graph $\A$ has a straightforward representation in terms of the factor adjacency matrices (here $\A_A$, $\A_B$ and $\A_C$). Specifically, it is given by the Kronecker sum
+Happily, the adjacency matrix of a Cartesian product graph $\A$ has a straightforward representation in terms of the factor adjacency matrices (here $\A_A$, $\A_B$ and $\A_C$). Specifically, it is given by their Kronecker sum. 
 
 \begin{align}
     \A &= \A_A \oplus \A_B \oplus \A_C \notag \\
@@ -139,60 +139,36 @@ Here, we have used the notation $\bigotimes_{i=1}^d  \U^{\,(i)}$ to denote the c
 
 \subsection{Representing \textit{d}-dimensional graph signals}
 
-A signal $\mathbfcal{Y}$ residing on the nodes of a $d$-dimensional product graph has a natural representation as a tensor of order $d$. One way to conceptualise a $d$-dimensional tensor signal is as a multi-dimensional array with $d$ independent axes. If the $i$-th factor graph has $N_i$ vertices, then $\mathbfcal{Y}$ will be of shape $(N_1, \, N_2 , ... N_d)$. An individual element of this tensor signal can be specified via a vector index $\mathbf{n} = [n_1,\, n_2,\, ...,\, n_d]$, where $1\leq n_i \leq N_i$.
+Since each node in a $d$-dimensional product graph is specified by $d$ independent indices, a signal $\Yt$ existing over the nodes has a natural representation as a tensor of order $d$. One way to conceptualise a $d$-dimensional tensor signal is as a multi-dimensional array with $d$ independent axes. If the $i$-th factor graph has $N_i$ vertices, then $\Yt$ will be of shape $(N_1, \, N_2 , ... N_d)$. An individual element of this tensor signal can be specified via a vector index $\nn = [n_1,\, n_2,\, ...,\, n_d]$, where $1\leq n_i \leq N_i$.
 
-Alternatively, signals can be represented as a vector of length $N = \prod N_i$. This is essential if we are to interpret the $\otimes$ symbol strictly as a Kronecker product, rather than a tensor or outer product. Under the Kronecker interpretation, the chained use of $\otimes$ used in expressions such as \cref{eq:U_LAM_def} results in matrices of shape $N \times N$, providing a linear map from $\R^{N} \rightarrow \R^{N}$. Therefore, for an operator to act on a tensor graph signal $\mathbfcal{Y} \in \R^{N_1 \times N_2 \times ... \times N_d}$, we need a method of mapping tensors with shape $(N_1, \, N_2 , ... N_d)$ to vectors of length $N$. In order for this vectorisation process to be consistent with the operators, it should result in a vectors whose elements are arranged in lexicographic order. In some fields, this is referred to as \textit{row-major} vectorisation since, in the case of an order-2 tensor, the index representing the row varies before the column index. In the following, we symbolise this operation mathematically as $\vecrm{\cdot}: \R^{N_1 \times N_2 \times ... \times N_d} \rightarrow \R^N$, and its reverse operation as $\text{ten}_\text{RM}\left(\cdot; \, (N_1, N_2, ..., N_d)\right): \R^N \rightarrow \R^{N_1 \times N_2 \times ... \times N_d}$. Note that the $text{ten}_\text{RM}$ function requires the expected output shape whereas $\vecrm{\cdot}$ does not. 
+Alternatively, signals can be represented as a vector of length $N = \prod N_i$. This is essential if we are to interpret the $\otimes$ symbol strictly as a Kronecker product, rather than a tensor or outer product. Under the Kronecker interpretation, the chained use of $\otimes$ used in expressions such as \cref{eq:U_LAM_def} results in matrices of shape $N \times N$, providing a linear map from $\R^{N} \rightarrow \R^{N}$. Therefore, for an operator to act on a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, we need a method of mapping tensors with shape $(N_1, \, N_2 , ... N_d)$ to vectors of length $N$. In order for this vectorisation process to be consistent with the operators, it should result in a vectors whose elements are arranged in lexicographic order. In some fields, this is referred to as \textit{row-major} vectorisation since, in the case of an order-2 tensor, the index representing the row varies before the column index. In the following, we symbolise this operation mathematically as $\vecrm{\cdot}: \R^{N_1 \times N_2 \times ... \times N_d} \rightarrow \R^N$, and its reverse operation as $\tenrm{\cdot}: \R^N \rightarrow \R^{N_1 \times N_2 \times ... \times N_d}$. We use the `RM' subscript to indicate explicitly that this process is occurring in row-major order, since the standard $\vecc{\cdot}$ function defined for matrices is most commonly assumed to act in column-major order.  
+
+In the following, we use bold lower-case latin symbols (e.g. $\y$) to indicate graph signals existing in their vector form, and bold upper-case calligraphic latin symbols (e.g. $\Yt$) to indicate graph signals in their tensor form. That is, 
 
 \begin{align*}
-    \y \in \R^{N} = \vecrm{\mathbfcal{Y}}, \quad \implies \quad \mathbfcal{Y} \in \R^{N_1 \times N_2 \times ... \times N_d} =\text{ten}_\text{RM}\left(\y; \, (N_1, N_2, ..., N_d)\right)
+    \y \in \R^{N} = \vecrm{\Yt}, \quad \implies \quad \Yt \in \R^{N_1 \times N_2 \times ... \times N_d} = \tenrm{\y}
 \end{align*}
 
-\Cref{fig:ten_to_vec} shows gives a visual summary of the for an order-3 tensor. 
+\Cref{fig:ten_to_vec} shows gives a visual summary of the process of converting between these two representations for an order-3 tensor. 
 
 
 \begin{figure}[t]
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/Tensor_Digaram.pdf}    
     \end{center}
-    \caption{Graphical depiction of the process of converting an order-3 tensor between its multidimensional array and vectorised forma in row-major order. Note that the elements in the vectorised signal are lexicographically ordered. }
+    \caption[Conversion between a multidimensional array and a vector]{A graphical depiction of the process of converting an order-3 tensor between its multidimensional array and vector form in row-major order. Note that the elements in the vectorised signal are lexicographically ordered. }
     \label{fig:ten_to_vec}
 \end{figure}
 
 
-\note{A note on tensor notation}{
-    The use of tensor algebra is well established in fields such as phyics and mechanics \citep{Renteln2013,Abraham1988}, however, it is less commonly found in the signal processing community. For this reason, we choose to adopt a notation that leans more on linear algebra. In the process there is some loss of elegance, however, it has the benefit of fewer floating indices to keep track of. This is especially helpful when operating in a variable number of dimensions $d$. In general, all the equations and algorithms discussed in the following chapters could be alternatively written in tensor notation. For example, consider the following operation where a tensor $\mathbfcal{Z}$ is vectorised in row major order, then mapped by a matrix that is the chained Kronecker product of $d$ square matrices, and then turned back into a tensor in row major order. In our notation, this is written as
-
-    \begin{equation}
-        \label{eq:LA_MM}
-        \mathbfcal{Y} = \text{ten}_{\text{RM}}\left(\left(\bigotimes_{i=1}^d  \U^{\,(i)}\right) \text{vec}_\text{RM}\left(\mathbfcal{Z}\right) \right)    
-    \end{equation}
-
-    In much of the following, we assume tensors exist in their vectorised form, meaning this can be reduced to 
-
-    \begin{equation}
-    \label{eq:LA_MM2}
-    \y = \U \z, \where \U = \bigotimes_{i=1}^d  \U^{\,(i)}
-    \end{equation}
-
-    In more classical tensor notation, using the Einstein summation convention, \cref{eq:LA_MM} could be written as the following contraction. 
-
-    \begin{equation}
-    \label{eq:TEN_MM}
-    \mathbfcal{Y}^{i_1, i_2, ..., i_d} = \left(\U^{(1)}\right)^{i_1}_{j_1}\left(\U^{(2)}\right)^{i_2}_{j_2} ... \left(\U^{(d)}\right)^{i_d}_{j_d} \, \mathbfcal{Z}^{j_1, j_2, ..., j_d}
-    \end{equation}
-
-    Note that here the indices $j_1, j_2, ..., j_d$, which are contravariant in $\z$ and covariant in $\U^{(i)}$, are implicitly summed over. This eliminates the need to consider vectorisation at all. Both forms offer different trade-offs, however, there is little practical difference when it comes to executing the signal precessing algorithms themselves as the full $N \times N$ matrix implied by \cref{eq:LA_MM,eq:LA_MM2} is never actually instantiated in memory (see algorithm \hyperlink{KronMatMul}{\textbf{4}}).
-
-}
-
-To calculate the vector index $k$ which a tensor element with index $\mathbf{n} = [n_1,\, n_2,\, ...,\, n_d]$ is mapped to in row-major order, we can apply the following formula.  
+To calculate the vector index $k$ which a tensor element with index $\nn = [n_1,\, n_2,\, ...,\, n_d]$ is mapped to in row-major order, we can apply the following formula.  
 
 \begin{equation}
     \label{eq:vec}
     k = 1 + \sum_{i=1}^d \Big( \prod_{j=i+1}^d N_j \Big) \, (n_i - 1)
 \end{equation}
 
-(Note the $\pm1$ disappear when indexing begins from zero). The reverse operation, i.e. mapping a vector element index $k$ to a tensor index $\mathbf{n}$ can be achieved by running the algorithm \hyperlink{vectoten}{\textbf{3}}. 
+(Note the $\pm1$ disappear when indexing begins from zero). The reverse operation, i.e. mapping a vector element index $k$ to a tensor index $\nn$ can be achieved by running the algorithm \hyperlink{vectoten}{\textbf{3}}. 
 
 
 \begin{algorithm}[t]
@@ -229,33 +205,47 @@ Given these two operations, two arrays of any consistent shape can be mapped bet
 
 
 
-Consider a graph signal $\y \in \R^N$ represented in its vectorised form. We can define the Graph Fourier Transform (GFT) and the corresponding inverse (IGFT) of this signal as follows. 
+Consider a graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ represented in its tensor form. In direct analogy to the two dimensional case given in \cref{eq:GFT_2d,eq:IGFT_2d}, we can define the Graph Fourier Transform (GFT) and its corresponding inverse (IGFT) of this signal as follows. 
 
 \begin{alignat}{2}
 \label{eq:gft_nd}
-    \text{GFT}(\y) & = \U^\top \y && = \Big(  \bigotimes_{i=1}^d  \U^{\,(i)} \Big)^\top \y \\
+    \text{GFT}(\Yt) & = \tenrm{\U^\top \y} && = \tenrm{\left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \vecrm{\Yt} } \\
 \label{eq:igft_nd}
-    \text{IGFT}(\y) & = \U \y && = \Big(  \bigotimes_{i=1}^d  \U^{\,(i)} \Big) \; \y 
+    \text{IGFT}(\Yt) & = \tenrm{\U \y} && = \tenrm{\left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right) \vecrm{\Yt} }
 \end{alignat}
 
-The concept of a graph filter for signals defined on a Cartesian product graph follows naturally from this definition. Just as in the one and two-dimensional case, a graph filter is constructed by first taking the GFT of a signal, then applying some scaling function to each spectral component, then transforming back into the vertex domain via the IGFT. In the simplest case, we can consider an isotropic graph filter function $g(\lambda, \beta)$, such as one of those defined in \cref{tab:iso_filters}. 
+The concept of a graph filter for signals defined on a Cartesian product graph follows naturally from this definition. Just as in the one and two-dimensional case, a graph filter is constructed by first taking the GFT of a signal, then applying some scaling function to each spectral component, then transforming back into the vertex domain via the IGFT. In the simplest case, we can consider an isotropic graph filter function $g(\lambda, \beta)$, such as one of those defined in \cref{tab:iso_filters}. A filter $\HH$, defined to act on a vectorised graph signal, can be represented as an $N \times N$ matrix, constructed as follows. 
 
 
 \begin{align}
     \label{eq:H_def_dd}
     \HH &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) g\left(\bigoplus_{i=1}^d \LAM^{(i)}; \beta \right) \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
-        &= \U \, \diag{\vecrm{\mathbfcal{G}}} \, \U^\top
+        &= \U \, \diag{\vecrm{\Gt}} \, \U^\top
 \end{align}
 
 
-Here, $\mathbfcal{G}$ represents the spectral scaling tensor, which has element $\mathbf{n} = [n_1,\, n_2,\, ...,\, n_d]$ given by 
+Here, $\Gt$ represents the spectral scaling tensor, which has element $\nn = [n_1,\, n_2,\, ...,\, n_d]$ given by 
 
 \begin{equation}
     \label{eq:Gn_dd1}
-    \mathbfcal{G}_{\mathbf{n}} = g\left(\sum_{i=1}^d \lambda^{(i)}_{n_i}; \, \beta\right)
+    \Gt_{\nn} = g\left(\sum_{i=1}^d \lambda^{(i)}_{n_i}; \, \beta\right)
 \end{equation}
 
-This can be further generalised to a anisotropic graph filter function, where the intensity of the filtering operation is not restricted to be equal in each dimension. \Cref{tab:anis_filters} gives some examples of anisotropic graph filter functions defined to act in an arbitrary number of dimensions. Notice how the definition of  
+In certain special filter types, such as the diffusion filter, this function may be multiplicatively separable. In this case, we have that 
+
+\begin{equation}
+    \Gt_{\nn} = \prod_{i=1}^d g\left(\lambda^{(i)}_{n_i}; \, \beta\right)
+\end{equation}
+
+This further implies that the graph filter $\HH$ can be decomposed as 
+
+\begin{equation}
+    \HH = \bigotimes_{i=1}^d \HH^{(i)}, \where \HH^{(i)} = \U^{(i)} g\left(\LAM^{(i)}\right) \left(\U^{(i)}\right)^\top
+\end{equation}
+
+However, in the following, we ignore this special case and assume that the graph filter function is non-separable in general. 
+
+The concept of a multi-way graph filter can be further generalised to include anisotropic filter functions, where the intensity of the filtering operation is not restricted to be equal in each dimension. \Cref{tab:anis_filters} gives some examples of anisotropic graph filter functions defined to act in an arbitrary number of dimensions. Notice how the definition of  
 
 \begin{table}[t]
     \def\arraystretch{1.7}
@@ -286,114 +276,165 @@ In this case, the spectral scaling tensor is given by
 
 \begin{equation}
     \label{eq:Gn_dd2}
-    \mathbfcal{G}_{\mathbf{n}} = g\big(\lambdaa(\mathbf{n}); \, \betaa\big)
+    \Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)
 \end{equation}
 
-where $\betaa \in \R^{d}$ is the parameter vector characterising the filter intensity in each dimension, and $\lambdaa(\mathbf{n}) \in \R^d$ is a vector holding the $n_i$-th eigenvalue of each graph Laplacian in the Cartesian product. 
+where $\betaa \in \R^{d}$ is the parameter vector characterising the filter intensity in each dimension, and $\lambdaa(\nn) \in \R^d$ is a vector holding the $n_i$-th eigenvalue of each graph Laplacian in the Cartesian product. 
 
 $$
-\lambdaa(\mathbf{n}) = 
+\lambdaa(\nn) = 
 \begin{bmatrix}
     \lambda^{(1)}_{n_1} & \lambda^{(2)}_{n_2} & \dots & \lambda^{(d)}_{n_d}    
 \end{bmatrix}^\top
 $$
 
-\subsection{Fast computation with \textit{d} chained Kronecker products}
+In general, we can define any spectral transformation in tensor terms as follows. 
+
+\begin{equation}
+    \Yt' = \text{IGFT} \left( \Gt \circ \text{GFT}(\Yt) \right)
+\end{equation}
+
+\subsection{Fast computation of the \textit{d}-dimensional GFT and IGFT}
 
 \label{sec:fast_kron_dd}
 
-Consider the graph Fourier and inverse Fourier transforms of a $d$-dimensional graph signal given in \cref{eq:gft_nd,eq:igft_nd}. In both cases, we are required to compute the result of a chained Kronecker product matrix acting on a length-$N$ vector. Whilst the obvious approach to computing this product would have time and memory complexity of $O(N^2)$, a much more efficient implementation can be achieved by taking advantage of the Kronecker structure of the matrix. In practice, the required memory and time complexity can be reduced to $O(N)$ and $O(N\sum N_i)$ respectively. 
+Consider the definition of the GFT and IGFT of a $d$-dimensional graph signal given in \cref{eq:gft_nd,eq:igft_nd}. In both cases, we are required to compute the result of a chained Kronecker product matrix acting on a length-$N$ vector. Whilst the obvious approach to computing this product would have time and memory complexity of $O(N^2)$, a much more efficient implementation can be achieved by taking advantage of the Kronecker structure of the matrix. Specifically, the memory and time complexity of this operation can be reduced to $O(N)$ and $O(N\sum N_i)$ respectively. The importance of this fact cannot be understated, as it enables scaling to much larger product graphs that would otherwise be possible. 
 
-This algorithm for achieving this is well-known, and can be summarised as follows. Consider the application of a chained Kronecker product matrix acting on a vector $\y$. 
+This general algorithm for achieving this is well-known, and can be summarised as follows. Consider the application of a chained Kronecker product matrix acting on a vector $\y$. 
 
 $$
-\x = \left( \C^{(1)} \otimes \C^{(2)} \otimes ... \otimes \C^{(d)}\right) \y
+\y = \left( \U^{(1)} \otimes \U^{(2)} \otimes ... \otimes \U^{(d)}\right) \z
 $$
 
 This can be factorised as follows
 
 $$
-\x = \left( \C^{(1)} \otimes \I \otimes ... \otimes \I \right)\left( \I \otimes \C^{(2)} \otimes ... \otimes \I \right) ... \left( \I \otimes \I \otimes ... \otimes \C^{(d)} \right) \y
+\y = \left( \U^{(1)} \otimes \I \otimes ... \otimes \I \right)\left( \I \otimes \U^{(2)} \otimes ... \otimes \I \right) ... \left( \I \otimes \I \otimes ... \otimes \U^{(d)} \right) \z
 $$
 
-As is visible, the original multiplication has now been broken into $d$ stages. However, the $i$-th stage can be completed with $N_i \times N$ multiplications by reshaping the vector in the appropriate way and leveraging the properties of the Kronecker product. The reshaping operation can be completed using strided permutation matrices which can be applied in practice for virtually zero computational cost \citep{Granata1992}. This idea is also key to the FFT and related algorithms, which can be understood as finding a recursive Kronecker structure in the Fourier matrix \citep{Tolimieri2013}. 
+As is visible, the original multiplication has now been broken into $d$ stages. However, the $i$-th stage can be completed with $N \times N_i$ multiplications by reshaping the vector in the appropriate way and leveraging the properties of the Kronecker product. The reshaping operation can be completed using strided permutation matrices which can be applied in practice for virtually zero computational cost \citep{Granata1992}. This idea is also key to the FFT and related algorithms, which can be understood as finding a recursive Kronecker structure in the Fourier matrix \citep{Tolimieri2013}. 
 
-Work on efficient computational procedures for this operation can be traced back to \cite{Roth1934} who proposed the original 2-dimensional ``vec trick" algorithm. The $d$-dimensional algorithm was obtained in \cite{Pereyra1973} and improved in \cite{DeBoor1979}. More recent work, such as \cite{Fackler2019}, has focused on further optimisations such as minimising data transit times and parallel processing. 
+Work on efficient computational procedures for this operation can be traced back to \cite{Roth1934} who formulated the original 2-dimensional ``vec trick" algorithm. The $d$-dimensional generalisation was proposed in \cite{Pereyra1973} and improved in \cite{DeBoor1979}. More recent work, such as \cite{Fackler2019}, has focused on further optimisations such as minimising data transit times and parallel processing. 
 
-In order to execute computations of this nature in a way that is maximally efficient, we have developed the Python library \textit{PyKronecker}, which is described in detail in \cite{Antonian2023}. This library offers a high-level API for constructing Kronecker-based operators and applying them to either vectors or tensors, whilst optimising the underlying computation using parallel GPU processing and Just In Time (JIT) compilation. In the following, it will be assumed that all chained Kronecker product matrices are applied to vectors/tensors using an efficient implementation. 
+Furthermore, if the $i$-th factor graph in the Cartesian product is a path or ring graph, then the corresponding matrix transformation can be completed with only $N \log N_i$ multiplications by making use of the FCT/FST/FFT algorithms. In the extreme case, where every factor graph has this special structure, the computational complexity reaches parity with the multidimensional FFT algorithm, and will have a runtime complexity of $O(N \log N)$ \citep{Smith1995}. 
 
+In order to execute computations of this nature in a way that is maximally efficient, we have developed the Python library \textit{PyKronecker}, which is described in detail in \cite{Antonian2023}. This library offers a high-level API for constructing Kronecker-based operators and applying them to either vectors or tensors, whilst optimising the underlying computation using parallel GPU processing and Just In Time (JIT) compilation. In the following, it will be assumed that all chained Kronecker product matrices are applied to vectors/tensors using an efficient implementation. This is essential for computing the $d$-dimensional GFT and IGFT, the basic pseudocode for which is shown in algorithm \hyperlink{al:GFT_dd}{\textbf{4}}. Note that the `reshape' operation should always be applied using the row-major convention. This is the standard convention in languages such as C and Python's NumPy library \citep{Harris2020}, but not in languages such as Matlab and Fortran. 
 
 \begin{algorithm}[t]
-    \hypertarget{KronMatMul}{}
-    \label{al:KronMatMul}
-    \caption{Efficient chained Kronecker matrix-tensor multiplication}
+    \hypertarget{al:GFT_dd}{}
+    \label{al:GFT_dd}
+    \caption{Efficient GFT and IGFT in $d$-dimensions}
     \begin{algorithmic}
     \vspace{0.25cm}
-    \Require{List of square matrices $\{\M^{(i)} \in \R^{N_{i} \times N_{i}}\}_{i=1}^d$} 
-    \vspace{0.25cm}
-    \Require{$d$-dimensional tensor $\mathbfcal{Y} \in \R^{N_1 \times N_2 \times \; ... \; \times N_d}$} 
-    \vspace{0.5cm}
-    \Function{KronMatMul}{$ \{ \M^{(i)} \}$, $\mathbfcal{Y} $}
+    \Require{List of Laplacian eigenvector matrices $\left\{\U^{(i)} \in \R^{N_{i} \times N_{i}}\right\}_{i=1}^d$} 
+    \vspace{0.8cm}
+    \Function{GFT}{$ \Yt \in \R^{N_1 \times N_2 \times ... \times N_d} $}
     \vspace{0.25cm}
     \For{$i$ \textbf{from} 1 \textbf{to} $d$}
     \vspace{0.25cm}
-    \State{$\mathbfcal{Y}\leftarrow \text{reshape}\Big(\mathbfcal{Y},  \;\big(N_i,\, N / N_i \big) \Big)$}
+    \State{$\Yt\leftarrow \text{reshape}\Big(\Yt,  \;\big(N_i,\, N / N_i \big) \Big)$}
     \vspace{0.25cm}
-    \State{$\mathbfcal{Y} \leftarrow \big( \M^{(i)} \; \mathbfcal{Y}  \big)^\top$} 
+    \State{$\Yt \leftarrow \left( \left(\U^{(i)}\right)^\top \; \Yt  \right)^\top$} 
     \vspace{0.25cm}
     \EndFor
     \vspace{0.25cm}
-    \State{\textbf{return} $\text{reshape}\Big(\mathbfcal{Y}, \; \big(N_1, \, N_2, \; ..., \; N_d \big) \Big)$}
+    \State{\textbf{return} $\text{reshape}\Big(\Yt, \; \big(N_1, \, N_2, \; ..., \; N_d \big) \Big)$}
+    \vspace{0.25cm}
+    \EndFunction
+    \vspace{1cm}
+    \Function{IGFT}{$ \Zt \in \R^{N_1 \times N_2 \times ... \times N_d} $}
+    \vspace{0.25cm}
+    \For{$i$ \textbf{from} 1 \textbf{to} $d$}
+    \vspace{0.25cm}
+    \State{$\Zt\leftarrow \text{reshape}\Big(\Zt,  \;\big(N_i,\, N / N_i \big) \Big)$}
+    \vspace{0.25cm}
+    \State{$\Zt \leftarrow \left( \U^{(i)} \; \Zt  \right)^\top$} 
+    \vspace{0.25cm}
+    \EndFor
+    \vspace{0.25cm}
+    \State{\textbf{return} $\text{reshape}\Big(\Zt, \; \big(N_1, \, N_2, \; ..., \; N_d \big) \Big)$}
     \vspace{0.25cm}
     \EndFunction
     \vspace{0.25cm}
     \end{algorithmic}
 \end{algorithm}
 
+
+\note{A note on tensor notation}{
+    The use of tensor algebra is well established in fields such as phyics and mechanics \citep{Renteln2013,Abraham1988}, however, it is less widespread in the signal processing community. For this reason, we choose to adopt a notation that leans more on standard linear algebra, however, all the equations and algorithms discussed in the following chapters could be alternatively written in a purer form of tensor notation. For example, consider the IGFT of a tensor signal $\Zt$. In our notation, this is written as
+
+    \vspace{0.3cm}
+
+    \begin{equation}
+        \label{eq:LA_MM}
+        \Yt = \text{ten}_{\text{RM}}\left(\left(\bigotimes_{i=1}^d  \U^{\,(i)}\right) \text{vec}_\text{RM}\left(\Zt\right) \right)    
+    \end{equation}
+
+    \vspace{0.3cm}
+
+    As is visible, this describes the process in terms of regular matrix-vector multiplication, but requires the additional definition of the $\vecrm{\cdot}$ and $\tenrm{\cdot}$ operations. Alternatively, this expression could be written using tensor indexing and Einstein summation notation as follows. 
+    
+    \vspace{0.3cm}
+
+    \begin{equation}
+    \label{eq:TEN_MM}
+    \Yt^{\, i_1, i_2, ..., i_d} = \left(\U^{(1)}\right)^{i_1}_{j_1}\left(\U^{(2)}\right)^{i_2}_{j_2} ... \left(\U^{(d)}\right)^{i_d}_{j_d} \, \Zt^{\, j_1, j_2, ..., j_d}
+    \end{equation}
+
+    \vspace{0.3cm}
+
+    Note that here the indices $j_1, j_2, ..., j_d$ on the right hand side are implicitly summed over. This eliminates the need to consider vectorisation at all and is perhaps a more elegant way of describing the $d$-dimensional GFT/IGFT. However, there are multiple indices to keep track of which becomes somewhat unaesthetic in a variable number of dimensions.
+
+    \vspace{0.3cm}
+    
+    Both forms offer different trade-offs, however, there is no practical difference when it comes to executing the signal precessing algorithms themselves. Note that, as described in \cref{sec:fast_kron_dd}, the full $N \times N$ matrix implied by \cref{eq:LA_MM} is never actually instantiated in memory (see algorithm \hyperlink{KronMatMul}{\textbf{4}}).
+
+}
+
 \section{Tensor Graph Signal reconstruction}
 
-The model we use to describe graph signal reconstruction in the multi-dimensional setting is as follows. Consider a tensor signal $\mathbfcal{Y}$ of shape $\big(N_1, \, N_2, \, ... \, N_d \big)$ with elements interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph. Only a partial set $\mathcal{S} = \{\mathbf{n}_1, \, \mathbf{n}_2, \, ... \}$ of the vector elements of $\mathbfcal{Y}$ are available at observation time, with unobserved values set to zero. The goal is to estimate the signal value at these unobserved entries. 
+The model we use to describe graph signal reconstruction in the multi-dimensional setting is as follows. Consider a tensor signal $\Yt$ of shape $\big(N_1, \, N_2, \, ... \, N_d \big)$ with elements interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph. Only a partial set $\mathcal{S} = \{\nn_1, \, \nn_2, \, ... \}$ of the vector elements of $\Yt$ are available at observation time, with unobserved values set to zero. The goal is to estimate the signal value at these unobserved entries. 
 
-The binary sensing tensor $\mathbfcal{S}$, of the same shape as $\mathbfcal{Y}$, indicates which elements of $\mathbfcal{Y}$ were observed in the following way 
+The binary sensing tensor $\St$, of the same shape as $\Yt$, indicates which elements of $\Yt$ were observed in the following way 
 
 \begin{equation}
-    \mathbfcal{S}_{\mathbf{n}} = \begin{cases}
-        1 & \text{if} \;\; \mathbf{n} \in \mathcal{S} \\
+    \St_{\nn} = \begin{cases}
+        1 & \text{if} \;\; \nn \in \mathcal{S} \\
         0 & \text{otherwise}
     \end{cases}
 \end{equation}
 
-In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\mathbfcal{Y}$ is a noisy partial observation of an underlying tensor $\mathbfcal{F}$ which is smooth with respect to the topology of the Cartesian product graph. This is represented in the following statistical model. 
+In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\Yt$ is a noisy partial observation of an underlying tensor $\Ft$ which is smooth with respect to the topology of the Cartesian product graph. This is represented in the following statistical model. 
 
 \begin{equation}
-    \mathbfcal{Y} = \mathbfcal{S} \circ \big(\mathbfcal{F} + \mathbfcal{E} \big)
+    \Yt = \St \circ \big(\Ft + \Et \big)
 \end{equation}
 
-where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\mathbfcal{E}$ is a random tensor where each element has an independent normal distribution with with unit variance. That is,
+where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\Et$ is a random tensor where each element has an independent normal distribution with with unit variance. That is,
 
 \begin{equation}
-    \vecrm{\mathbfcal{E}} \, \sim \, \mathcal{N}(\mathbf{0}, \, \I)
+    \vecrm{\Et} \, \sim \, \mathcal{N}(\mathbf{0}, \, \I)
 \end{equation}
 
-Given distribution over the model noise, the conditional distribution of $\mathbfcal{Y} |  \mathbfcal{F}$ is given by 
+Given this distribution over the model noise, the conditional distribution of $\Yt |  \Ft$ is given by 
 
 \begin{equation}
-    \vecrm{\mathbfcal{Y}} \, | \, \vecrm{\mathbfcal{F}} \, \sim \, \mathcal{N}\Big(\vecrm{\mathbfcal{S} \circ \mathbfcal{F}}, \; \diag{\vecrm{\mathbfcal{S}}}\Big)
+    \vecrm{\Yt} \, | \, \vecrm{\Ft} \, \sim \, \mathcal{N}\Big(\vecrm{\St \circ \Ft}, \; \diag{\vecrm{\St}}\Big)
 \end{equation}
 
 Or, more concisely, 
 
 \begin{equation}
-    \y \, | \, \f \, \sim \, \mathcal{N}\big(\s \circ \f, \; \diag{\s}\big)
+    \y \, | \, \f \, \sim \, \mathcal{N}\big(\s \circ \f, \; \D_{\St} \big)
 \end{equation}
 
-In order to encode the belief that the underlying tensor $\mathbfcal{F}$ is smooth with respect to the topology of the graph, we can make use of the following prior distribution. 
+where $\D_{\St} = \diag{\s}$. In order to encode the belief that the underlying tensor $\Ft$ is smooth with respect to the topology of the graph, we can make use of the following prior distribution. 
 
 \begin{equation}
     \f \, \sim \, \mathcal{N}\left( \mathbf{0}, \, \gamma^{-1} \HH^2 \right) 
 \end{equation}
 
-where $\HH$ is constructed from a graph filter function in the manner specified in \cref{eq:H_def_dd}. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
+where $\HH$ is constructed from a graph filter function in the manner specified in \cref{eq:H_def_dd}. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
 
 
 \begin{equation}
@@ -403,62 +444,125 @@ where $\HH$ is constructed from a graph filter function in the manner specified 
 where 
 
 \begin{equation}
-    \PP = \diag{\s} + \gamma \HH^{-2}
+    \PP = \D_{\St} + \gamma \HH^{-2}
 \end{equation}
 
 Therefore, the mean of this posterior is obtained by solving the following linear system.
 
 \begin{equation}
     \label{eq:lin_system_dd}
-    \f^{\star} = \left(\D_\s + \gamma \HH^{-2}\right)^{-1} \y
+    \f^{\star} = \left(\D_\St + \gamma \HH^{-2}\right)^{-1} \y
 \end{equation}
 
-where $\D_\s = \diag{\s}$. Once again, we are faced with a similar set of problems to those outlined in \cref{sec:problem_statement_2d}. Namely, the coefficient matrix is very large and potentially ill-defined. This can be solved by turing to iterative methods such as the SIM and CGM, which are repeated here in their form adapted for the general tensor case. 
+Once again, we are faced with a similar set of problems to those outlined in \cref{sec:problem_statement_2d}. Namely, the coefficient matrix is very large and potentially ill-defined. This can be solved by turing to iterative methods such as the SIM and CGM, which are repeated here in their form adapted for the general tensor case. 
 
 \subsection{Tensor SIM}
 
-Generalising the SIM, which we describe in \cref{sec:SIM}, to the tensor setting is straightforward. In particular, \cref{eq:lin_system_dd} can be solved by splitting the coefficient matrix $\left(\diag{\s} + \gamma \HH^{-2}\right)$ into $\M - \N$, where $\M$ and $\N$ take on the following values
+Generalising the SIM, which we describe in \cref{sec:SIM}, to the tensor setting is straightforward. In particular, \cref{eq:lin_system_dd} can be solved by splitting the coefficient matrix $\left(\D_\St + \gamma \HH^{-2}\right)$ into $\M - \N$, where $\M$ and $\N$ take on the following values
  
 \begin{equation}
-    \M = \gamma \HH^{-2} + \I_N, \aand \N = \D_{\s'}
+    \M = \gamma \HH^{-2} + \I, \aand \N = \D_{\St'}
 \end{equation}
 
-where $\D_{\s'} = \diag{\mathbf{1} - \s}$. In this case, the inverse of $\M$ has the form 
+where $\D_{\St'} = \diag{\mathbf{1} - \vecrm{\St}}$. In this case, the inverse of $\M$ has the form 
 
 
 \begin{align}
-\M^{-1} &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\mathbfcal{J}}}\, \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
-&= \U \, \diag{\vecrm{\mathbfcal{J}}} \, \U^\top
+\M^{-1} &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\Jt}}\, \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
+&= \U \, \D_\Jt \, \U^\top
 \end{align}
 
-where the tensor $\mathbfcal{J}$ has entries with the vector index $\mathbf{n} = [n_1,\, n_2,\, ...,\, n_d]$ given by 
+where the tensor $\Jt$ has entries with the vector index $\nn = [n_1,\, n_2,\, ...,\, n_d]$ given by 
 
 \begin{equation}
-    \mathbfcal{J}_{\mathbf{n}} = \frac{\mathbfcal{G}_{\mathbf{n}}^2}{\mathbfcal{G}_{\mathbf{n}}^2 + \gamma}.
+    \Jt_{\nn} = \frac{\Gt_{\nn}^2}{\Gt_{\nn}^2 + \gamma}.
 \end{equation}
 
-Here, the entries of $\mathbfcal{G}$ are given by either \cref{eq:Gn_dd1} or \cref{eq:Gn_dd2}, which correspond to an isotropic or anisotropic filter function respectively. In a very similar manner to \cref{eq:sim_update}, the SIM update equation is given by 
+Here, the entries of $\Gt$ are given by either \cref{eq:Gn_dd1} or \cref{eq:Gn_dd2}, which correspond to an isotropic or anisotropic filter function respectively. In a very similar manner to \cref{eq:sim_update}, the SIM update equation is given by 
 
 \begin{equation}
     \label{eq:sim_update_dd}
     \f_{k+1} = \M^{-1}\N \f_{k} + \M^{-1} \y
 \end{equation}
 
-Note that each step can be achieved with time complexity $O(N \sum N_i)$ by making use of the fast Kronecker algorithms highlighted in \cref{sec:fast_kron_dd}. To be explicit, this update formula can be computed efficiently as 
+Note that each step can be achieved with time complexity $O(N \sum N_i)$ by making use of the fast Kronecker algorithm for computing the $d$-dimensional GFT/IFGT highlighted in \cref{sec:fast_kron_dd}. To be explicit, this update formula can be computed efficiently as 
 
 \begin{align*}
-    \mathbfcal{F}_{k+1} &= \text{KronMatMul} \left( \left\{\U^{(i)}\right\}, \; \mathbfcal{J} \circ \text{KronMatMul} \left(\left\{\left(\U^{(i)}\right)^{\top}\right\}, \; \mathbfcal{S}' \circ \mathbfcal{F}_{k}\right) \right) + \mathbfcal{F}_{0} \\[0.2cm]
-    \text{where} \quad \mathbfcal{F}_{0} &= \text{KronMatMul} \left( \left\{\U^{(i)}\right\}, \; \mathbfcal{J} \circ \text{KronMatMul} \left(\left\{\left(\U^{(i)}\right)^{\top}\right\}, \; \mathbfcal{Y}\right) \right)
+    \Ft_{k+1} &= \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\St' \circ \Ft_{k}\big)\Big)  + \Ft_{0} \\[0.2cm]
+    \text{where} \quad \Ft_{0} &= \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\Yt \big)\Big) 
 \end{align*}
 
+or, equivalently,
+
+\begin{align*}
+    \Delta \Ft_{k+1} &= \text{IGFT}  \Big( \Jt \circ \text{GFT}\big(\St' \circ \Delta \Ft_{k}\big)\Big)  \\[0.2cm]
+    \text{where} \quad \Delta \Ft_{0} &= \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\Yt \big)\Big)  
+\end{align*}
+
+using the fast GFT/IGFT algorithms described in \hyperlink{al:GFT_dd}{\textbf{4}}. For clarity, the full SIM algorithm is given in algorithm \hyperlink{al:SIM_dd}{\textbf{5}}. 
+
+\begin{algorithm}[t]
+    \hypertarget{al:SIM_dd}{}
+    \caption{The tensor SIM for GSR}
+    \begin{algorithmic}
+        \vspace{0.15cm}
+        \Require{Observation tensor $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
+        \vspace{0.15cm}
+        \Require{Sensing tensor $\St \in [0, 1]^{N_1 \times N_2 \times ... \times N_d}$}
+        \vspace{0.15cm}
+        \Require{Factor graph Laplacians $\{\LL^{(i)} \in \R^{N_i \times N_i}\}_{i=1}^d $}
+        \vspace{0.15cm}
+        \Require{Regularisation parameter $\gamma \in \R^{+}$}
+        \vspace{0.15cm}
+        \Require{Graph filter function $g(\, \cdot\, \,; \betaa \in \R^{d})$}
+        \vspace{0.5cm}
+        \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
+        \vspace{0.15cm}
+        \State{Initialise $\Gt, \Jt, \St'$}
+        \vspace{0.5cm}
+        \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
+        \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
+        \hspace*{0.7cm} $\ddots$
+        \For{$n_d$ \textbf{from} 1 \textbf{to} $N_d$}
+        \vspace{0.25cm}
+        \State{$\nn \leftarrow [n_1, n_2, ..., n_d]$}
+        \vspace{0.15cm}
+        \State{$\Gt_{\nn} \leftarrow g\big(\lambdaa(\nn); \, \betaa\big)$ }
+        \vspace{0.15cm}
+        \State{$\Jt_{\nn} \leftarrow \Gt_{\nn}^2 \, / \, (\Gt_{\nn}^2 + \gamma)$ }
+        \vspace{0.15cm}
+        \State{$\St_{\nn}' \leftarrow 1 - \St_\nn$}
+        \vspace{0.25cm}
+        \EndFor
+        \EndFor \\
+        \hspace*{0.1cm} \reflectbox{$\ddots$}
+        \EndFor
+        \vspace{0.5cm}
+        \State{$\Delta\Ft \leftarrow \text{IGFT}  \Big( \Jt \circ \text{GFT}\big( \Yt \big)\Big) $}
+        \vspace{0.15cm}
+        \State{$ \Ft  \leftarrow \Delta\Ft$}
+        \vspace{0.15cm}
+        \While{$|\Delta\Ft| > \text{tol}$}
+        \vspace{0.15cm}
+        \State{$\Delta\Ft \leftarrow \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\St' \circ \Delta \Ft_{k} \big)\Big) $}
+        \vspace{0.15cm}
+        \State{$ \Ft \leftarrow  \Ft  + \Delta\Ft$}
+        \vspace{0.15cm}
+        \EndWhile
+        \vspace{0.5cm}
+        \Ensure{$ \Ft $}
+        \vspace{0.15cm}
+        \label{al:SIM_dd}
+    \end{algorithmic}
+\end{algorithm}
 
 Once again, the worst-case scaling rate of the number of steps required for convergence, $n_{\text{SIM}}$, is bounded by
 
 $$
-\frac{1}{\log(1 + \gamma) - \log m} \leq n_{\text{SIM}} \leq \frac{1}{\log(1 + \gamma)}
+\frac{1}{\log(1 + \gamma) - \log m} \; \leq \; n_{\text{SIM}} \; \leq \; \frac{1}{\log(1 + \gamma)}
 $$
 
-where $m$ is the fraction of data that is missing in the input tensor $\mathbfcal{Y}$. 
+where $m$ is the fraction of data that is missing in the input tensor $\Yt$ (see \cref{sec:convergence}). As before, the true scaling rate will depend on the strength of the graph filter. 
 
 \subsection{Tensor CGM}
 
@@ -466,26 +570,97 @@ The tensor version of the CGM also follows naturally from the two-dimensional ca
 
 \begin{equation}
     \label{eq:lin_system_precon_dd}
-    \f^{\star} = \PHI \left( \PHI^\top \left(\D_{\s} + \gamma \HH^{-2}\right)\PHI \right)^{-1}\PHI^\top \y
+    \f^{\star} = \PHI \left( \PHI^\top \left(\D_\St + \gamma \HH^{-2}\right)\PHI \right)^{-1}\PHI^\top \y
 \end{equation}
 
-where 
+where, in the tensor case, 
 
 \begin{equation}
-    \PHI = \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\mathbfcal{G}}} = \U \D_\g
+    \PHI = \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\Gt}} = \U \D_\Gt
 \end{equation}
 
-This means \cref{eq:lin_system_precon_dd} can vbe expressed as 
+This means \cref{eq:lin_system_precon_dd} can be expressed as 
 
 \begin{equation}
-    \f^{\star} = \PHI \left( \D_\g \U^\top \D_\s \U \D_\g + \gamma \I_N \right)^{-1}\PHI^\top \y
+    \f^{\star} = \PHI \left( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N \right)^{-1}\PHI^\top \y
 \end{equation}
 
-Note that, once again, this preconditioned coefficient matrix can be multiplied onto a tensor $\mathbfcal{Z}$ efficiently by making use of the chained Kronecker multiplication procedure given in algorithm \hyperlink{KronMatMul}{\textbf{4}}. In particular, 
+Note that, once again, this preconditioned coefficient matrix can be multiplied onto any appropriate tensor $\Zt$ efficiently by making use of the chained Kronecker multiplication procedure given in algorithm \hyperlink{KronMatMul}{\textbf{4}}. As with the SIM, this can be performed with $O(N \sum N_i)$ multiplications. In particular, 
 
-\begin{equation*}
-    \
-\end{equation*}
+\begin{align*}
+    \Zt' &= \tenrm{\big( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I \big) \vecrm{\Zt}} \\[0.2cm]
+    &= \Gt \circ \text{GFT} \Big( \St \circ \text{IGFT} \big(\Gt \circ \Zt\big) \Big)  + \gamma \Zt
+\end{align*}
+
+
+\begin{algorithm}[t]
+    \hypertarget{al:CGM_dd}{}
+    \caption{The tensor CGM for GSR}
+    \begin{algorithmic}
+        \vspace{0.15cm}
+        \Require{Observation tensor $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
+        \vspace{0.15cm}
+        \Require{Sensing tensor $\St \in [0, 1]^{N_1 \times N_2 \times ... \times N_d}$}
+        \vspace{0.15cm}
+        \Require{Factor graph Laplacians $\{\LL^{(i)} \in \R^{N_i \times N_i}\}_{i=1}^d $}
+        \vspace{0.15cm}
+        \Require{Regularisation parameter $\gamma \in \R^{+}$}
+        \vspace{0.15cm}
+        \Require{Graph filter function $g(\, \cdot\, \,; \betaa \in \R^{d})$}
+        \vspace{0.5cm}
+        \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
+        \vspace{0.15cm}
+        \State{Initialise $\Gt'$}
+        \vspace{0.5cm}
+        \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
+        \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
+        \hspace*{0.7cm} $\ddots$
+        \For{$n_d$ \textbf{from} 1 \textbf{to} $N_d$}
+        \vspace{0.25cm}
+        \State{$\nn \leftarrow [n_1, n_2, ..., n_d]$}
+        \vspace{0.15cm}
+        \State{$\Gt_{\nn} \leftarrow g\big(\lambdaa(\nn); \, \betaa\big)$ }
+        \vspace{0.25cm}
+        \EndFor
+        \EndFor \\
+        \hspace*{0.1cm} \reflectbox{$\ddots$}
+        \EndFor
+        \vspace{0.5cm}
+        \State{Initialise $\Zt$}
+        \vspace{0.15cm}
+        \State{$\Rt \leftarrow \Gt \circ \text{GFT} \left( \Yt \right)$}
+        \vspace{0.15cm}
+        \State{$\Dt \leftarrow \Rt$}
+        \vspace{0.5cm}
+        \While{$|\Delta\RR| > \text{tol}$}
+        \vspace{0.25cm}
+        \State{$\At \leftarrow \Gt \circ \text{GFT} \Big( \St \circ \text{IGFT} \big(\Gt \circ \Dt \big) \Big)  + \gamma \Dt  $}
+        \vspace{0.15cm}
+        \State{$\alpha \leftarrow  \sum_{\nn} \Rt_{\nn}^2 \, / \, \sum_{\nn} \Rt_\nn \At_\nn $}
+        \vspace{0.15cm}
+        \State{$\Zt \leftarrow  \Zt + \alpha \Dt $}
+        \vspace{0.15cm}
+        \State{$\Rt \leftarrow  \Rt - \alpha \At $}
+        \vspace{0.15cm}
+        \State{$\delta \leftarrow \sum_{\nn} \Rt_{\nn}^2  \, / \, \sum_{\nn} (\Rt + \alpha \At)^2$}
+        \vspace{0.15cm}
+        \State{$\Dt \leftarrow  \Rt + \delta \Dt $}
+        \vspace{0.25cm}
+        \EndWhile
+        \vspace{0.5cm}
+        \Ensure{$\text{IGFT} \left(  \Gt \circ \Zt \right)$}
+        \vspace{0.15cm}
+    \end{algorithmic}
+    \label{al:CGM_dd}
+\end{algorithm}
+
+
+
+Just as with the two-dimensional case, we can bound the condition number of the preconditioned coefficient matrix to find the worst case scaling rates in the limit of a weak and strong filter. As before, this falls between
+
+$$
+\sqrt{\frac{1 - m + \gamma}{\gamma}} \; \leq \; n_{\text{CGM}} \; \leq \; \sqrt{\frac{1+\gamma}{\gamma}}
+$$
 
 \section{Kernel Graph Tensor Regression}
 

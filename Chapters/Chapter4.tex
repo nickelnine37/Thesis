@@ -204,12 +204,14 @@ This motivates the following definitions for the Graph Fourier Transform (GFT) a
 
 
 \begin{equation}
+    \label{eq:GFT_2d}
     \text{GFT}(\Y) = \mat{\big( \U_A^\top \otimes \U_B^\top \big) \, \vecc{\Y}} = \U_B^\top \Y \U_A
 \end{equation}
 
 Correspondingly, we can define the IGFT acting on a matrix of spectral components $\Z \in \R^{B \times A}$ as follows.
 
 \begin{equation}
+    \label{eq:IGFT_2d}
     \text{IGFT}(\Z) = \mat{\big( \U_A \otimes \U_B \big)\,\vecc{\Z}} = \U_B \Z \U_A^\top
 \end{equation}
 
@@ -564,14 +566,14 @@ Next, consider the spectral radius of $\N$. This can be extracted directly as 1,
 Finally, the update formulas given in \cref{eq:update3,eq:update4} can be written equivalently as 
 
 \begin{align}
-    \Delta \F_0     & = \U_N \, \big( \J  \circ \big( \U_N^\top \, \Y \, \U_T \big) \big) \, \U_T^\top \notag                 \\
+    \Delta \F_0     & = \U_N \, \big( \J  \circ \big( \U_N^\top \, \Y \, \U_T \big) \big) \, \U_T^\top  \\
     \Delta \F_{k+1} & = \U_N \, \big( \J  \circ \big( \U_N^\top \, (\Ss' \circ \Delta \F_{k})\, \U_T \big) \big) \, \U_T^\top
 \end{align}
 
-In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is sufficiently small. The complete procedure is given in \hyperlink{al1}{\textbf{algorithm 1}}.
+In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is sufficiently small. The complete procedure is given in algorithm \hyperlink{al:SIM}{\textbf{1}}.
 
 \begin{algorithm}[t]
-    \hypertarget{al1}{}
+    \hypertarget{al:SIM}{}
     \caption{Stationary iterative method with matrix splitting}
     \begin{algorithmic}
         \vspace{0.05cm}
@@ -690,10 +692,10 @@ The linear system defined \cref{eq:Z_post} can be understood as a two-sided symm
     \PHI =   \big(\U_T \otimes \U_N\big) \, \D_{\G}.
 \end{equation}
 
-Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In \hyperlink{al2}{\textbf{algorithm 2}}, we outline a conjugate gradient method based on this new formulation. 
+Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In algorithm \hyperlink{al:CGM}{\textbf{2}}, we outline a conjugate gradient method based on this new formulation. 
 
 \begin{algorithm}[t]
-    \hypertarget{al2}{}
+    \hypertarget{al:CGM}{}
     \label{al:MVGKR}
     \caption{Conjugate gradient method with graph-spectral preconditioner}
     \begin{algorithmic}
