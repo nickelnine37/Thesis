@@ -1,34 +1,48 @@
 
 
-\chapter{Regression and Reconstruction on \textit{d}-dimensional Cartesian Product Graphs}
+\chapter{Regression and Reconstruction with Tensor-Valued
+Muliway Graph Signals}
 
-\lhead{Chapter 6. \emph{Regression and Reconstruction on \textit{d}-dimensional Product Graphs}}
+\lhead{Chapter 6. \emph{Regression and Reconstruction with
+Muliway Graph Signals}}
 
 \label{chap:nd_gsp}
 
-Multiway Graph Signal Processing (MWGSP) is an emerging field of research that seeks to generalise existing GSP algorithms, designed for use on graphs of one or two dimensions, to an arbitrary number of dimensions \citep{Stanley2020}. The majority of graph signal processing algorithms have been developed for graphs without 
 
-The roles of tensors and is long-established in the 
+Multiway Graph Signal Processing (MWGSP) is an emerging framework for analysing signals with multiple distinct axes (or `ways'), where the relation between elements within each axis is described by a graph topology \citep{Stanley2020}. For example, consider an fMRI experiment where cerebral blood flow is measured at a set of 3D voxels across time, for multiple subjects, in response to various stimuli. This dataset could be modelled as a six-way graph signal with the three spatial coordinates and the one time coordinate forming a four-way hypergrid graph, the subjects forming a graph based on characteristics, and the stimuli forming a graph based on similarity \citep{Cichocki2015}. A visual depiction of this is given in \cref{fig:fMRI_diagram}. 
+ 
+\vspace{1.5cm}
 
-\begin{figure}[t]
+\begin{figure}[h] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/fMRI_Digaram.pdf}
+    \end{center}
+   \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of a six-way graph signal originating from a hypothetical fMRI experiment. } 
+    \label{fig:fMRI_diagram}
+\end{figure} 
+
+
+\begin{figure}[b] 
     \begin{center}
         \includegraphics[width=0.4\linewidth]{Figures/coloured_tensor.pdf}
     \end{center}
-    \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of an order-3 tensor with graphs underlying each axis}
-    \label{fig:3D_colored_tensor}
-\end{figure}
+   \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of an order-3 tensor signal with graphs underlying each axis. } 
+    \label{fig:coloured_tensor}
+\end{figure}  
+
+The goal of this chapter is to extend the methods developed in \cref{chap:gsr_2d,chap:kgr_rnc_2d} such that they can accommodate multiway graph signals. In particular, Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) can all be understood as special two-dimensional cases of their more general and versatile MWGSP counterparts. In this chapter, we translate all three models into a their $d$-dimensional form, and demonstrate how to solve efficiently for the posterior mean. This framework forms the basis for the models developed in \cref{chap:variance,chap:binary}. 
 
 
-In this chapter we extend the methods developed in the previous two chapters, that is Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC), to graphs which are the Cartesian product of three or more factor graphs. 
+Multiway signals are represented using tensors, which are often conceptualised as $d$-dimensional arrays. Tensor algebra is well-established in fields such as physics and mechanics \citep{Renteln2013}, however it is less widespread in the graph signal processing community. As such, the first section of this chapter sets out some conceptual and notational standards for tensors. In MWGSP, each axis of the tensor has an underlying graph topology, with each factor graph linked together in a $d$-dimensional Cartesian product. \Cref{fig:coloured_tensor} gives some visual intuition for this with an order-3 tensor signal.  
 
-\begin{itemize}
-    \item Summarise chapter aims and output
-\end{itemize}
 
+We begin \cref{sec:dd_gsp} by defining the Cartesian product of more than two graphs, and discuss the algebraic and spectral structure of the resultant objects. Next, we cover the tensor representation of multiway graph signals and give the general definition of a graph-spectral operators in $d$-dimensions. We also discuss issues surrounding computational efficiency and how the so called `vec-trick' utilised in prior chapters can be generalised to the tensor setting. In \cref{sec:tensor_gsr}, we begin the core contributions of this chapter by generalising Bayesian GSR as defined in \cref{chap:gsr_2d} to the multiway GSP setting. This necessitates an updated version of the SIM and CGM to accommodate tensor-valued data in arbitrary dimensions, which we give in \cref{sec:SIM_dd,sec:CGM_dd}. Next, in \cref{sec:kgr_dd}, we generalise KGR for the non-parametric prediction of multiway graph signals as a function of exogenous variables. Finally, in \cref{sec:rnc_dd}, we the generalise RNC as defined in \cref{sec:rnc_mdp} in much the same way.  
 
 
 
-\section{Extending GSP to arbitrary dimensions}
+\section{Multiway Graph Signal Processing}
+
+\label{sec:dd_gsp}
 
 \subsection{The Cartesian product of more than two graphs}
 
@@ -143,10 +157,10 @@ Since each node in a $d$-dimensional product graph is specified by $d$ independe
 
 Alternatively, signals can be represented as a vector of length $N = \prod N_i$. This is essential if we are to interpret the $\otimes$ symbol strictly as a Kronecker product, rather than a tensor or outer product. Under the Kronecker interpretation, the chained use of $\otimes$ used in expressions such as \cref{eq:U_LAM_def} results in matrices of shape $N \times N$, providing a linear map from $\R^{N} \rightarrow \R^{N}$. Therefore, for an operator to act on a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, we need a method of mapping tensors with shape $(N_1, \, N_2 , ... N_d)$ to vectors of length $N$. In order for this vectorisation process to be consistent with the operators, it should result in a vectors whose elements are arranged in lexicographic order. In some fields, this is referred to as \textit{row-major} vectorisation since, in the case of an order-2 tensor, the index representing the row varies before the column index. In the following, we symbolise this operation mathematically as $\vecrm{\cdot}: \R^{N_1 \times N_2 \times ... \times N_d} \rightarrow \R^N$, and its reverse operation as $\tenrm{\cdot}: \R^N \rightarrow \R^{N_1 \times N_2 \times ... \times N_d}$. We use the `RM' subscript to indicate explicitly that this process is occurring in row-major order, since the standard $\vecc{\cdot}$ function defined for matrices is most commonly assumed to act in column-major order.  
 
-In the following, we use bold lower-case latin symbols (e.g. $\y$) to indicate graph signals existing in their vector form, and bold upper-case calligraphic latin symbols (e.g. $\Yt$) to indicate graph signals in their tensor form. That is, 
+In the following, we use bold lower-case symbols (e.g. $\y$) to indicate graph signals existing in their vector form, and bold upper-case calligraphic symbols (e.g. $\Yt$) to indicate graph signals in their multi-dimensional array form. That is, 
 
 \begin{align*}
-    \y \in \R^{N} = \vecrm{\Yt}, \quad \implies \quad \Yt \in \R^{N_1 \times N_2 \times ... \times N_d} = \tenrm{\y}
+    \y = \vecrm{\Yt} \quad \implies \quad \Yt  = \tenrm{\y}
 \end{align*}
 
 \Cref{fig:ten_to_vec} shows gives a visual summary of the process of converting between these two representations for an order-3 tensor. 
@@ -240,10 +254,10 @@ In certain special filter types, such as the diffusion filter, this function may
 This further implies that the graph filter $\HH$ can be decomposed as 
 
 \begin{equation}
-    \HH = \bigotimes_{i=1}^d \HH^{(i)}, \where \HH^{(i)} = \U^{(i)} g\left(\LAM^{(i)}\right) \left(\U^{(i)}\right)^\top
+    \HH = \bigotimes_{i=1}^d \HH^{(i)}, \where \HH^{(i)} = \U^{(i)} g \big(\LAM^{(i)}\big) \left(\U^{(i)}\right)^\top
 \end{equation}
 
-However, in the following, we ignore this special case and assume that the graph filter function is non-separable in general. 
+However, in the following, we typically don't consider this special case and assume that the graph filter function is non-separable in general. 
 
 The concept of a multi-way graph filter can be further generalised to include anisotropic filter functions, where the intensity of the filtering operation is not restricted to be equal in each dimension. \Cref{tab:anis_filters} gives some examples of anisotropic graph filter functions defined to act in an arbitrary number of dimensions. Notice how the definition of  
 
@@ -393,6 +407,8 @@ In order to execute computations of this nature in a way that is maximally effic
 
 \section{Tensor Graph Signal reconstruction}
 
+\label{sec:tensor_gsr}
+
 The model we use to describe graph signal reconstruction in the multi-dimensional setting is as follows. Consider a tensor signal $\Yt$ of shape $\big(N_1, \, N_2, \, ... \, N_d \big)$ with elements interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph. Only a partial set $\mathcal{S} = \{\nn_1, \, \nn_2, \, ... \}$ of the vector elements of $\Yt$ are available at observation time, with unobserved values set to zero. The goal is to estimate the signal value at these unobserved entries. 
 
 The binary sensing tensor $\St$, of the same shape as $\Yt$, indicates which elements of $\Yt$ were observed in the following way 
@@ -457,6 +473,8 @@ Therefore, the mean of this posterior is obtained by solving the following linea
 Once again, we are faced with a similar set of problems to those outlined in \cref{sec:problem_statement_2d}. Namely, the coefficient matrix is very large and potentially ill-defined. This can be solved by turing to iterative methods such as the SIM and CGM, which are repeated here in their form adapted for the general tensor case. 
 
 \subsection{Tensor SIM}
+
+\label{sec:SIM_dd}
 
 Generalising the SIM, which we describe in \cref{sec:SIM}, to the tensor setting is straightforward. In particular, \cref{eq:lin_system_dd} can be solved by splitting the coefficient matrix $\left(\D_\St + \gamma \HH^{-2}\right)$ into $\M - \N$, where $\M$ and $\N$ take on the following values
  
@@ -566,6 +584,8 @@ where $m$ is the fraction of data that is missing in the input tensor $\Yt$ (see
 
 \subsection{Tensor CGM}
 
+\label{sec:CGM_dd}
+
 The tensor version of the CGM also follows naturally from the two-dimensional case outlined in \cref{sec:CGM}. In particular, \cref{eq:lin_system_dd} can be transformed into the following equivalent preconditioned linear system. 
 
 \begin{equation}
@@ -664,9 +684,17 @@ $$
 
 \section{Kernel Graph Tensor Regression}
 
+\label{sec:kgr_dd}
+
 Hello
 
 \section{Tensor Regression with Network Cohesion}
 
+\label{sec:rnc_dd}
+
 Ahhhh
 
+\section{Application}
+
+
+\section{Conclusions}
