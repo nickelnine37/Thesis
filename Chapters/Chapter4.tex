@@ -1012,21 +1012,23 @@ In order to test the true convergence behaviour in practice, we ran a small expe
 
 As is visible, the optimal choice of method will depend strongly on the choice of hyperparameters. Given these experiments, we give some ``rules-of-thumb'' for making this choice under various hyperparameter settings. This is summarised in \cref{tab:decision_SIM_CGM}. 
 
+\definecolor{sim}{rgb}{0.12,0.47,0.71}
+\definecolor{cgm}{rgb}{1,0.49,0.05}
 
 \begin{table*}[h]
     \centering
     \footnotesize
-    \def\arraystretch{1.5}
-    \begin{tabular}{@{}lccccccccccccc@{}}
+    \def\arraystretch{1.4}
+    \begin{tabular}{@{}lcccccccccccc@{}}
     \toprule
-    & \multicolumn{3}{c}{Small $\gamma$} & \phantom{ab} & \multicolumn{3}{c}{Medium $\gamma$} & \phantom{ab} & \multicolumn{3}{c}{Large $\gamma$} \\
+    & \multicolumn{3}{c}{Small $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Medium $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Large $\gamma$} \\
     \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
-    & S $m$   & M $m$  & L $m$ &&  S $m$   & M $m$  & L $m$ && S $m$   & M $m$  & L $m$ && \\ \midrule \rule{0pt}{1cm}
-    Small $\beta$  & SIM & CGM & CGM && SIM & CGM & CGM &&  SIM & CGM & CGM    \\ \rule{0pt}{6ex}
-    Medium $\beta$ & SIM & SIM & CGM && SIM & CGM & CGM &&  SIM & CGM & CGM    \\ \rule{0pt}{6ex}
-    Large $\beta$  & SIM & SIM & CGM && SIM & SIM & CGM &&  SIM & CGM & CGM   \\[0.5cm] \bottomrule 
+    & S $m$   & M $m$  & L $m$ &&  S $m$   & M $m$  & L $m$ && S $m$   & M $m$  & L $m$ & \\ \midrule \rule{0pt}{0.8cm}
+    S $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
+    M $\beta$ & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
+    L $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}   \\[0.5cm] \bottomrule 
     \end{tabular}
-    \caption{This table gives a rough rule of thumb for which iterative method should be chosen under various hyperparameter settings. S, M and L $m$ refers to small, medium and large $m$. Note that small and large $m$ mean close to zero or one respectively, small and large $\gamma$ mean around $10^{-6}$ and around one respectively, and small and large $\beta$ mean values which cause the filter function to approach the weak and strong filter limits respectively. }
+    \caption[Rules of thumb for iterative method choice under different hyperparameter settings]{This table gives a rough rule of thumb for which iterative method should be chosen under various hyperparameter settings. S, M and L denotes small, medium and large. Note that small and large $m$ mean close to zero or one respectively, small and large $\gamma$ mean around $10^{-6}$ and around one respectively, and small and large $\beta$ mean values which cause the filter function to approach the weak and strong filter limits respectively. }
     \label{tab:decision_SIM_CGM} 
 \end{table*}
 
@@ -1037,174 +1039,7 @@ As is visible, the optimal choice of method will depend strongly on the choice o
 
 
 
-% \begin{figure}[t]
-%     % \begin{center} 
-%     \includegraphics[width=0.88\linewidth]{Figures/beta-rho-plot.pdf}
-%     % \end{center}
-%     \caption{\small{ The emprical value of $\rho$ measured at different values of $\beta$ for six differnet filter types on a product graph defined by a $16 \times 16$ grid. Here,  $\beta$ is varied from 0 to 20 keeping $m$ fixed at 0.5. The upper and lower bounds given by the weak and strong filter limit respectively are indicated in gray. }}
-%     \label{fig:beta_rho_plot}
-% \end{figure}
 
-
-
-\newpage
-
-
-% \subsubsection{Characterising computational complexity}
-
-% The number of steps required to reduce the magnitude of the error vector to some small value $\epsilon$ as a function of $\rho$ is given in \cref{eq:n_SIM}. Note that this applies in the case when the initial error vector $\vecc{\E_0}$ is proportional to the first eigenvector of $\M^{-1}\N$ and, as such, provides an upper bound.  
-
-
-% Given the bounds on $\rho$ expressed in \cref{eq:rho_bounds}, it follows that the upper bound on the number of steps $n$ required for convergence is given by 
-
-% \begin{equation}
-%     \frac{-\log \epsilon}{\log(1 + \gamma) - \log m} \, \leq \, n \, \leq \, \frac{-\log \epsilon}{\log(1 + \gamma)}
-% \end{equation}
-
-% Note the taylor series expansions of these bounds around $\gamma=0$. 
-
-% \begin{equation}
-%     \label{eq:WFL_its}
-%     \frac{-\log \epsilon}{\log(1 + \gamma)} = - \log \epsilon \left( \frac{1}{\gamma} + \frac{1}{2} - \frac{\gamma}{12} + O(\gamma^2) \right) 
-% \end{equation}
-
-% \begin{equation}
-%     \label{eq:SFL_its}
-%     \frac{-\log \epsilon}{\log(1 + \gamma) - \log m} = - \log \epsilon \left( -\frac{1}{\log m} - \frac{\gamma}{(\log m)^2} + O(\gamma^2)\right) 
-% \end{equation}
-
-% From this, it is clear that the convergence behaviour at small $\gamma$ is very different in these two cases. In particular, in the weak filter limit given in \cref{eq:WFL_its}, the number of iterations becomes dominated by the term $\gamma^{-1}$ which increases to infinity as $\gamma \rightarrow 0$. However, in the strong filter limit given in \cref{eq:SFL_its}, no such term exists meaning the number of iterations required for convergence is bounded as $\gamma \rightarrow 0$. This behaviour is depicted explicitly in \cref{fig:gamma_its}. Here, we plot the regularisation parameter $\gamma$ against the number of iterations required to reach some level of error. The dashed lines depict the predicted strong and weak filter limits, and the intermediate scattered points represent experimental values for iteration count over a range of values for $\beta$. 
-
-
-% \begin{figure}[t]
-%     % \begin{center} 
-%     \includegraphics[width=0.8\linewidth]{Figures/it_gamma_plot.pdf}
-%     % \end{center}
-%     \caption{\small{ The number of iterations required to reduce the initial error magnitude by a factor of $10^{-8}$ is shown. The blue dashed lines represent the }}
-%     \label{fig:gamma_its}
-% \end{figure} 
-
-% In conclusion, there is a hard upper bound for the computational complexity of the SIM: the limit of a weak filter. Since the SIM requires $O(N^2T + NT^2)$ multiplications per iteration, the complexity is given by
-
-
-% \begin{equation}
-%     \label{eq:OSIM}
-%     O\Bigg(\frac{N^2T + NT^2}{\log\,(1 + \gamma)} \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\gamma} \Bigg)
-% \end{equation}
-
-
-% In the limiting case of an infinitely strong filter, the computational complexity does not vary as a function of $\gamma$, but rather of the fraction of the data that is missing, $m$. 
-
-
-% \begin{equation}
-%     \label{eq:OSIM2}
-%     O\Bigg(\frac{N^2T + NT^2}{\log\,(1 + \gamma) - \log m} \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{- \log m} \Bigg)
-% \end{equation}
-
-% For intermediately aggressive filters, the true computational complexity will be a function of all three of $\beta$, $\gamma$ and $m$. In general, fast convergence is associated with high values of $\beta$ and $\gamma$, and low values of $m$. 
-
-
-% \subsection{Convergence of the CGM}
-% \label{sec:CGM_convergence}
-
-% In the conjugate gradient method, by contrast, the number of steps required to achieve some termination condition is well-known to follow $O(\sqrt{\kappa})$, where $\kappa$ is the condition number of the coefficient matrix \cite{Kelley1995}. In our case, the coefficient matrix is given in equation (\ref{eq:Z_post}) as $\C + \gamma \I$, and its associated condition number can be bounded in a similar fashion to $\rho$ in the SIM.
-
-% Consider the definition for $\C$ given in equation (\ref{eq:Q}). Given this, we can write the condition number as 
-
-% \begin{equation}
-%      \kappa \left(  \, \D_\G \U \D_{\Ss} \U^\top \D_\G + \gamma \I \; \right)
-% \end{equation}
-
-% As in \cref{sec:SIM_convergence}, we will consider the limit of $\kappa$ as $\beta$ goes to both zero and infinity.  
-
-% \subsubsection{Upper bound: the weak filter limit}
-
-% Consider the limiting case of a weak filter where the parameter $\beta$ characterising the filter function approaches zero. In this case, the spectral scaling matrix $\G$ is full of ones and, as such, the diagonal matrix $\D_\G$ will be equal to the identity. Therefore 
-
-% \begin{align}
-%     \lim_{\beta \rightarrow 0} \quad \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right) &= \kappa  \left(  \, \U^\top \D_{\Ss} \U + \gamma \I \; \right) \notag \\[0.2cm]
-%     &= \kappa  \left(  \, \U^\top \left( \D_{\Ss} + \gamma \I \right) \U \; \right) \notag \\[0.3cm]
-%     &= \frac{1 + \gamma}{\gamma}
-% \end{align}
-
-% The number of steps required to achieve some level of precision will be proportional to $\sqrt{\kappa}$. The Taylor series expansion of this, as a function of $\gamma$ evaluated at zero gives
-
-% \begin{equation}
-%     \sqrt{\frac{1}{\gamma} + 1} = \gamma^{-1/2} \, + \, 
-%     \frac{\gamma^{1/2}}{2} \, - \, \frac{\gamma^{3/2}}{8}  \, + \, O\left(\gamma^{5/2}\right) 
-% \end{equation}
-
-
-% This gives a hard limit on the computational complexity of the CGM as applied to graph signal reconstruction.
-
-
-
-% \subsubsection{Lower bound: the srong filter limit}
-
-% As with the SIM, consider now the limiting case where the parameter $\beta$ characterising the graph filter approaches infinity. In this case, the matrix $\G$ becomes $\mathbf{\Delta}$ as given in \cref{eq:Delta}. The condition number is therefore given by 
-
-% \begin{align}
-%     \lim_{\beta \rightarrow 0} & \quad \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right)  \notag \\[0.2cm]
-%     &= \kappa  \left(  \, \D_{\mathbf{\Delta}} \U^\top \D_{\Ss} \U \D_{\mathbf{\Delta}}  + \gamma \I \; \right) \notag \\[0.3cm]
-%     &= \kappa  \left(  \, 
-%     \begin{bmatrix} 
-%         \uu_1^\top \\ 
-%         \mathbf{0}^\top \\
-%         \vdots \\ 
-%         \mathbf{0}^\top 
-%     \end{bmatrix} \D_{\Ss}  \Big[ \uu_1, \, \mathbf{0}, \, \dots, \,\mathbf{0} \Big]
-%     + \gamma \I \; \right) \notag \\[0.2cm]
-%     &= \kappa  \left(  \, \frac{1}{NT}  \begin{bmatrix}
-%         |\mathcal{S}'| & 0 & 0 & \dots \\
-%         0 & 0 & 0 &  \\
-%         \vdots & & & \ddots
-%     \end{bmatrix}   + \gamma \I \; \right) \notag \\[0.3cm]
-%     &= \frac{m + \gamma}{\gamma}
-% \end{align}
-
-% Again, evaluating the square root of the condition nu8}\left(\frac{m}{\gamma}\right)^{-3/2} \, + \, O\left(\left(\frac{m}{\gamma}\right)^{-5/2}\right) 
-% \end{equation}
-
-% In this case it is clear to see that the quantity of interest is $m/\gamma$. 
-
-
-% \subsubsection{}
-
-% $$
-%     m \sqrt{\frac{1 + \gamma}{\gamma}} = m \Big( \frac{1}{\sqrt{\gamma}} + \frac{\gamma}{2\sqrt{\gamma}}  - \frac{\gamma^3}{8\sqrt{\gamma}} + ... \Big)
-% $$
-
-% From this expansion, we can see that the dominant behaviour for small $\gamma$ is $O(\gamma^{-1/2})$. Therefore, for small $\gamma$, the overall run-time complexity of the CGM is given by
-
-% \begin{equation}
-%     \label{eq:OCGM}
-%     O\Bigg(\sqrt{\frac{1 + \gamma}{\gamma}}\big(N^2T + NT^2\big) \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\sqrt{\gamma}} \Bigg)
-% \end{equation}
-
-% Furthermore, in the case of a time-vertex problem, or a
-% mber in this  limit, gives the following Taylor series expansion. 
-
-% \begin{equation}
-%     \sqrt{\frac{m}{\gamma} + 1} = \left(\frac{m}{\gamma}\right)^{1/2} \, + \, \frac{1}{2}\left(\frac{m}{\gamma}\right)^{-1/2} \, - \, \frac{1}{8}\left(\frac{m}{\gamma}\right)^{-3/2} \, + \, O\left(\left(\frac{m}{\gamma}\right)^{-5/2}\right) 
-% \end{equation}
-
-% In this case it is clear to see that the quantity of interest is $m/\gamma$. 
-
-
-% \subsubsection{}
-
-% $$
-%     m \sqrt{\frac{1 + \gamma}{\gamma}} = m \Big( \frac{1}{\sqrt{\gamma}} + \frac{\gamma}{2\sqrt{\gamma}}  - \frac{\gamma^3}{8\sqrt{\gamma}} + ... \Big)
-% $$
-
-% From this expansion, we can see that the dominant behaviour for small $\gamma$ is $O(\gamma^{-1/2})$. Therefore, for small $\gamma$, the overall run-time complexity of the CGM is given by
-
-% \begin{equation}
-%     \label{eq:OCGM}
-%     O\Bigg(\sqrt{\frac{1 + \gamma}{\gamma}}\big(N^2T + NT^2\big) \Bigg) \approx O\Bigg(\frac{N^2T + NT^2}{\sqrt{\gamma}} \Bigg)
-% \end{equation}
-
-% Furthermore, in the case of a time-vertex problem, or a
 
 \newpage 
 
