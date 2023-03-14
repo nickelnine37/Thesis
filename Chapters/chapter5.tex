@@ -1,6 +1,6 @@
-\chapter{Regression Models with Cartesian Product Graphs}
+\chapter{Multivariate Regression Models for Network-Structured Data}
 
-\lhead{Chapter 5. \emph{Regression Models on Cartesian Product Graphs}}
+\lhead{Chapter 5. \emph{Multivariate Regression Models for Network-Structured Data}}
 
 \label{chap:kgr_rnc_2d}
 
@@ -10,6 +10,8 @@ In this chapter, we build on the results from \cref{chap:gsr_2d} to solve severa
 \section{Kernel Graph Regression with Unrestricted Missing Data Patterns}
 
 \label{sec:kgr_mdp}
+
+\subsection{Model specification}
 
 Consider a sequence of graph signals $\y_t$ measured on a static $N$-node graph, each with an associated vector of explanatory variables $\x_t$, containing $M$ distinct features. Each graph signal may have unique and arbitrary missing data, specified by a binary vector $\s_t$ which contains ones where data was successfully collected as zeros elsewhere. Any entry in $\y_t$ where no data was collected should be filled with a zero. As such, the input data for this problem can be summarised as follows. 
 
@@ -21,19 +23,28 @@ Consider a sequence of graph signals $\y_t$ measured on a static $N$-node graph,
 
 As in \cref{sec:problem_statement_2d}, the graph signals can be stacked together into a matrix $\Y$ of shape $(N \times T)$. Note that this in contrast to the typical shape found in multivariate regression, which is most commonly $(T \times N)$ with the index referring to each sample varying first, however, we adopt the opposite convention here for the reasons outlined \cref{sec:gsp_cpg}. 
 
-Consider now a $P$-dimensional basis function representation of each explanatory vector $\x_t$, denoted as $\boldsymbol{\phi}(\x_t) \in \R^{P}$. In the following, we will assume that $\y_t$ can be modelled as a noisy linear combination of these basis functions that has been partially observed. This is summarised in the following statistical model. 
+Consider now a $P$-dimensional basis function representation of each explanatory vector $\x_t$, denoted as $\boldsymbol{\phi}(\x_t) \in \R^{P}$. 
+
+\begin{equation}
+    \boldsymbol{\phi}(\x_t) = 
+    \begin{bmatrix}
+        \phi_1(\x_t) & \phi_2(\x_t) & \dots & \phi_P(\x_t)
+    \end{bmatrix}^\top
+\end{equation}
+
+In the following, we will assume that each element of $\y_t$ can be modelled as a noisy linear combination of these basis functions which may or may not have been observed. This is summarised in the following statistical model. 
 
 \begin{equation}
     \y_t = \s_t \circ \big( \mspace{1mu} \W \boldsymbol{\phi}(\x_t) + \e_t \mspace{1mu} \big), \quad \for \; t = 1, 2, ..., T
 \end{equation}
 
-Here, $\W \in \R^{N \times P}$ notes the model coefficients defining the linear combination, and $\e_t \in \R^{N}$ represents iid Gaussian noise. Each of these basis function vectors can be horizontally stacked together to form a new matrix $\PHI$. 
+Here, $\W \in \R^{N \times P}$ represents the model coefficients defining the linear combination, and $\e_t \in \R^{N}$ is a vector of iid Gaussian noise with zero mean and unit variance. The basis function vectors can be horizontally stacked together to form a design matrix $\PHI$. 
 
 \begin{equation}
     \PHI \in \R^{P \times T} = \begin{bmatrix} 
         \phi_1(\x_1) & \phi_1(\x_2) & \dots & \phi_1(\x_T) \\
         \phi_2(\x_1) & \phi_2(\x_2) & \dots & \phi_2(\x_T) \\
-        \vdots & \vdots & \vdots & \vdots  \\
+        \vdots & \vdots & \ddots & \vdots  \\
         \phi_P(\x_1) & \phi_P(\x_2) & \dots & \phi_P(\x_T) \\
     \end{bmatrix}
 \end{equation}
@@ -45,11 +56,179 @@ Therefore, the statistical model can be written in matrix form as
     \Y = \Ss \circ \big( \mspace{1mu} \W \PHI + \E \mspace{1mu} \big)
 \end{equation}
 
+where $\Ss \in [0, 1]^{N \times T}$ is the binary sensing matrix as defined in \cref{sec:problem_statement_2d}, which is also each $\s_t$ stacked horizontally, and $\E \in \R^{N \times T}$ is a matrix of iid Gaussian noise with zero mean and unit variance. This implies that the probability distribution for $\vecc{\Y} \, | \, \W$ is given by 
+
+\begin{equation}
+    \vecc{\Y} \, | \, \W \sim \mathcal{N}\big( \vecc{\Ss \circ (\W \PHI)}, \; \I \, \big)
+\end{equation}
+
+In order to find the posterior distribution over the model coefficients $\W$, we must specify a prior. This should capture the assumption that predicted signals are expected to be smooth with respect to the topology of the graph. We assert that an appropriate prior for $\W$ is 
+
+\begin{equation}
+    \label{eq:W_prior}
+    \vecc{\W} \sim \mathcal{N}\left(\mathbf{0}, \; \gamma^{-1} \I_P \otimes \HH_N^{2}\right)
+\end{equation}
+
+where $\HH_N \in \R^{N}$ is a graph filter constructed according to one of the univariate filter functions defined in \cref{tab:iso_filters}, and $\gamma$ is a hyperparameter representing the prior precision. The justification for this prior is as follows. Consider a random graph signal which is constructed as $\W \boldsymbol{\phi}$ where both $\W$ and $\boldsymbol{\phi}$ have Gaussian iid entries with zero mean and unit variance. The probability distribution of their product will also be an iid multivariate Gaussian with zero mean. Consider now smoothing this signal by applying a graph filter $\HH_N$. The resultant signal will have the same probability distribution as $\W \boldsymbol{\phi}$ if instead $\W$ was drawn from the distribution given in \cref{eq:W_prior}. Therefore, the effect of this prior can be understood as promoting the probability of smooth signals. 
+
+% https://stats.stackexchange.com/questions/28229/variance-of-the-product-of-a-random-matrix-and-a-random-vector
+
+Consider now a transformed variable $\F$ defined by $\F = \W \PHI$. Given that $\W$ has a prior distribution given in \cref{eq:W_prior}, we can ask what the implied prior over $\F$ is. Clearly, since the expected value of $\W$ is zero for all entries, the expected value of $\F$ should also be zero for all entries regardless of the value of $\PHI$. The covariance of $\F$ can also be computed easily. 
+
+\begin{align*}
+    \text{Cov}\big[\vecc{\F}\big] &= \text{Cov}\big[\vecc{\W \PHI}\big] \\[0.1cm]
+    &= \text{Cov}\left[\big(\PHI^\top \otimes \I\big) \, \vecc{\W}\right] \\[0.1cm]
+    &= \big(\PHI^\top \otimes \I\big) \text{Cov}\big[\vecc{\W}\big] \big(\PHI \otimes \I\big) \\[0.2cm]
+    &= \gamma^{-1}  \big(\PHI^\top \otimes \I\big) \big(\I \otimes \HH_N^{2} \big) \big(\PHI \otimes \I\big) \\[0.2cm]
+    &= \gamma^{-1} \big( \PHI^\top \PHI \big) \otimes \HH_N^2
+\end{align*}
+
+Therefore, we can rewrite the model in terms of the new transformed variable as follows. 
+
+\begin{equation}
+    \vecc{\Y} \, | \, \F \sim \mathcal{N}\big(\, \vecc{\Ss \circ \F}, \, \I \, \big)
+\end{equation}
+
+\begin{equation}
+    \label{eq:F_prior2}
+    \vecc{\F} \sim \mathcal{N}\Big(\mathbf{0}, \; \gamma^{-1} \big(\PHI^\top \PHI \big) \otimes \HH_N^{2}\Big)
+\end{equation}
 
 
-\subsection{Cartesian product graphs and KGR}
+The final step to convert this into a non-parametric regression model is to apply the `kernel-trick'. Consider the PSD matrix $\PHI^\top \PHI$. Entry $(i, j)$ will be the inner product between the basis function expansion of $\x_i$ and $\x_j$. 
 
-Hello
+\begin{equation}
+    \PHI^\top \PHI \in \R^{T \times T} = 
+    \begin{bmatrix} 
+        \boldsymbol{\phi}(\x_1)^\top\boldsymbol{\phi}(\x_1) & \boldsymbol{\phi}(\x_1)^\top\boldsymbol{\phi}(\x_2) & \dots & \boldsymbol{\phi}(\x_1)^\top\boldsymbol{\phi}(\x_T) \\
+        \boldsymbol{\phi}(\x_2)^\top\boldsymbol{\phi}(\x_1) & \boldsymbol{\phi}(\x_2)^\top\boldsymbol{\phi}(\x_2) & \dots & \boldsymbol{\phi}(\x_2)^\top\boldsymbol{\phi}(\x_T) \\
+        \vdots & \vdots & \ddots & \vdots  \\
+        \boldsymbol{\phi}(\x_T)^\top\boldsymbol{\phi}(\x_1) & \boldsymbol{\phi}(\x_T)^\top\boldsymbol{\phi}(\x_2) & \dots & \boldsymbol{\phi}(\x_T)^\top\boldsymbol{\phi}(\x_T) \\
+    \end{bmatrix}
+\end{equation}
+
+The trick is to characterise each inner product in terms of a predefined function such that $\boldsymbol{\phi}(\x_i)^\top\boldsymbol{\phi}(\x_j) = \kappa(\x_i, \x_j)$. This means that instead of mapping the explanatory variables via $\boldsymbol{\phi}$ and computing the inner product directly, it is done in a single operation, leaving the mapping implicit. This means we can replace the matrix $\PHI^\top \PHI$ with a so-called kernel matrix $\K \in \R^{T \times T}$, which has entries defined by 
+
+\begin{equation}
+    \K_{ij} =  \kappa(\x_i, \x_j)
+\end{equation}
+
+$\kappa(\cdot, \cdot)$ can be any valid Mercer kernel. A common example is the Gaussian kernel given below. 
+
+\begin{equation}
+    \kappa(\x_i, \x_j) = \exp\left(-\frac{|| \x_i - \x_j ||^2}{2 \sigma^2}\right)
+\end{equation}
+
+Therefore, the prior distribution over $\F$ is given in terms of $\K$ by 
+
+\begin{equation}
+    \label{eq:F_prior3}
+    \vecc{\F} \sim \mathcal{N}\Big(\mathbf{0}, \; \gamma^{-1} \K \otimes \HH_N^{2}\Big)
+\end{equation}
+
+In a similar manner to \cref{sec:problem_statement_2d}, the posterior distribution for $\F | \Y$ is given by 
+
+\begin{equation}
+    \label{eq:F_post_kgr}
+    \vecc{\F} \, | \, \Y \sim \mathcal{N}\left(\PP^{-1}\vecc{\Y}, \; \PP^{-1}\right)
+\end{equation}
+
+where
+
+\begin{equation}
+    \PP = \D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2}
+\end{equation}
+
+where, as before, $\D_\Ss = \diag{\vecc{\Ss}}$. 
+
+\subsection{Solving for the posterior mean}
+
+By noting the structural similarity between the posterior distribution given in \cref{eq:F_post_kgr}, we can utilise the same iterative methods developed in \cref{chap:gsr_2d} to solve for the mean, with only minor modifications. Once again, the task is to solve an ill-conditioned linear system with a Kronecker structure. Specifically, we need to compute the solution to the following expression. 
+
+\begin{equation}
+    \label{eq:lin_system_kgr}
+    \vecc{\F} = \Big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2}\Big)^{-1} \vecc{\Y}
+\end{equation}
+
+\subsubsection{Solving with the SIM}
+
+First, let us revisit the SIM. Recall that the strategy is to split the coefficient matrix $\PP$ into $\M - \N$, where $\M$ is easy to invert. In this case, we can put
+
+\begin{equation}
+    \M = \gamma \K^{-1} \otimes \HH_N^{-2} + \I_{NT}, \aand \N = \D_{\Ss'}.
+\end{equation}
+
+where, as before, $\D_{\Ss'} = \diag{\mathbf{1} - \vecc{\Ss}}$. Consider the matrix $\M^{-1}$. First, we define the eigendecompositions of the PSD matrices $\K$ and $\HH_N$ as follows. 
+
+\begin{equation}
+    \K = \V \LAM_\K \V^\top, \aand \HH_N = \U_N \LAM_\HH \U_N^\top
+\end{equation}
+
+where $\V$ and $\U_N$ are the orthonormal eigenvector matrices of $\K$ and $\LL_N$ respectively. Similarly, $\LAM_\K$ is the diagonal eigenvalue matrix of $\K$ given by
+
+
+$$
+\LAM_\K = \diag{\left[\lambda^{(K)}_1, \; \lambda^{(K)}_2, \; \dots, \;\lambda^{(K)}_T \right]}
+$$
+
+and $\LAM_\HH$ is the diagonal eigenvalue matrix of $\HH$, with entries given by the chosen graph filter applied to the eigenvalues of the graph Laplacian $\LL_N$. 
+
+$$
+\LAM_\HH = \diag{\left[g\big(\lambda^{(N)}_1\big), \; g\big(\lambda^{(N)}_2\big), \; \dots, \; g\big(\lambda^{(N)}_N\big) \right]}
+$$
+
+Using these definitions, we can efficiently compute the inverse of the matrix $\M$.  
+
+\begin{align}
+    \label{eq:M_inv_kgr}
+    \M^{-1} &= \Big(\gamma \K^{-1} \otimes \HH_N^{-2} + \I_{NT}\Big)^{-1} \notag \\[0.2cm]
+    &= \Big(\gamma \big(\V \LAM_\K \V^\top\big)^{-1} \otimes \big(\U_N \LAM_\HH \U_N^\top\big)^{-2} + \I_{NT}\Big)^{-1} \notag \\[0.2cm]
+    &= \Big(\gamma \big(\V \otimes \U_N \big) \big(\LAM_\K^{-1} \otimes \LAM_\HH^{-2}) \big(\V^\top \otimes \U_N^\top) + \I_{NT}\Big)^{-1} \notag \\[0.25cm]
+    &= \Big( \big(\V \otimes \U_N \big) \big(\gamma \LAM_\K^{-1} \otimes \LAM_\HH^{-2} + \I_{NT}\big) \big(\V^\top \otimes \U_N^\top\big)\Big)^{-1} \notag \\[0.3cm]
+    &= \big(\V \otimes \U_N\big ) \big(\gamma  \LAM_\K^{-1} \otimes \LAM_\HH^{-2} + \I_{NT}\big)^{-1} \big(\V^\top \otimes \U_N^\top\big) \notag \\[0.35cm]
+    &= \big(\V \otimes \U_N \big) \, \diag{\vecc{\bar{\J}}}\big(\V^\top \otimes \U_N^\top\big)
+\end{align}
+
+where $\bar{\J}$ has entries given by 
+
+\begin{equation}
+    \label{eq:Jnt2}
+    \bar{\J}_{nt} = \frac{\lambda^{(K)}_t g^2\big(\lambda_n^{(N)}\big)}{ \raisebox{-0.2cm} { $\lambda^{(K)}_t g^2\big(\lambda_n^{(N)}\big) + \gamma$ } } = \frac{\bar{\G}_{nt}^2}{\bar{\G}_{nt}^2 + \gamma}, \where \bar{\G}_{nt} = g\left(\lambda^{(N)}_n\right) \sqrt{\lambda^{(K)}_t} 
+\end{equation}
+
+Note the similarity between the expression in \cref{eq:M_inv_kgr} and the one given in \cref{eq:M_inv}.
+
+The SIM algorithm then proceeds in much the same way as described in \cref{sec:SIM}. As before, it is clear to see that convergence will be achieved, since the spectral radius of $\M^{-1}\N$ will surely be less than one for any positive $\gamma$. In this case, the update formula is given by 
+
+\begin{align}
+    \label{eq:update_sim_kgr}
+    \F_{k+1} & = \U_N \, \big( \J  \circ \big( \U_N^\top \, (\Ss' \circ \F_{k})\, \V \big) \big) \, \V^\top + \F_0 \\
+    \label{eq:update_sim_kgr2}
+    \text{with} \quad\quad\quad \F_0 & = \U_N \, \big( \J  \circ \big( \U_N^\top \, \Y \, \V \big) \big) \, \V^\top 
+\end{align}
+
+using the altered definition of $\J$ given in \cref{eq:Jnt2}. 
+
+\subsubsection{Solving with the CGM}
+
+Next, let us return to the CGM. Recall that the strategy for solving the linear system in \cref{eq:lin_system_kgr} is to utilise a symmetric a preconditioner $\PSI$ such that the new system is given by 
+
+\begin{equation}
+    \Big(\PSI^\top  \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \PSI  \Big) \Big(\PSI^{-1}\, \vecc{ \F } \Big) = \PSI^\top \, \vecc{\Y},
+\end{equation}
+
+$\PSI$ should be chosen such that new coefficient matrix $\Big(\PSI^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \PSI  \Big)$ has a reduced condition number. In the present case, an effective preconditioner is 
+
+\begin{equation}
+    \PSI = \big(\V \otimes \U_N \big) \, \D_{\bar{\G}}.
+\end{equation}
+
+where 
+
+\begin{equation}
+    \D_{\bar{\G}} = \diag{\vecc{\bar{\G}}}, \aand \bar{\G}_{nt} = g\left(\lambda^{(N)}_n\right) \sqrt{\lambda^{(K)}_t} 
+\end{equation}
+
 
 \subsection{Convergence properties}
 

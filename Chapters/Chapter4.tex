@@ -518,7 +518,7 @@ In this way, the update equation is given by
 Note that this splitting is valid since $\big(\gamma\HH^{-2} + \I \, \big)^{-1}$ is guaranteed to exist. It can also be readily computed as we already have the eigendecomposition of $\HH$. Noting the decomposed definition of $\HH$ given in \cref{eq:graph_filter}, this can be written as
 
 \begin{align}
-    \label{eq:inv}
+    \label{eq:M_inv}
     \M^{-1} & = \Big( \gamma \HH^{-2} + \I \, \Big)^{-1} \notag \\
             & = \Big( \gamma \big(\U_T \otimes \U_N\big)\, \diag{\vecc{\G}}^{-2}\,  \big(\U_T^\top \otimes \U_N^\top\big)  + \I \, \Big)^{-1} \notag   \\
             & = \big(\U_T \otimes \U_N\big)\, \Big( \gamma \, \diag{\vecc{\G}}^{-2}\,    + \I \, \Big)^{-1} \big(\U_T^\top \otimes \U_N^\top\big) \notag \\
@@ -550,7 +550,7 @@ It is well-know that a given splitting will be convergent if the largest eigenva
 
 Whilst the spectral radius of $\M^{-1}\N$ cannot be computed directly, we can derive an upper bound based on the properties of $\M$ and $\N$ individually. 
 
-Consider the spectral radius of $\M^{-1}$. By directly inspecting \cref{eq:inv}, it is clear that $\rho(\M^{-1})$ will be the maximum entry in the matrix $\J$ since $\M^{-1}$ is already diagonalised in the basis $\U_T \otimes \U_N$. Consider now the definition of $\J$ given in \cref{eq:Jnt}. By definition, $g(\cdot)$ has a maximum value of one on the non-negative reals, achieved when its argument is zero. Since the graph Laplacian is guaranteed to have at least one zero eigenvalue, the maximum entry in the matrix $\J$, and therefore the spectral radius of $\M^{-1}$, is surely given by
+Consider the spectral radius of $\M^{-1}$. By directly inspecting \cref{eq:M_inv}, it is clear that $\rho(\M^{-1})$ will be the maximum entry in the matrix $\J$ since $\M^{-1}$ is already diagonalised in the basis $\U_T \otimes \U_N$. Consider now the definition of $\J$ given in \cref{eq:Jnt}. By definition, $g(\cdot)$ has a maximum value of one on the non-negative reals, achieved when its argument is zero. Since the graph Laplacian is guaranteed to have at least one zero eigenvalue, the maximum entry in the matrix $\J$, and therefore the spectral radius of $\M^{-1}$, is surely given by
 
 \begin{equation}
     \rho(\M^{-1}) = \frac{1}{1 + \gamma}
@@ -643,7 +643,7 @@ $$
 
 over $\x_0 + \mathcal{K}_k$ \citep{Kelley1995}. 
 
-The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PHI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PHI^\top$ and the left by $\PHI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
+The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PSI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PSI^\top$ and the left by $\PSI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
 
 In our case, where the coefficient matrix is given by $\Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-Laplacian frequency eigenvalues of the graph Laplacian, meaning elements of $\diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
 
@@ -685,16 +685,16 @@ This has $O(N^2T + NT^2)$ complexity at each step which may be  reduced to $O(N^
 The linear system defined \cref{eq:Z_post} can be understood as a two-sided symmetrically preconditioned version of the original linear system given in \cref{eq:lin_system}. In particular, the new expression can be constructed by modifying the original system in the following way.
 
 \begin{equation}
-    \Big(\PHI^\top  \big(\D_{\Ss} + \gamma  \HH^{-2}\big) \, \PHI  \Big) \Big(\PHI^{-1}\, \vecc{ \F } \Big) = \PHI^\top \, \vecc{\Y},
+    \Big(\PSI^\top  \big(\D_{\Ss} + \gamma  \HH^{-2}\big) \, \PSI  \Big) \Big(\PSI^{-1}\, \vecc{ \F } \Big) = \PSI^\top \, \vecc{\Y},
 \end{equation}
 
 \noindent where
 
 \begin{equation}
-    \PHI =   \big(\U_T \otimes \U_N\big) \, \D_{\G}.
+    \PSI =   \big(\U_T \otimes \U_N\big) \, \D_{\G}.
 \end{equation}
 
-Since preconditioning of the coefficient matrix on the left is achieved with $\PHI^\top$ and on the right with $\PHI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In algorithm \hyperlink{al:CGM}{\textbf{2}}, we outline a conjugate gradient method based on this new formulation. 
+Since preconditioning of the coefficient matrix on the left is achieved with $\PSI^\top$ and on the right with $\PSI$, symmetry is preserved. This ensures that one can continue to utilise algorithms tailored to work with PSD matrices. In algorithm \hyperlink{al:CGM}{\textbf{2}}, we outline a conjugate gradient method based on this new formulation. 
 
 \begin{algorithm}[t]
     \hypertarget{al:CGM}{}
