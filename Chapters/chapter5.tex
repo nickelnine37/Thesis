@@ -6,13 +6,46 @@
 
 In this chapter, we build on the results from \cref{chap:gsr_2d} to solve several Bayesian regression models for graph signals. 
 
-\section{Graph Regression with Unrestricted Missing Data}
 
-\section{Kernel Graph Regression}
+\section{Kernel Graph Regression with Unrestricted Missing Data Patterns}
 
 \label{sec:kgr_mdp}
 
-Hello
+Consider a sequence of graph signals $\y_t$ measured on a static $N$-node graph, each with an associated vector of explanatory variables $\x_t$, containing $M$ distinct features. Each graph signal may have unique and arbitrary missing data, specified by a binary vector $\s_t$ which contains ones where data was successfully collected as zeros elsewhere. Any entry in $\y_t$ where no data was collected should be filled with a zero. As such, the input data for this problem can be summarised as follows. 
+
+\begin{equation}
+    \text{input data} = \Big\{\left(\x_t \in \R^{M}, \; \y_t \in \R^{N}, \; \s_t \in [0, 1]^{N} \right)\Big\}_{t=1}^T
+\end{equation}
+
+ In the following, we assume that the explanatory variables not not contain any missing values. If missing values are present here, they can be filled in using standard techniques such as those described in \cite{Little2019}. Note that, under this model specification, there is no hard distinction between training data and data for which we would like to make a prediction. To indicate a particular value of $\x_t$ for which a full prediction should be made, one can just set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
+
+As in \cref{sec:problem_statement_2d}, the graph signals can be stacked together into a matrix $\Y$ of shape $(N \times T)$. Note that this in contrast to the typical shape found in multivariate regression, which is most commonly $(T \times N)$ with the index referring to each sample varying first, however, we adopt the opposite convention here for the reasons outlined \cref{sec:gsp_cpg}. 
+
+Consider now a $P$-dimensional basis function representation of each explanatory vector $\x_t$, denoted as $\boldsymbol{\phi}(\x_t) \in \R^{P}$. In the following, we will assume that $\y_t$ can be modelled as a noisy linear combination of these basis functions that has been partially observed. This is summarised in the following statistical model. 
+
+\begin{equation}
+    \y_t = \s_t \circ \big( \mspace{1mu} \W \boldsymbol{\phi}(\x_t) + \e_t \mspace{1mu} \big), \quad \for \; t = 1, 2, ..., T
+\end{equation}
+
+Here, $\W \in \R^{N \times P}$ notes the model coefficients defining the linear combination, and $\e_t \in \R^{N}$ represents iid Gaussian noise. Each of these basis function vectors can be horizontally stacked together to form a new matrix $\PHI$. 
+
+\begin{equation}
+    \PHI \in \R^{P \times T} = \begin{bmatrix} 
+        \phi_1(\x_1) & \phi_1(\x_2) & \dots & \phi_1(\x_T) \\
+        \phi_2(\x_1) & \phi_2(\x_2) & \dots & \phi_2(\x_T) \\
+        \vdots & \vdots & \vdots & \vdots  \\
+        \phi_P(\x_1) & \phi_P(\x_2) & \dots & \phi_P(\x_T) \\
+    \end{bmatrix}
+\end{equation}
+
+Therefore, the statistical model can be written in matrix form as 
+
+
+\begin{equation}
+    \Y = \Ss \circ \big( \mspace{1mu} \W \PHI + \E \mspace{1mu} \big)
+\end{equation}
+
+
 
 \subsection{Cartesian product graphs and KGR}
 
