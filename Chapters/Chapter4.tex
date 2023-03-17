@@ -245,7 +245,8 @@ Given these definitions, we can define a spectral operator (usually a low-pass f
     \label{eq:graph_filter}
     \HH & = g(\LL_A \oplus \LL_B) \notag                                                                                          \\
         & = \big( \U_A \otimes \U_B \big) \, g \big( \LAM_A \oplus \LAM_B \big) \, \big( \U_A^\top \otimes \U_B^\top \big) \notag \\
-        & = \big( \U_A \otimes \U_B \big) \, \diag{\vecc{\G}} \, \big( \U_A^\top \otimes \U_B^\top \big)
+        & = \big( \U_A \otimes \U_B \big) \, \diag{\vecc{\G}} \, \big( \U_A^\top \otimes \U_B^\top \big) \notag \\
+        &= \U \D_\G \U^\top
 \end{align}
 
 % remark which section of the thesis the properties of G are explained
@@ -429,22 +430,18 @@ where we use the notation $\pi(\cdot)$ to denote a probability density function.
 The posterior distribution for $\F$ is given by
 
 \begin{equation}
-    \label{eq:F_post}
-    \vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\SIG \, \vecc{\Y}, \; \SIG \big)
+    \label{eq:F_post_gsr}
+    \vecc{\F} \, | \, \Y \sim \mathcal{N} \big(\PP^{-1} \, \vecc{\Y}, \; \PP^{-1} \big)
 \end{equation}
 
-\noindent where
+\noindent where $\PP$ is the posterior precision matrix, given by 
 
 \begin{equation}
-    \label{eq:Sig_post}
-    \SIG = \Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1}
+    \label{eq:P_post_gsr}
+    \PP = \diag{\vecc{\Ss}} + \gamma  \HH^{-2}
 \end{equation}
 
-A proof of this can be found in the appendix, theorem \ref{the:F_posterior}.
-
-
-
-In this chapter, we are primarily interested in computing the posterior mean, which is the solution to the following linear system.
+A proof of this can be found in the appendix, theorem \ref{the:F_posterior}. In this chapter, we are primarily interested in computing the posterior mean, which is the solution to the following linear system.
 
 \begin{equation}
     \label{eq:lin_system}
