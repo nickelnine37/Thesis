@@ -1,6 +1,6 @@
-\chapter{Multivariate Regression Models for Network-Structured Data}
+\chapter{Multivariate Regression Models for Time-Varying Graph Signals}
 
-\lhead{Chapter 5. \emph{Multivariate Regression Models for Network-Structured Data}}
+\lhead{Chapter 5. \emph{Multivariate Regression Models for Time-Varying Graph Signals}}
 
 \label{chap:kgr_rnc_2d}
 
@@ -15,13 +15,15 @@ In this chapter, we build on the results from \cref{chap:gsr_2d} to solve severa
 
 \label{sec:kgr_model_desc}
 
-Consider a sequence of graph signals $\y_t$ measured on a static $N$-node graph, each with an associated vector of explanatory variables $\x_t$, containing $M$ distinct features. Each graph signal may have unique and arbitrary missing data, specified by a binary vector $\s_t$ which contains ones where data was successfully collected and zeros elsewhere. Any entry in $\y_t$ where no data was collected should be filled with a zero. As such, the input data for this problem can be summarised as follows. 
+Consider a sequence of graph signals $\y_t$, measured on a static $N$-node graph, each of which is accompanied by a corresponding explanatory vector $\x_t$ that encompasses $M$ distinct characteristics. Each graph signal may have unique and arbitrary missing data, as indicated by a binary vector $\s_t$, where ones represent successfully collected data and zeros signify missing data. Any absent data in $\y_t$ should be filled with zeros. Hence, the input data for this problem can be concisely described as follows. 
 
-\begin{equation}
-    \text{input data} = \Big\{\left(\x_t \in \R^{M}, \; \y_t \in \R^{N}, \; \s_t \in [0, 1]^{N} \right)\Big\}_{t=1}^T
-\end{equation}
 
- In the following, we assume that the explanatory variables not not contain any missing values. If missing values are present here, they can be filled in using standard techniques such as those described in \cite{Little2019}. Note that, under this model specification, there is no hard distinction between training data and data for which we would like to make a prediction. To indicate a particular value of $\x_t$ for which a full prediction should be made, one can just set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
+\begin{align*}
+    \text{input data} &= \Big\{\left(\x_t \in \R^{M}, \; \y_t \in \R^{N}, \; \s_t \in [0, 1]^{N} \right)\Big\}_{t=1}^T \\[0.2cm]
+    &= \X \in \R^{T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}
+\end{align*}
+
+ In the following, we assume that the explanatory variables do not contain missing values. However, if any missing values are present, conventional methods such as those described in \cite{Little2019} can be employed to fill them. It should be noted that, with this model specification, there is no rigid distinction between training data and data for which we would like to make a prediction. To indicate a particular value of $\x_t$ for which a comprehensive prediction should be generated, one can set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
 
 As in \cref{sec:problem_statement_2d}, the graph signals can be stacked together into a matrix $\Y$ of shape $(N \times T)$. Note that this in contrast to the typical shape found in multivariate regression, which is most commonly $(T \times N)$ with the index referring to each sample varying first, however, we adopt the opposite convention here for the reasons outlined \cref{sec:gsp_cpg}. 
 
@@ -80,8 +82,8 @@ Consider now a transformed variable $\F$ defined by $\F = \W \PHI$. Given that $
 \begin{align*}
     \text{Cov}\big[\vecc{\F}\big] &= \text{Cov}\big[\vecc{\W \PHI}\big] \\[0.1cm]
     &= \text{Cov}\left[\big(\PHI^\top \otimes \I\big) \, \vecc{\W}\right] \\[0.1cm]
-    &= \big(\PHI^\top \otimes \I\big) \text{Cov}\big[\vecc{\W}\big] \big(\PHI \otimes \I\big) \\[0.2cm]
-    &= \gamma^{-1}  \big(\PHI^\top \otimes \I\big) \big(\I \otimes \HH_N^{2} \big) \big(\PHI \otimes \I\big) \\[0.2cm]
+    &= \big(\PHI^\top \otimes \I\big) \, \text{Cov}\big[\vecc{\W}\big] \, \big(\PHI \otimes \I\big) \\[0.2cm]
+    &= \gamma^{-1}  \big(\PHI^\top \otimes \I\big) \, \big(\I \otimes \HH_N^{2} \big) \, \big(\PHI \otimes \I\big) \\[0.2cm]
     &= \gamma^{-1} \big( \PHI^\top \PHI \big) \otimes \HH_N^2
 \end{align*}
 
@@ -251,12 +253,85 @@ This preconditioner transforms the coefficient matrix into
 
 \subsection{Model description}
 
-Consider a sequence of graph signals 
+In this model, we consider a sequence of signals $\y_t$, which are regularly sampled over a static $N$-node graph and may contain arbitrary missing values. As with both GSR and KGR, the missing values in each signal are indicated by a corresponding binary sensing vector $\s_t$. At each node of this graph, for each time instant under consideration, a length-$M$ vector of explanatory variables exists. The objective is to make us of both the node-level covariates and the network topology to estimate the missing values in the graph signal. The input data for this model can therefore be described by 
 
-\subsection{Regression with node-level covariates}
+\begin{align*}
+    \text{input data} &= \Big\{ \left( \big\{ \x_{nt} \in \R^M \big\}_{n=1}^N, \; \y_t \in \R^N, \; \s_t \in [0, 1]^N \right)\Big\}_{t=1}^T \\[0.2cm]
+    &= \Xt \in \R^{N \times T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}
+\end{align*}
 
-Hello
+Here, $\Y$ and $\Ss$ have the same meaning as in previous sections, and $\Xt$ is now an order-3 tensor, with three independent axes representing node number, time, and covariate number respectively. To refer to a specific covariate measured across the whole graph, at every time instant, we use the notation $\X_m \in \R^{N \times T}$. We use the symbol $\X$ to refer to the matrix of shape $(NT \times M)$, which horizontally stacks each vectorised $\X_m$, that is
 
-\subsection{Convergence properties}
+\begin{equation*}
+    \X \in \R^{NT \times M} = \begin{bmatrix} \vecc{\X_1} & \vecc{\X_2} & \dots & \vecc{\X_M} \end{bmatrix}    
+\end{equation*}
 
-Hello
+The RNC model assumes that every element of the observed graph signal $\Y$ can be represented as the sum of an intercept term, a linear combination of the node-level covariates, and some Gaussian noise. However, the intercept term is flexible in the sense that each node/time can have a distinct value. To avoid underspecification, the model postulates that the intercepts are smooth with respect to the graph's topology. This is represented as follows. 
+
+\begin{equation}
+    \vecc{\Y} = \vecc{\Ss} \circ \big( \alphaa + \X \betaa  + \vecc{\E} \big)
+\end{equation}
+
+In this context, $\alphaa \in \R^{NT}$ represents the flexible intercept term, $\betaa \in \R^{M}$ the vector of regression coefficients, and $\E \in \R^{N \times T}$ a matrix of independent and identically distributed Gaussian noise with unit variance. Furthermore, the above expression can be restated in terms of a single model coefficient vector $\thetaa$ as follows.
+
+\begin{equation}
+    \label{eq:rnc_stat_model_theta}
+    \vecc{\Y} = \vecc{\Ss} \circ \Big( \big[ \I_{NT} \;\; \X \big]\thetaa  + \vecc{\E} \Big)
+\end{equation}
+
+where $\big[ \I_{NT} \;\; \X \big] \in \R^{NT \times (NT + M)}$ is a block matrix consisting of the $(NT \times NT)$ identity matrix alongside $\X \in \R^{NT \times N}$, and $\thetaa$ is the block vector consisting of $\alphaa$ stacked on top of $\betaa$, that is, 
+
+\begin{equation}
+    \thetaa \in \R^{NT + M} = \begin{bmatrix} \alphaa \\ \betaa \end{bmatrix}
+\end{equation}
+
+Given \cref{eq:rnc_stat_model_theta}, we can write the probability distribution for $\Y \, | \, \thetaa$ as follows.  
+
+\begin{equation}
+    \vecc{\Y} \, | \, \thetaa \sim \mathcal{N}\left(\vecc{\Ss} \circ \Big( \big[ \I_{NT} \;\; \X \big]\thetaa \Big), \; \diag{\vecc{\Ss}}\right)
+\end{equation}
+
+In order to complete the specification of the Bayesian model, we need a prior distribution for $\thetaa$. In this case, we can independently combine both a graph-spectral prior for the $\alphaa$ section and an L2 prior for the $\betaa$ section. This can be written as follows. 
+
+\begin{equation}
+    \thetaa \sim \mathcal{N}\left( \mathbf{0}, \; \begin{bmatrix} \gamma^{-1} \HH^2 & \mathbf{0} \\ \mathbf{0} & \lambda^{-1} \I_M \end{bmatrix} \right)
+\end{equation}
+
+Here, $\HH \in \R^{NT \times NT}$ is a graph filter defined to act over the entire T-V product graph. This both encodes the smoothness assumption for the flexible intercept term, and provides regularisation for the regression coefficients. Given this, the posterior distribution over $\thetaa$ is given by 
+
+\begin{equation}
+    \thetaa \, | \, \Y \sim \mathcal{N}\left(\widetilde{\PP}^{-1} \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}, \, \widetilde{\PP}^{-1}\right)
+\end{equation}
+
+where 
+
+\begin{equation}
+    \widetilde{\PP} \in \R^{(NT + M) \times (NT + M)}= 
+    \begin{bmatrix}
+     \D_\Ss + \gamma \HH^{-2} & \D_\Ss  \X \\
+     \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+    \end{bmatrix}
+\end{equation}
+
+
+As before, $\D_\Ss = \diag{\vecc{\Ss}}$. 
+
+\subsection{Solving for the posterior mean}
+
+In the case of RNC, there is no simple or convenient way to reuse the SIM method to solve for the posterior mean. To see this, consider splitting the matrix $\widetilde{\PP}$ into $\M - \N$ where 
+
+\begin{equation*}
+    \M = 
+    \begin{bmatrix}
+        \I_{NT} + \gamma \HH^{-2} & \mathbf{0} \\
+        \mathbf{0} & \lambda \I_M   
+       \end{bmatrix}, 
+       \aand \N = \begin{bmatrix}
+        \D_{\Ss'} & -\D_\Ss  \X \\
+        -\X^\top \D_\Ss & -\X^\top\D_\Ss \X 
+       \end{bmatrix}
+\end{equation*}
+
+While $\M$ is indeed still easy to invert, the eigenvalues of both $\M$ and $\N$ are no longer guaranteed to have an absolute value of less than one. As such, convergence is no longer guaranteed. This could in theory be mitigated by 
+
+\section{Dynamic Regression with Network Cohesion (DRNC)}
