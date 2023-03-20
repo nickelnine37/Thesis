@@ -94,7 +94,7 @@ Each definition of a graph product corresponds to the union of a specific subset
 
 \begin{figure}[t]
     \begin{center}
-        \includegraphics[width=\linewidth]{Figures/product_graphs.pdf}
+        \includegraphics[width=0.95\linewidth]{Figures/product_graphs.pdf}
     \end{center}
     \caption[Graphical depiction of the standard graph products]{A graphical depiction of the four standard graph products}
     \label{fig:graph_products}
@@ -121,21 +121,11 @@ Consider the eigendecompositions of $\LL_A$ and $\LL_B$.
 
 where $\U_A$ and $\U_B$ are the respective orthonormal eigenvector matrices, and $\LAM_A$ and $\LAM_B$ are the diagonal eigenvalue matrices given by
 
-\begin{equation}
-    \LAM_A = \begin{bmatrix}
-        \lambda_1^{(A)}, &                 &        &                 \\
-                         & \lambda_2^{(A)} &        &                 \\
-                         &                 & \ddots &                 \\
-                         &                 &        & \lambda_A^{(A)} \\
-    \end{bmatrix}
+\begin{equation*}
+    \LAM_A = \diag{\begin{bmatrix} \lambda_1^{(A)} & \lambda_2^{(A)} & \dots & \lambda_A^{(A)} \end{bmatrix}},
     \aand
-    \LAM_B = \begin{bmatrix}
-        \lambda_1^{(B)}, &                 &        &                 \\
-                         & \lambda_2^{(B)} &        &                 \\
-                         &                 & \ddots &                 \\
-                         &                 &        & \lambda_B^{(B)} \\
-    \end{bmatrix}
-\end{equation}
+    \LAM_B = \diag{\begin{bmatrix} \lambda_1^{(B)} & \lambda_2^{(B)} & \dots & \lambda_B^{(B)} \end{bmatrix}}
+\end{equation*}
 
 Given these definitions, table \ref{tab:product_graph_spectra} gives information about the spectral decomposition of the standard graph products.
 
@@ -359,14 +349,14 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
     In particular, this reduces both of the following procedures
 
     \begin{equation*}
-        \text{GFT}(\y) = \U^\top \y \aand \text{IGFT}(\y) = \U \y
+        \text{GFT}(\y) = \U_T^\top \y \aand \text{IGFT}(\y) = \U_T \y
     \end{equation*}
 
-    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. In particular, we varied $T$ from 10 to 15,000 in 20 equally spaced increments, and measured the mean time to compute $\U^\top \y$ across five independent trials using both the standard matrix multiplication and the Fast Cosine Transform method. As is visible, the difference becomes extremely pronounced as $T$ grows large.
+    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. In particular, we varied $T$ from 10 to 15,000 in 20 equally spaced increments, and measured the mean time to compute $\U_T^\top \y$ across five independent trials using both the standard matrix multiplication and the Fast Cosine Transform method. As is visible, the difference becomes extremely pronounced as $T$ grows large.
 
     % \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=\linewidth]{Figures/DCT.pdf}
+        \includegraphics[width=0.9\linewidth]{Figures/DCT.pdf}
     \end{center}
     % \caption[Run time comparison for DCT]{A graphical depiction of the four standard graph products}
     % \label{fig:DCT}
@@ -660,22 +650,16 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
 
 \begin{equation}
     \label{eq:Z_post}
-    \vecc{\Z} = \big( \C + \gamma \I_T \otimes \I_N \big) ^{-1} \vecc{\G \circ (\U_N^\top \Y \U_T)}
+    \vecc{\Z} = \Big( \D_{\G} \big( \U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G} + \gamma \I_{NT} \Big)^{-1} \vecc{\G \circ \big(\U_N^\top \Y \U_T\big)}
 \end{equation}
 
-\noindent where $\C$ is the symmetric PSD matrix
+\noindent where we have abbreviated $\diag{\vecc{\G}}$ and $\diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
+
+\begin{multline}
+    \mat{\Big( \D_{\G} \big( \U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G} + \gamma \I_{NT} \Big) \, \vecc{\RR}} \\ = \gamma \RR + \G \circ \left(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\right) 
+\end{multline}
 
 
-\begin{equation}
-    \label{eq:Q}
-    \C = \D_{\G} \, \big(\U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G}
-\end{equation}
-
-\noindent where we have abbreviated $\diag{\vecc{\G}}$ and $\diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix $\C + \gamma \I$ is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
-
-$$
-\mat{\big(\C + \gamma \I \big)\vecc{\RR}} = \gamma \RR + \G \circ \Bigg(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\Bigg) 
-$$
 
 This has $O(N^2T + NT^2)$ complexity at each step which may be  reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
 

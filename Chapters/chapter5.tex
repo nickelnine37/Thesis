@@ -4,8 +4,23 @@
 
 \label{chap:kgr_rnc_2d}
 
-In this chapter, we build on the results from \cref{chap:gsr_2d} to solve several Bayesian regression models for graph signals. 
+In this chapter, we turn our attention to multivariate regression models for graph signals. In particular, we are interested in predicting the value of a graph signal given a set of explanatory variables which change over time. As in the previous cha
 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{Figures/KGR_diagram.pdf}
+    \caption[Kernel Graph Regression diagram]{The structure of input data for which the KGR model is relevant. There are $T$ graph signals $\y_t$ measured over a static graph, each with independent missing data (indicated in white), and each with its own unique vector of explanatory variables $\x_t$. }
+    \label{fig:KGR_diagram}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{Figures/RNC_diagram.pdf}
+    \caption[Regression with Network Cohesion diagram]{The structure of input data for which RNC is relevant. There are $T$ graph signals $\y_t$ measured over a static graph, each with independent missing data (indicated in white), and each with its own unique vector of explanatory variables $\x_t$. }
+    \label{fig:RNC_diagram}
+\end{figure}
+  
+  
 
 \section{Kernel Graph Regression with Unrestricted Missing Data Patterns}
 
@@ -66,14 +81,14 @@ where $\Ss \in [0, 1]^{N \times T}$ is the binary sensing matrix as defined in \
     \vecc{\Y} \, | \, \W \sim \mathcal{N}\big( \vecc{\Ss \circ (\W \PHI)}, \; \I \, \big)
 \end{equation}
 
-In order to find the posterior distribution over the model coefficients $\W$, we must specify a prior. This should capture the assumption that predicted signals are expected to be smooth with respect to the topology of the graph. We assert that an appropriate prior for $\W$ is 
+To determine the posterior distribution of the model coefficients $\W$, it is necessary to specify a prior that reflects the assumption that predicted signals are expected to be smooth with respect to the graph's topology. We propose that an appropriate prior for $\W$ is given by
 
 \begin{equation}
-    \label{eq:W_prior}
-    \vecc{\W} \sim \mathcal{N}\left(\mathbf{0}, \; \gamma^{-1} \I_P \otimes \HH_N^{2}\right)
+\label{eq:W_prior}
+\vecc{\W} \sim \mathcal{N}\left(\mathbf{0}, \; \gamma^{-1} \I_P \otimes \HH_N^{2}\right)
 \end{equation}
 
-where $\HH_N \in \R^{N}$ is a graph filter constructed according to one of the univariate filter functions defined in \cref{tab:iso_filters}, and $\gamma$ is a hyperparameter representing the prior precision. The justification for this prior is as follows. Consider a random graph signal which is constructed as $\W \boldsymbol{\phi}$ where both $\W$ and $\boldsymbol{\phi}$ have Gaussian iid entries with zero mean and unit variance. The probability distribution of their product will also be an iid multivariate Gaussian with zero mean. Consider now smoothing this signal by applying a graph filter $\HH_N$. The resultant signal will have the same probability distribution as $\W \boldsymbol{\phi}$ if instead $\W$ was drawn from the distribution given in \cref{eq:W_prior}. Therefore, the effect of this prior can be understood as promoting the probability of smooth signals. 
+where $\HH_N \in \R^{N}$ is a graph filter constructed according to one of the univariate filter functions defined in \cref{tab:iso_filters}, and $\gamma$ is a hyperparameter representing the prior precision. The rationale for this prior is as follows. Suppose we have a random graph signal constructed as $\W \boldsymbol{\phi}$, where both $\W$ and $\boldsymbol{\phi}$ have Gaussian i.i.d. entries with zero mean and unit variance. The probability distribution of their product will also be an i.i.d. multivariate Gaussian with zero mean. If we smooth this signal by applying a graph filter $\HH_N$, the resulting signal will have the same probability distribution as $\W \boldsymbol{\phi}$ if instead $\W$ was drawn from the distribution specified in \cref{eq:W_prior}. Therefore, the effect of this prior is to increase the likelihood of smooth signals.
 
 % https://stats.stackexchange.com/questions/28229/variance-of-the-product-of-a-random-matrix-and-a-random-vector
 
@@ -225,26 +240,36 @@ The SIM algorithm then proceeds in much the same way as described in \cref{sec:S
     \text{with} \quad\quad\quad \F_0 & = \U_N \, \big( \bar{\J}  \circ \big( \U_N^\top \, \Y \, \V \big) \big) \, \V^\top 
 \end{align}
 
+Note that each update step can be performed with $O(N^2T + NT^2)$ multiplications. 
 
 Next, let us return to the CGM. Recall that the strategy for solving the linear system in \cref{eq:lin_system_kgr} is to utilise a symmetric a preconditioner $\PSI$ such that the new system is given by 
 
 \begin{equation}
-    \Big(\PSI^\top  \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \PSI  \Big) \Big(\PSI^{-1}\, \vecc{ \F } \Big) = \PSI^\top \, \vecc{\Y},
+    \Big(\bar{\PSI} ^\top  \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \bar{\PSI}   \Big) \Big(\bar{\PSI} ^{-1}\, \vecc{ \F } \Big) = \bar{\PSI} ^\top \, \vecc{\Y},
 \end{equation}
 
-$\PSI$ should be chosen such that new coefficient matrix $\PSI^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \PSI$ has a reduced condition number. In the present case, an effective preconditioner is 
+$\bar{\PSI} $ should be chosen such that new coefficient matrix $\bar{\PSI} ^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \bar{\PSI} $ has a reduced condition number. In the present case, an effective preconditioner is 
 
 \begin{equation}
-    \PSI = \big(\V \otimes \U_N \big) \, \diag{\vecc{\bar{\G}}} = \bar{\U} \D_{\bar{\G}}.
+    \bar{\PSI} = \big(\V \otimes \U_N \big) \, \diag{\vecc{\bar{\G}}} = \bar{\U} \D_{\bar{\G}}.
 \end{equation}
 
 This preconditioner transforms the coefficient matrix into 
 
 \begin{align*}
-    \PSI^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \PSI  &= \D_{\bar{\G}} \, \big(\V^\top \otimes \U_N^\top \big) \, \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \,  \big(\V \otimes \U_N \big) \, \D_{\bar{\G}}   \\[0.1cm]
+    \bar{\PSI} ^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \bar{\PSI}   &= \D_{\bar{\G}} \, \big(\V^\top \otimes \U_N^\top \big) \, \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \,  \big(\V \otimes \U_N \big) \, \D_{\bar{\G}}   \\[0.1cm]
     &= \D_{\bar{\G}} \, \big(\V^\top \otimes \U_N^\top \big) \, \D_\Ss \, \big(\V \otimes \U_N \big) \, \D_{\bar{\G}} + \gamma \I \\[0.1cm]
     &= \D_{\bar{\G}} \, \bar{\U} \, \D_\Ss \, \bar{\U}^\top \, \D_{\bar{\G}} + \gamma \I 
 \end{align*}
+
+Note that we can efficiently compute the action of multiplying this preconditioned matrix onto an arbitrary vector $\vecc{\RR} \in \R^{NT}$ as follows. 
+
+$$
+\mat{\big(\D_{\bar{\G}} \, \bar{\U} \, \D_\Ss \, \bar{\U}^\top \, \D_{\bar{\G}} + \gamma \I  \big)\, \vecc{\RR}} = \gamma \RR + \bar{\G} \circ \left(\U_N^\top \Big( \Ss \circ \big(\U_N (\bar{\G} \circ \RR) \V^\top \big) \Big) \V\right) 
+$$
+
+As with the SIM, this action can be performed with $O(N^2T + NT^2)$ multiplications. 
+
 
 
 \section{Regression with Network Cohesion}
@@ -253,7 +278,7 @@ This preconditioner transforms the coefficient matrix into
 
 \subsection{Model description}
 
-In this model, we consider a sequence of signals $\y_t$, which are regularly sampled over a static $N$-node graph and may contain arbitrary missing values. As with both GSR and KGR, the missing values in each signal are indicated by a corresponding binary sensing vector $\s_t$. At each node of this graph, for each time instant under consideration, a length-$M$ vector of explanatory variables exists. The objective is to make us of both the node-level covariates and the network topology to estimate the missing values in the graph signal. The input data for this model can therefore be described by 
+In this model, we consider a sequence of signals $\y_t$, which are regularly sampled over a static $N$-node graph and may contain arbitrary missing values. As with both GSR and KGR, the missing values in each signal are indicated by a corresponding binary sensing vector $\s_t$. At each node of this graph, for each time instant under consideration, there exists a length-$M$ vector of explanatory variables. The objective is to make us of both the node-level covariates and the network topology to estimate the missing values in the graph signal. The input data for this model can therefore be described by 
 
 \begin{align*}
     \text{input data} &= \Big\{ \left( \big\{ \x_{nt} \in \R^M \big\}_{n=1}^N, \; \y_t \in \R^N, \; \s_t \in [0, 1]^N \right)\Big\}_{t=1}^T \\[0.2cm]
@@ -332,6 +357,55 @@ In the case of RNC, there is no simple or convenient way to reuse the SIM method
        \end{bmatrix}
 \end{equation*}
 
-While $\M$ is indeed still easy to invert, the eigenvalues of both $\M$ and $\N$ are no longer guaranteed to have an absolute value of less than one. As such, convergence is no longer guaranteed. This could in theory be mitigated by 
+Although $\M$ remains easy to invert, the eigenvalues of both $\M$ and $\N$ are no longer guaranteed to have an absolute value of less than one, resulting in a potential lack of convergence. This issue is not unique to a specific permutation of $\M$ and $\N$, but rather persists across multiple arrangements. 
+
+On the other hand, we can find an effective preconditioner $\widetilde{\PSI}  \in \R^{(NT + M) \times (NT + M)}$ for use with the CGM, which transforms the linear system as follows. 
+
+\begin{equation}
+    \left( \widetilde{\PSI}^\top \begin{bmatrix}
+        \D_\Ss + \gamma \HH^{-2} & \D_\Ss  \X \\
+        \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+       \end{bmatrix}  \widetilde{\PSI} \right) \left( \widetilde{\PSI}^{-1} \thetaa \right)   = \widetilde{\PSI}^\top \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}
+\end{equation}
+
+
+To obtain a suitable value for $\widetilde{\PSI}$, first let us define the eigendecomposition of $\X^\top\D_\Ss \X$. Note that this has a cost of $O(M^3)$ to compute. 
+
+\begin{equation}
+    \X^\top\D_\Ss \X = \U_M \LAM_M \U_M^\top
+\end{equation}
+
+Since $\X^\top\D_\Ss \X$ is positive semi-definite, $\U_M$ can be chosen to be orthonormal. Next, let us also introduce the diagonal matrix $\D_M$, which has the following definition 
+
+\begin{equation}
+    \D_M = \big(\LAM_M + \lambda \I_M \big)^{-1/2}
+\end{equation}
+
+We propose that an effective preconditioner is given by 
+
+\begin{equation}
+    \widetilde{\PSI} = 
+    \begin{bmatrix}
+        \big( \U_T \otimes \U_N \big) \D_\G & \mathbf{0} \\
+        \mathbf{0} & \U_M \D_M 
+    \end{bmatrix} =  \begin{bmatrix}
+        \U \D_\G & \mathbf{0} \\
+        \mathbf{0} & \U_M \D_M 
+    \end{bmatrix}
+\end{equation}
+
+We choose this preconditioner because it transforms the block-diagonal elements of the original coefficient matrix $\widetilde{\PP}$ into matrices with eigenvalues bounded between $1 + \gamma$ and $\gamma$. In particular, the new coefficient matrix is given by
+
+\begin{equation*}
+    \widetilde{\PSI}^\top \widetilde{\PP}  \widetilde{\PSI} = 
+       \begin{bmatrix}
+        \D_\G \U^\top \D_\Ss \U \D_\G + \gamma \I_{NT}  &  \D_\G \U^\top \D_\Ss \X \U_M \D_M \\[0.1cm] 
+        \D_M \U_M^\top \X^\top \D_\Ss \U \D_\G & \I_M
+        \end{bmatrix}
+\end{equation*}
+
+% Unfortunately, it is difficult to precisely quantify the spectrum of this block matrix. 
+
+
 
 \section{Dynamic Regression with Network Cohesion (DRNC)}
