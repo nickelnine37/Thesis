@@ -4,23 +4,30 @@
 
 \label{chap:kgr_rnc_2d}
 
-In this chapter, we turn our attention to multivariate regression models for graph signals. In particular, we are interested in predicting the value of a graph signal given a set of explanatory variables which change over time. As in the previous cha
+In this chapter, we focus on time-series regression models for graph signals. Specifically, our interest lies in the analysis of repeated measurements of a graph signal, where each sample is associated with a set of explanatory variables. The primary objective is to construct a predictive model capable of estimating these signals as a function of the aforementioned explanatory variables. Although regression has traditionally garnered less attention within the Graph Signal Processing (GSP) community compared to reconstruction, this framework holds significant relevance for numerous real-world applications. Consequently, it warrants further exploration and in-depth examination.
+
+In the subsequent discussion, we emphasise two distinct data scenarios that may emerge within the context of graph signal regression. In the first scenario, the explanatory variables are exogenous or `global' with respect to the graph signals. In this setting, each graph signal $\y_t$ is accompanied by a feature vector $\x_t$, which is global in the sense that it is associated with the entire signal rather than a specific node. For example, consider predicting the quarterly earnings growth for a network of firms based on economic factors such as interest rates, inflation, and unemployment. A visual representation of the data present in such a scenario can be found in \cref{fig:KGR_diagram}.
+
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\linewidth]{Figures/KGR_diagram.pdf}
-    \caption[Kernel Graph Regression diagram]{The structure of input data for which the KGR model is relevant. There are $T$ graph signals $\y_t$ measured over a static graph, each with independent missing data (indicated in white), and each with its own unique vector of explanatory variables $\x_t$. }
+    \caption[Graph signal regression with exogenous variables]{A visual representation of a time-series graph signal regression problem with exogenous variables. Here, there are $T$ graph signals measured over a static graph, each with independent missing data (indicated in white). Each signal $\y_t$ is accompanied by a unique vector of global explanatory variables $\x_t$. }
     \label{fig:KGR_diagram}
 \end{figure}
+
+In the second scenario under consideration, the explanatory variables are 'local' to the nodes of the graph signal. This implies that for each graph signal $\y_t$, every node possesses an individual vector of explanatory variables $\x_{nt}$. For instance, consider a network of air quality monitoring stations with the objective of predicting the concentration of a specific airborne pollutant. Each station may simultaneously track various local factors, including temperature, pressure, precipitation, and so on. \Cref{fig:RNC_diagram} offers a visual depiction of the data encountered in this particular scenario.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\linewidth]{Figures/RNC_diagram.pdf}
-    \caption[Regression with Network Cohesion diagram]{The structure of input data for which RNC is relevant. There are $T$ graph signals $\y_t$ measured over a static graph, each with independent missing data (indicated in white), and each with its own unique vector of explanatory variables $\x_t$. }
+    \caption[Graph signal regression with local variables]{A visual representation of a time-series graph signal regression problem with local explanatory variables. As before, there are $T$ graph signals measured over a static graph, each with independent missing data (indicated in white). In this case, each signal $\y_t$ has a vector of explanatory variables $\x_{nt}$ for every node in the signal. }
     \label{fig:RNC_diagram}
 \end{figure}
   
-  
+The core goal of this chapter is to derive some useful extensions to existing methods for graph signal regression in both the local and global variable context. In the case of exogenous explanatory variables, we focus on Kernel Graph Regression (KGR) \citep{Venkitaraman2019,Elias2022} and the closely related topic of Gaussian Processes over Graphs (GPoG) \citep{Venkitaraman2020}. A notable issue in practice with existing KGR-type models is the assumption that the input signals $\y_t$ are always fully observed, meaning there is no missing data. As discussed in \cref{chap:gsr_2d}, a prevalent characteristic of graph signals in real-world applications is the high occurrence of missing data. This situation forces the end user to either eliminate entire rows (i.e., the complete time series for a specific node) if any elements in the series are not recorded, which may result in the loss of valuable topological information, or alternatively employ interpolation methods, which could prove inadequate for extended strings of missing data. Our proposed model accommodates fully general patterns of missing data in the input signals, enabling users to optimally utilise all available data.
+
+For the scenario involving local explanatory variables, we enhance a model known as Regression with Network Cohesion (RNC) \citep{Li2019,Le2022} by incorporating several beneficial extensions. Specifically, the original RNC model was designed for a single graph signal rather than multiple repeated samples. Moreover, the original specification did not account for the presence of missing data. Consequently, we advance the model in at least two significant directions.
 
 \section{Kernel Graph Regression with Unrestricted Missing Data Patterns}
 
@@ -38,7 +45,7 @@ Consider a sequence of graph signals $\y_t$, measured on a static $N$-node graph
     &= \X \in \R^{T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}
 \end{align*}
 
- In the following, we assume that the explanatory variables do not contain missing values. However, if any missing values are present, conventional methods such as those described in \cite{Little2019} can be employed to fill them. It should be noted that, with this model specification, there is no rigid distinction between training data and data for which we would like to make a prediction. To indicate a particular value of $\x_t$ for which a comprehensive prediction should be generated, one can set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
+ In the following, we assume that the explanatory variables do not contain missing values. However, if any missing values are present, conventional methods such as those described in \cite{Little2019} can be employed to fill them. It should be noted that, with this model specification, there is no rigid distinction between in-sample and out-of-sample prediction. To indicate a particular value of $\x_t$ for which a comprehensive prediction should be generated, one can set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
 
 As in \cref{sec:problem_statement_2d}, the graph signals can be stacked together into a matrix $\Y$ of shape $(N \times T)$. Note that this in contrast to the typical shape found in multivariate regression, which is most commonly $(T \times N)$ with the index referring to each sample varying first, however, we adopt the opposite convention here for the reasons outlined \cref{sec:gsp_cpg}. 
 
