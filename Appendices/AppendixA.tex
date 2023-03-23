@@ -174,3 +174,112 @@
     
     \end{proof}
     
+
+\begin{theorem}
+    \label{the:SIM_convergence}
+    The number of steps required to reach a given level of precision for matrix splitting methods follows 
+
+    \begin{equation}
+        n_{\text{SIM}} \propto -\frac{1}{\log \rho(\M^{-1}\N)}
+    \end{equation}
+
+    where the coefficient matrix is split as $\M - \N$. 
+\end{theorem}
+
+\begin{proof}
+    In the SIM, we have that 
+
+\begin{equation}
+    \label{eq:SIM_F_true}
+\M \vecc{\F} =  \N \vecc{\F} + \vecc{\Y}
+\end{equation}
+
+where $\vecc{\F}$ represents the true solution to the linear system. This leads directly to an update equation given by
+
+\begin{equation}
+    \label{eq:SIM_F_update}
+\M \vecc{\F_k} = \N \vecc{\F_{k-1}} + \vecc{\Y}
+\end{equation}
+
+Subtracting \cref{eq:SIM_F_true} from \cref{eq:SIM_F_update} gives
+
+\begin{align}
+    \M \vecc{\F_k} - \M \vecc{\F} &= \N \vecc{\F_{k-1}} - \N \vecc{\F}  \notag \\
+    \vecc{\E_k} &= \M^{-1} \N \vecc{\E_{k-1}} \notag \\
+     &= \big( \M^{-1} \N \big)^{k} \vecc{\E_{0}}
+\end{align}
+
+where we denote the error at the $k$-th iteration as $\vecc{\E_k} = \vecc{\F_k} - \vecc{\F}$. From this it is clear to see that convergence will be achieved so long as the spectral radius $\rho(\M^{-1}\N)$ is less than one. If this condition holds then,
+
+\begin{equation}
+    \lim_{k \rightarrow \infty} \vecc{\E_{k}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_0} = \mathbf{0} .
+\end{equation}
+
+In general, the number of iterations required to achieve some specified reduction in the magnitude of the error is proportional to one over the logarithm of the spectral radius
+\end{proof}
+
+\begin{theorem}
+    \label{the:gamma_deriv_negative}
+    The values of $n_{\text{SIM}}$ and $n_{\text{CGM}}$ always increase when $\gamma$, within its valid range, decreases in both the strong a weak filter limits. 
+\end{theorem}
+
+\begin{proof}
+    Consider each of the following expressions.
+
+    \begin{equation*}
+        n_{\text{SIM}}(\gamma ; \; \beta \rightarrow 0) =  \frac{1}{\log(1 + \gamma)}
+     \end{equation*}
+
+     \begin{equation*}
+        n_{\text{CGM}}(\gamma ; \; \beta \rightarrow 0) = \sqrt{\frac{1}{\gamma} + 1}
+     \end{equation*}
+
+    \begin{equation*}
+        n_{\text{SIM}}(\gamma, m; \; \beta \rightarrow \infty) =  \frac{1}{\log(1 + \gamma) - \log m}
+    \end{equation*}
+
+    \begin{equation*}
+        n_{\text{CGM}}(\gamma, m; \; \beta \rightarrow \infty) = \sqrt{\frac{1 - m + \gamma}{\gamma}}
+    \end{equation*}
+
+In order to prove the theorem, we must show that the partial derivative of each expression with respect to $\gamma$ is strictly negative over the domain $0 \leq \gamma \leq \infty$. Let us compute this for each expression in turn. 
+
+\begin{equation*}
+    \frac{\partial \,  n_{\text{SIM}}(\gamma ; \; \beta \rightarrow 0)}{\partial \, \gamma} = - \frac{1}{(1 + \gamma)\log^2(1 + \gamma)}
+\end{equation*}
+
+\begin{equation*}
+    \frac{\partial \,  n_{\text{CGM}}(\gamma ; \; \beta \rightarrow 0)}{\partial \, \gamma}  = - \frac{1}{2 \gamma^2 \sqrt{\frac{1}{\gamma} + 1}}
+\end{equation*}
+
+\begin{equation*}
+    \frac{\partial \,  n_{\text{SIM}}(\gamma, m ; \; \beta \rightarrow \infty)}{\partial \, \gamma}  =  - \frac{1}{(1 + \gamma)\big(\log(1 + \gamma) - \log(m) \big)^2}
+\end{equation*}
+
+\begin{equation*}
+    \frac{\partial \,  n_{\text{CGM}}(\gamma, m ; \; \beta \rightarrow \infty)}{\partial \, \gamma}  = - \frac{1 - m}{2 \gamma^2 \sqrt{\frac{1 - m + \gamma}{\gamma}}}
+\end{equation*}
+
+In each of these expressions we have a fraction for which both the numerator and denominator can easily be shown to be strictly positive over the valid ranges of $\gamma$ and $m$. Each expression also includes a negative sign in front. As such, every expression is strictly negative. 
+
+\end{proof}
+
+\begin{theorem}
+    \label{the:m_deriv}
+    In the limit of a strong filter, for any fixed value of $\gamma$, the number of iterations for convergence will always increase as the proportion of missing data $m$ increases for the SIM, whereas it the number will always decrease for the CGM.  
+\end{theorem}
+
+\begin{proof}
+    To prove this theorem it suffices to show that the partial derivative of $n_\text{SIM}$ with respect to $m$ is always positive, whereas the partial derivative of $n_\text{CGM}$ with respect to $m$ is always negative. They are respectively given by 
+
+    \begin{equation*}
+        \frac{\partial \,  n_{\text{SIM}}(\gamma, m ; \; \beta \rightarrow \infty)}{\partial \, m}  =  \frac{1}{m\big(\log(1 + \gamma) - \log(m) \big)^2}
+    \end{equation*}
+    
+    \begin{equation*}
+        \frac{\partial \,  n_{\text{CGM}}(\gamma, m ; \; \beta \rightarrow \infty)}{\partial \, m}  = - \frac{1}{2 \gamma \sqrt{\frac{1 - m + \gamma}{\gamma}}}
+    \end{equation*}
+
+    Since $\gamma$ is strictly positive and $m$ must be in the range $0 \leq m \leq 1$, clearly the first expression is always positive whereas the second is always negative. 
+    
+\end{proof}

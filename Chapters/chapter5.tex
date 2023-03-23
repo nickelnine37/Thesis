@@ -37,7 +37,7 @@ For the scenario involving local explanatory variables, we enhance a model known
 
 \label{sec:kgr_model_desc}
 
-Consider a sequence of graph signals $\y_t$, measured on a static $N$-node graph, each of which is accompanied by a corresponding explanatory vector $\x_t$ that encompasses $M$ distinct characteristics. Each graph signal may have unique and arbitrary missing data, as indicated by a binary vector $\s_t$, where ones represent successfully collected data and zeros signify missing data. Any absent data in $\y_t$ should be filled with zeros. Hence, the input data for this problem can be concisely described as follows. 
+Consider a sequence of graph signals $\y_t \in \R^M$, measured on a static $N$-node graph, each of which is accompanied by a corresponding explanatory vector $\x_t \in \R^M$ that encompasses $M$ distinct characteristics. Each graph signal may have unique and arbitrary missing data, as indicated by a binary vector $\s_t \in [0, 1]^N$, where ones represent successfully collected data and zeros signify missing data. Any absent data in $\y_t$ should be filled with zeros. Hence, the input data for this problem can be concisely described as follows. 
 
 
 \begin{align*}
@@ -58,13 +58,13 @@ Consider now a $P$-dimensional basis function representation of each explanatory
     \end{bmatrix}^\top
 \end{equation}
 
-In the following, we will assume that each element of $\y_t$ can be modelled as a noisy linear combination of these basis functions which may or may not have been observed. This is summarised in the following statistical model. 
+Let us assume that each element of $\y_t$ can be modelled as a noisy linear combination of these basis functions, which may or may not have been observed. This is summarised in the following statistical model. 
 
 \begin{equation}
     \y_t = \s_t \circ \big( \mspace{1mu} \W \boldsymbol{\phi}(\x_t) + \e_t \mspace{1mu} \big), \quad \for \; t = 1, 2, ..., T
 \end{equation}
 
-Here, $\W \in \R^{N \times P}$ represents the model coefficients defining the linear combination, and $\e_t \in \R^{N}$ is a vector of iid Gaussian noise with zero mean and unit variance. The basis function vectors can be horizontally stacked together to form a design matrix $\PHI$. 
+Here, $\W \in \R^{N \times P}$ represents the model coefficients defining the linear combination, and $\e_t \in \R^{N}$ is a vector of i.i.d. Gaussian noise with zero mean and unit variance. The basis function vectors can be horizontally stacked together to form a design matrix $\PHI$. 
 
 \begin{equation}
     \PHI \in \R^{P \times T} = \begin{bmatrix} 
@@ -82,24 +82,25 @@ Therefore, the statistical model can be written in matrix form as
     \Y = \Ss \circ \big( \mspace{1mu} \W \PHI + \E \mspace{1mu} \big)
 \end{equation}
 
-where $\Ss \in [0, 1]^{N \times T}$ is the binary sensing matrix as defined in \cref{sec:problem_statement_2d}, which is also each $\s_t$ stacked horizontally, and $\E \in \R^{N \times T}$ is a matrix of iid Gaussian noise with zero mean and unit variance. This implies that the probability distribution for $\vecc{\Y} \, | \, \W$ is given by 
+where $\Ss \in [0, 1]^{N \times T}$ is the binary sensing matrix as defined in \cref{sec:problem_statement_2d}, which is also each $\s_t$ stacked horizontally, and $\E \in \R^{N \times T}$ is a matrix of i.i.d. Gaussian noise with zero mean and unit variance. This implies that the probability distribution for $\vecc{\Y} \, | \, \W$ is given by 
 
 \begin{equation}
-    \vecc{\Y} \, | \, \W \sim \mathcal{N}\big( \vecc{\Ss \circ (\W \PHI)}, \; \I \, \big)
+    \vecc{\Y} \, | \, \W \sim \mathcal{N}\big( \vecc{\Ss \circ (\W \PHI)}, \; \I_{NT} \, \big)
 \end{equation}
 
-To determine the posterior distribution of the model coefficients $\W$, it is necessary to specify a prior that reflects the assumption that predicted signals are expected to be smooth with respect to the graph's topology. We propose that an appropriate prior for $\W$ is given by
+To determine the posterior distribution of the model coefficients $\W$, it is necessary to specify a prior that reflects the assumption that predicted signals are expected to be smooth with respect to the graph's topology. We assert that an appropriate prior for $\W$ is given by
 
 \begin{equation}
 \label{eq:W_prior}
 \vecc{\W} \sim \mathcal{N}\left(\mathbf{0}, \; \gamma^{-1} \I_P \otimes \HH_N^{2}\right)
 \end{equation}
 
-where $\HH_N \in \R^{N}$ is a graph filter constructed according to one of the univariate filter functions defined in \cref{tab:iso_filters}, and $\gamma$ is a hyperparameter representing the prior precision. The rationale for this prior is as follows. Suppose we have a random graph signal constructed as $\W \boldsymbol{\phi}$, where both $\W$ and $\boldsymbol{\phi}$ have Gaussian i.i.d. entries with zero mean and unit variance. The probability distribution of their product will also be an i.i.d. multivariate Gaussian with zero mean. If we smooth this signal by applying a graph filter $\HH_N$, the resulting signal will have the same probability distribution as $\W \boldsymbol{\phi}$ if instead $\W$ was drawn from the distribution specified in \cref{eq:W_prior}. Therefore, the effect of this prior is to increase the likelihood of smooth signals.
+Here, $\HH_N \in \R^{N}$ represents a graph filter constructed in accordance with one of the univariate filter functions defined in \cref{tab:iso_filters}, while $\gamma$ serves as a hyperparameter denoting the prior precision. The rationale for this prior, as explicated in \cite{Venkitaraman2020}, is as follows. Consider a random graph signal formulated as $\W \boldsymbol{\phi}$, where both $\W$ and $\boldsymbol{\phi}$ have Gaussian i.i.d. entries with zero mean and unit variance. The probability distribution of their product will also be an i.i.d. multivariate Gaussian with zero mean. By applying a graph filter $\HH_N$ to smooth this signal, the resulting signal will exhibit the same probability distribution as $\W \boldsymbol{\phi}$, assuming $\W$ was drawn from the distribution specified in \cref{eq:W_prior}. Consequently, this prior serves to enhance the likelihood of smooth signals.
+
 
 % https://stats.stackexchange.com/questions/28229/variance-of-the-product-of-a-random-matrix-and-a-random-vector
 
-Consider now a transformed variable $\F$ defined by $\F = \W \PHI$. Given that $\W$ has a prior distribution given in \cref{eq:W_prior}, we can ask what the implied prior over $\F$ is. Clearly, since the expected value of $\W$ is zero for all entries, the expected value of $\F$ should also be zero for all entries regardless of the value of $\PHI$. The covariance of $\F$ can also be computed easily. 
+Consider now a transformed variable $\F$ defined by $\F = \W \PHI$. Given that $\W$ has a prior distribution given in \cref{eq:W_prior}, we can ask what the implied prior for $\F \, | \, \PHI$ is. Clearly, since the expected value of $\W$ is zero for all entries, the expected value of $\F$ should also be zero for all entries regardless of the value of $\PHI$. The covariance of $\F$ can also be computed easily. 
 
 \begin{align*}
     \text{Cov}\big[\vecc{\F}\big] &= \text{Cov}\big[\vecc{\W \PHI}\big] \\[0.1cm]
@@ -112,7 +113,7 @@ Consider now a transformed variable $\F$ defined by $\F = \W \PHI$. Given that $
 Therefore, we can rewrite the model in terms of the new transformed variable as follows. 
 
 \begin{equation}
-    \vecc{\Y} \, | \, \F \sim \mathcal{N}\big(\, \vecc{\Ss \circ \F}, \, \I \, \big)
+    \vecc{\Y} \, | \, \F \sim \mathcal{N}\big(\, \vecc{\Ss \circ \F}, \, \I_{NT} \, \big)
 \end{equation}
 
 \begin{equation}
@@ -133,13 +134,13 @@ The final step to convert this into a non-parametric regression model is to appl
     \end{bmatrix}
 \end{equation}
 
-The trick is to characterise each inner product in terms of a predefined function such that $\boldsymbol{\phi}(\x_i)^\top\boldsymbol{\phi}(\x_j) = \kappa(\x_i, \x_j)$. This means that instead of mapping the explanatory variables via $\boldsymbol{\phi}$ and computing the inner product directly, it is done in a single operation, leaving the mapping implicit. This means we can replace the matrix $\PHI^\top \PHI$ with a so-called kernel matrix $\K \in \R^{T \times T}$, which has entries defined by 
+The trick is to characterise each inner product in terms of a predefined function such that $\boldsymbol{\phi}(\x_i)^\top\boldsymbol{\phi}(\x_j) = \kappa(\x_i, \x_j)$. This means that instead of mapping the explanatory variables via $\boldsymbol{\phi}$ and computing the inner product directly, it is done in a single operation, leaving the mapping implicit. This means we can replace the matrix $\PHI^\top \PHI$ with a so-called kernel (or \textit{Gram}) matrix $\K \in \R^{T \times T}$, which has entries defined by 
 
 \begin{equation}
     \K_{ij} =  \kappa(\x_i, \x_j)
 \end{equation}
 
-$\kappa(\cdot, \cdot)$ can be any valid Mercer kernel. A common example is the Gaussian kernel given below. 
+where $\kappa(\cdot, \cdot)$ is any valid Mercer kernel \citep{Rasmussen2005}. A common example is the Gaussian kernel given below. 
 
 \begin{equation}
     \kappa(\x_i, \x_j) = \exp\left(-\frac{|| \x_i - \x_j ||^2}{2 \sigma^2}\right)
@@ -159,7 +160,7 @@ In a similar manner to \cref{sec:problem_statement_2d}, the posterior distributi
     \vecc{\F} \, | \, \Y \sim \mathcal{N}\left(\bar{\PP}^{-1}\vecc{\Y}, \; \bar{\PP}^{-1}\right)
 \end{equation}
 
-where $\bar{\PP}$ is the posterior precision matrix, given by
+where $\bar{\PP}$ is the posterior precision matrix for $\vecc{\F}$, given by
 
 \begin{equation}
     \label{eq:P_post_kgr}
@@ -190,11 +191,13 @@ where $\K$ and $\HH_N$ have eigendecompositions given by
     \K = \V \LAM_K \V^\top, \aand \HH_N = \U_N \; g\left(\LAM_N\right)  \U_N^\top
 \end{equation}
 
-with $\LAM_K = \diag{\left[\lambda^{(K)}_1, \; \lambda^{(K)}_2, \; \dots, \;\lambda^{(K)}_T \right]}$, $\bar{\U} = \V \otimes \U_N$ and $\D_{\bar{\G}} = \diag{\vecc{\bar{\G}}}$, and $\bar{\G}$ has elements given by
+with $\LAM_K = \diag{\left[\lambda^{(K)}_1, \; \lambda^{(K)}_2, \; \dots, \;\lambda^{(K)}_T \right]}$, $\bar{\U} = \V \otimes \U_N$ and $\D_{\bar{\G}} = \diag{\vecc{\bar{\G}}}$. $\bar{\G} \in \R^{N \times T}$ has elements given by
 
 \begin{equation}
-    \bar{\G}_{nt} = g\left(\lambda^{(N)}_n\right) \sqrt{\lambda^{(K)}_t} 
+    \bar{\G}_{nt} = g\left(\lambda^{(N)}_n\right) \sqrt{\lambda^{(K)}_t} \quad \rightarrow \quad \D_{\bar{\G}} = \LAM_K^{1/2} \otimes g\left(\LAM_N\right) 
 \end{equation}
+
+
 
 Therefore, KGR is algebraically equivalent to GSR under the following change of variables:
 
@@ -207,7 +210,7 @@ As such, the iterative algorithms developed in \cref{chap:gsr_2d} can be largely
 
 \subsection{Solving for the posterior mean}
 
-We now briefly restate the SIM and CGM algorithms to highlight the small changes necessary to accommodate KGR. The goal is to solve the following linear system 
+We now briefly restate the SIM and CGM algorithms to highlight the small changes necessary to accommodate KGR with arbitrary missing data. The goal is to solve the following linear system 
 
 \begin{equation}
     \label{eq:lin_system_kgr}
@@ -231,7 +234,7 @@ where, as before, $\D_{\Ss'} = \diag{\mathbf{1} - \vecc{\Ss}}$. Consider the mat
     &= \bar{\U} \, \D_{\bar{\J}} \, \bar{\U}^\top 
 \end{align}
 
-where $\D_{\bar{\J}} = \diag{\vecc{\bar{\J}}}$, and $\bar{\J}$ has entries given by 
+where $\D_{\bar{\J}} = \diag{\vecc{\bar{\J}}}$, and $\bar{\J} \in \R^{N \times T}$ has entries given by 
 
 \begin{equation}
     \label{eq:Jnt2}
@@ -255,7 +258,7 @@ Next, let us return to the CGM. Recall that the strategy for solving the linear 
     \Big(\bar{\PSI} ^\top  \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \bar{\PSI}   \Big) \Big(\bar{\PSI} ^{-1}\, \vecc{ \F } \Big) = \bar{\PSI} ^\top \, \vecc{\Y},
 \end{equation}
 
-$\bar{\PSI} $ should be chosen such that new coefficient matrix $\bar{\PSI} ^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \bar{\PSI} $ has a reduced condition number. In the present case, an effective preconditioner is 
+$\bar{\PSI} $ should be chosen such that new coefficient matrix $\bar{\PSI} ^\top \big(\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} \big) \, \bar{\PSI} $ has a reduced condition number. In the present case, we assert that an effective preconditioner is given by 
 
 \begin{equation}
     \bar{\PSI} = \big(\V \otimes \U_N \big) \, \diag{\vecc{\bar{\G}}} = \bar{\U} \D_{\bar{\G}}.
