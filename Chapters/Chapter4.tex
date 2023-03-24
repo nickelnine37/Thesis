@@ -936,31 +936,28 @@ Consider now the parameter $\beta$, which characterises the strength of the grap
 
 Whilst the convergence rates of both the SIM and CGM have the same directional response to changes in $\gamma$ and $\beta$, they display the opposite behaviour when $m$ is varied. In particular, a higher proportion of missing value in $\Y$, corresponding to an increasing value of $m$, causes the number of iterations to rise for the SIM but fall for the CGM, at least in the limit of a strong filter as $\beta \rightarrow \infty$. This can be shown explicitly by taking the partial derivative of $n_\text{SIM}$ and $n_\text{CGM}$ with respect to $m$ and demonstrating that it is universally positive for the former and negative for the latter (which we show in \cref{the:m_deriv}). While $m$ has no effect for either the SIM or CGM in the limit as $\beta \rightarrow 0$, we can reasonably expect that it will have \textit{some} effect for intermediate values of $\beta$. This insight is especially important since, unlike $\gamma$ and $\beta$, $m$ is a feature of the data rather than an adjustable hyperparameter. 
 
+\subsection{Experimental validation}
+
+In order to verify aspects of this theoretically predicted behaviour, we ran a simple experiment using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance, and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in [0, 1]^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. This was carried out for three values of $m$: 0.05, 0.5 and 0.95, representing low, medium and high prevalence of missing data respectively. For each value of $m$, we compute the solution using both algorithms over a grid of 50 $\beta$ values and 50 $\gamma$ values which were logarithmically spaced between $10^{-1}$-$10^2$ and $10^{-4}$-$10^1$ respectively. The results are shown in \cref{fig:3d_iteration_plots}. 
 
 
-\subsection{Experimental verification}
-
-In order to validate some of the 
-
-\begin{figure}[hb]
+\begin{figure}[t]
     \begin{center} 
     \includegraphics[width=\linewidth]{Figures/3d_iterations.pdf}
     \end{center}
-    \caption{\small{ Here, we have plotted the functions given in \cref{eq:n_WFL} } and \cref{eq:n_SFL} to give a visual sense of the scaling rate of each method. Note that, since these functions are \textit{proportional} to the true number of iterations, the real values may be shifted up or down in this log-log plot.}
-    \label{fig:conv_SIM_CGM_compared}
+    \caption{\small{Six 3D surfaces are shown representing the number of iterations required for convergence for three values of $m$ for both the SIM and CGM algorithms. In each plot, the $x$-axis represents the filter parameter $\beta$, and the $y$-axis represents the regularisation parameter $\gamma$. The colormap, which is normalsied equally across all plots, tracks the vertical height. }}
+    \label{fig:3d_iteration_plots}
 \end{figure}
+
+This experiment validates several key aspects of the theoretical convergence analysis. Firstly, notice that the basic behaviour that the number of iterations rises in all cases as $\beta$ and $\gamma$ get closer to zero. Furthermore, in all cases, regardless of the value of $m$ or $\beta$, convergence is very fast when $\gamma$ is large. We also observe the predicted behaviour that the number of iterations plateaus as a function of decreasing $\gamma$ when $\beta$ is large for the SIM while it continues to increase for the CGM. However, for this data, the CGM level seems to remain below that of the SIM in this limit. 
+
+One key result of this experiment that aligns with the theoretical prediction is that convergence is accelerated as $m$ rises for the CGM but convergence slows as $m$ rises for the SIM. In particular, for this dataset, $n_\text{SIM} \leq n_\text{CGM}$ for all values of $\gamma$ and $\beta$ when $m=0.05$, but $n_\text{CGM} \leq n_\text{SIMM}$ for all values of $\gamma$ and $\beta$ when $m=0.95$. This is particularly impactful as it strongly indicates the CGM should be preferable when data is sparely observed and the SIM should be preferable when the data is densely observed. 
 
 % We have shown that the CGM will be preferable in the limit of a weak filter, when $\beta \rightarrow 0$, and that the SIM will be preferable in the limit of a strong filter, when $\beta \rightarrow \infty$. For filters that are neither asymptotically strong or weak, i.e. positive finite values of $\beta$, it is natural to ask which method can be expected to perform better. This decision will be more significant when $\gamma$ is small since, when it is large, both methods converge quickly. A visual overview of the convergence behaviour is given in \cref{fig:conv_SIM_CGM_compared}. 
 
 % \vspace{0.5cm}
 
-% \begin{figure}[hb]
-%     \begin{center} 
-%     \includegraphics[width=0.85\linewidth]{Figures/conv_SIM_CGM_compared.pdf}
-%     \end{center}
-%     \caption{\small{ Here, we have plotted the functions given in \cref{eq:n_WFL} } and \cref{eq:n_SFL} to give a visual sense of the scaling rate of each method. Note that, since these functions are \textit{proportional} to the true number of iterations, the real values may be shifted up or down in this log-log plot.}
-%     \label{fig:conv_SIM_CGM_compared}
-% \end{figure}
+
 
 % In order to test the true convergence behaviour in practice, we ran a small experiment on synthetic data residing on a grid. In particular, we use a $16 \times 16$ grid of pixel data, and generated an observation matrix $\Y$ via white Gaussian noise. Next, for three different values of $m$, we chose pixels to be removed uniformly at random. We then counted the total number of iterations required to reconstruct the signal to a tolerance of $10^{-8}$ for both the SIM and the CGM, over a range of values of $\gamma$. This was done for four values of $\beta$, with a diffusion graph filter (see \cref{tab:iso_filters}). The results are shown in \cref{fig:it_gamma_plot}. 
 
@@ -968,7 +965,7 @@ In order to validate some of the
 
 % \begin{figure}[hb]
 %     \begin{center} 
-%     \includegraphics[width=0.9\linewidth]{Figures/experimental_its_for_conv.pdf}
+%     \includegraphics[width=0.9\linewidth]{Figures/experimental_its_for_conv.pdf} 
 %     \end{center}
 %     \caption{\small{ The emprical number of steps required to reach some comparable convergence criteria is shown for a range of values of $\beta$ and $\gamma$ for both the SIM and CGM. }}
 %     \label{fig:it_gamma_plot}
@@ -978,25 +975,8 @@ In order to validate some of the
 
 % As is visible, the optimal choice of method will depend strongly on the choice of hyperparameters. Given these experiments, we give some ``rules-of-thumb'' for making this choice under various hyperparameter settings. This is summarised in \cref{tab:decision_SIM_CGM}. 
 
-% \definecolor{sim}{rgb}{0.12,0.47,0.71}
-% \definecolor{cgm}{rgb}{1,0.49,0.05}
 
-% \begin{table*}[h]
-%     \centering
-%     \footnotesize
-%     \def\arraystretch{1.4}
-%     \begin{tabular}{@{}lcccccccccccc@{}}
-%     \toprule
-%     & \multicolumn{3}{c}{Small $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Medium $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Large $\gamma$} \\
-%     \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
-%     & S $m$   & M $m$  & L $m$ &&  S $m$   & M $m$  & L $m$ && S $m$   & M $m$  & L $m$ & \\ \midrule \rule{0pt}{0.8cm}
-%     S $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
-%     M $\beta$ & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
-%     L $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}   \\[0.5cm] \bottomrule 
-%     \end{tabular}
-%     \caption[Rules of thumb for iterative method choice under different hyperparameter settings]{This table gives a rough rule of thumb for which iterative method should be chosen under various hyperparameter settings. S, M and L denotes small, medium and large. Note that small and large $m$ mean close to zero or one respectively, small and large $\gamma$ mean around $10^{-6}$ and around one respectively, and small and large $\beta$ mean values which cause the filter function to approach the weak and strong filter limits respectively. }
-%     \label{tab:decision_SIM_CGM} 
-% \end{table*}
+
 
 
 
@@ -1008,9 +988,26 @@ In this chapter we have introduced a Bayesian model for the reconstruction of si
 
 The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed analysis of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, we have provided some rules-of-thumb for making a choice of iterative method in practive, which is summarised here. This decision is of less importance when $\gamma$ is large, as both methods converge quickly in this domain, however it may be of great significance when $\gamma$ is small. 
 
+\definecolor{sim}{rgb}{0.12,0.47,0.71}
+\definecolor{cgm}{rgb}{1,0.49,0.05}
 
 
-    
+\begin{table*}[h]
+    \centering
+    \footnotesize
+    \def\arraystretch{1.4}
+    \begin{tabular}{@{}lcccccccccccc@{}}
+    \toprule
+    & \multicolumn{3}{c}{Small $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Medium $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Large $\gamma$} \\
+    \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
+    & S $m$   & M $m$  & L $m$ &&  S $m$   & M $m$  & L $m$ && S $m$   & M $m$  & L $m$ & \\ \midrule \rule{0pt}{0.8cm}
+    S $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
+    M $\beta$ & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
+    L $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}   \\[0.5cm] \bottomrule 
+    \end{tabular}
+    \caption[Rules of thumb for iterative method choice under different hyperparameter settings]{This table gives a rough rule of thumb for which iterative method should be chosen under various hyperparameter settings. S, M and L denotes small, medium and large. Note that small and large $m$ mean close to zero or one respectively, small and large $\gamma$ mean around $10^{-6}$ and around one respectively, and small and large $\beta$ mean values which cause the filter function to approach the weak and strong filter limits respectively. }
+    \label{tab:decision_SIM_CGM} 
+\end{table*}
 
 
 
