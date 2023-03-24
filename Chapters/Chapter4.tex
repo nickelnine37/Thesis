@@ -56,7 +56,7 @@ Typically, vertices are are arranged in lexicographic order, in the sense that $
 
 Each definition of a graph product corresponds to the union of a specific subset of these conditions, thus, there exist 256 different types of graph product \citep{Barik2015}. Of these, the Cartesian product (conditions 1 or 7), the direct product (condition 3), the strong product (conditions 1, 3 or 7) and the lexicographic product (conditions 1, 3, 5 or 7) are referred to as the standard products and are well-studied \citep{Imrich2000}. A graphical depiction of the standard graph products is shown in figure \ref{fig:graph_products}. In each of these four cases, the adjacency and Laplacian matrices of the product graph can be described in terms of matrices relating to the factor graphs \citep{Fiedler1973, Barik2018}. This is shown in table \ref{tab:grap_product_matrices}.
 
-\begin{table}[h]
+\begin{table}[b]
     \def\arraystretch{1.8}
     \centering
     \small
@@ -132,7 +132,7 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
 
 % see the effect of preconditioning matrix on different graph products 
 
-\begin{table}[h]
+\begin{table}[t]
     \def\arraystretch{1.8}
     \centering
     \small
@@ -355,13 +355,9 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 
     from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. In particular, we varied $T$ from 10 to 15,000 in 20 equally spaced increments, and measured the mean time to compute $\U_T^\top \y$ across five independent trials using both the standard matrix multiplication and the Fast Cosine Transform method. As is visible, the difference becomes extremely pronounced as $T$ grows large.
 
-    % \begin{figure}[h]
     \begin{center}
         \includegraphics[width=0.9\linewidth]{Figures/DCT.pdf}
     \end{center}
-    % \caption[Run time comparison for DCT]{A graphical depiction of the four standard graph products}
-    % \label{fig:DCT}
-    % \end{figure} 
 
     % write algorithm explicitly
     % what is aliasing in this context? 
@@ -478,7 +474,7 @@ When $\M$ is a simple matrix that is easy to invert, this update function can be
 
 Instead, we require a custom splitting that avoids direct evaluation of $\HH^{-2}$, and allows the right hand side of \cref{eq:sim_update} to be computed efficiently. The main contribution of this subsection is the identification of appropriate values for $\M$ and $\N$, and an investigation of the consequences of that choice. 
 
-In the folowing, we set 
+In the following, we set 
 
 \begin{equation}
     \M = \gamma \HH^{-2} + \I_{NT}, \aand \N = \diag{\vecc{\Ss'}}.
@@ -551,7 +547,7 @@ Next, consider the spectral radius of $\N$. This can be extracted directly as 1,
     \rho(\A\B) \leq \rho(\A) \, \rho(\B)
 \end{equation}
 
-\citep{Bhatia1997}. Therefore, the spectral radius of $\M^{-1}\N$ is guaranteed to be less than or equal to $1 / (1 + \gamma)$.  Since $\gamma$ is strictly positive, this is less than one and, as such, convergence is guaranteed. We return to the question of convergence more thoroughly in \cref{sec:SIM_convergence}. 
+\citep{Bhatia1997}. Therefore, the spectral radius of $\M^{-1}\N$ is guaranteed to be less than or equal to $1 / (1 + \gamma)$.  Since $\gamma$ is strictly positive, this is less than one and, as such, convergence is guaranteed. We return to the question of convergence more thoroughly in \cref{sec:convergence}. 
 
 Finally, the update formulas given in \cref{eq:update3,eq:update4} can be written equivalently as 
 
@@ -827,7 +823,7 @@ $$
 $$
 
 
-In this case, the spectral scaling matrix $\G$ has entries that are zero for all elements except (1, 1) which has the value one. Similarly, the matrix $\J$ has the value $1 / (1 + \gamma)$ at element (1, 1) and zeros elsewhere. This implies thatr 
+In this case, the spectral scaling matrix $\G$ has entries that are zero for all elements except (1, 1) which has the value one. Similarly, the matrix $\J$ has the value $1 / (1 + \gamma)$ at element (1, 1) and zeros elsewhere. This implies that
 
 
 $$
@@ -953,46 +949,18 @@ This experiment validates several key aspects of the theoretical convergence ana
 
 One key result of this experiment that aligns with the theoretical prediction is that convergence is accelerated as $m$ rises for the CGM but convergence slows as $m$ rises for the SIM. In particular, for this dataset, $n_\text{SIM} \leq n_\text{CGM}$ for all values of $\gamma$ and $\beta$ when $m=0.05$, but $n_\text{CGM} \leq n_\text{SIMM}$ for all values of $\gamma$ and $\beta$ when $m=0.95$. This is particularly impactful as it strongly indicates the CGM should be preferable when data is sparely observed and the SIM should be preferable when the data is densely observed. 
 
-% We have shown that the CGM will be preferable in the limit of a weak filter, when $\beta \rightarrow 0$, and that the SIM will be preferable in the limit of a strong filter, when $\beta \rightarrow \infty$. For filters that are neither asymptotically strong or weak, i.e. positive finite values of $\beta$, it is natural to ask which method can be expected to perform better. This decision will be more significant when $\gamma$ is small since, when it is large, both methods converge quickly. A visual overview of the convergence behaviour is given in \cref{fig:conv_SIM_CGM_compared}. 
-
-% \vspace{0.5cm}
-
-
-
-% In order to test the true convergence behaviour in practice, we ran a small experiment on synthetic data residing on a grid. In particular, we use a $16 \times 16$ grid of pixel data, and generated an observation matrix $\Y$ via white Gaussian noise. Next, for three different values of $m$, we chose pixels to be removed uniformly at random. We then counted the total number of iterations required to reconstruct the signal to a tolerance of $10^{-8}$ for both the SIM and the CGM, over a range of values of $\gamma$. This was done for four values of $\beta$, with a diffusion graph filter (see \cref{tab:iso_filters}). The results are shown in \cref{fig:it_gamma_plot}. 
-
-% \vspace{0.5cm}
-
-% \begin{figure}[hb]
-%     \begin{center} 
-%     \includegraphics[width=0.9\linewidth]{Figures/experimental_its_for_conv.pdf} 
-%     \end{center}
-%     \caption{\small{ The emprical number of steps required to reach some comparable convergence criteria is shown for a range of values of $\beta$ and $\gamma$ for both the SIM and CGM. }}
-%     \label{fig:it_gamma_plot}
-% \end{figure}
-
-% \vspace{0.5cm}
-
-% As is visible, the optimal choice of method will depend strongly on the choice of hyperparameters. Given these experiments, we give some ``rules-of-thumb'' for making this choice under various hyperparameter settings. This is summarised in \cref{tab:decision_SIM_CGM}. 
-
-
-
-
-
-
-% \newpage 
 
 \section{Conclusions}
 
 In this chapter we have introduced a Bayesian model for the reconstruction of signals defined over the nodes of a Cartesian product graph. In particular, we show that the posterior mean of the smooth underlying signal, $\F$, is obtained by solving a linear system of size $NT \times NT$, given in \cref{eq:lin_system}. While a naive approach to computing this would have a time complexity of $O(N^3T^3)$, we can utilise the classic methods of matrix splitting and conjugate gradients, customised for the context of graph signal reconstruction, to compute a solution iteratively. When used in conjunction with the properties of the Kronecker product, the linear system can be solved with complexity $O(N^2T + NT^2)$ per iterative step. Furthermore, we show that this can be reduced to $O(N^2T + NT \log T)$ when considering time-vertex problems, and to $O(NT \log NT)$ when operating on a grid by making use of the Fast Cosine Transform (FCT). 
 
-The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed analysis of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, we have provided some rules-of-thumb for making a choice of iterative method in practive, which is summarised here. This decision is of less importance when $\gamma$ is large, as both methods converge quickly in this domain, however it may be of great significance when $\gamma$ is small. 
+The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed analysis of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, we have provided some rules-of-thumb for making a choice of iterative method in practice, which is summarised here. This decision is of less importance when $\gamma$ is large, as both methods converge quickly in this domain, however it may be of great significance when $\gamma$ is small. 
+
 
 \definecolor{sim}{rgb}{0.12,0.47,0.71}
 \definecolor{cgm}{rgb}{1,0.49,0.05}
 
-
-\begin{table*}[h]
+\begin{table*}[t]
     \centering
     \footnotesize
     \def\arraystretch{1.4}
