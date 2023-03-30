@@ -722,30 +722,75 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
         \vspace{0.15cm}
     \end{algorithmic}
 \end{algorithm}
+ 
+\subsection{Real data experiments}
 
-\subsection{Verifying basic properties}
-
-In this subsection, we seek to verify several basic properties of the CGM and SIM. First, we want to show that both methods converge to the same prediction for the smooth underlying signal $\F$ an check that the solution is 
+In this subsection, we evaluate our GSR method using a dataset consisting of daily new SARS-CoV-2 cases reported in 372 lower-tier local authorities across the United Kingdom from February 5, 2020, to March 18, 2023 (1138 days) taken from the UK government website\footnote{See \url{https://coronavirus.data.gov.uk/details/download}}. Specifically, we focused on the ``newCasesBySpecimenDateRollingRate" metric, which represents the daily number of cases reported per 100,000 residents in each local reporting authority over a 7-day rolling period. To create a graph, we used boundary data\footnote{See \url{https://data.gov.uk/dataset/local-authority-districts-december-2019-boundaries-uk-buc}}, setting adjacency matrix entries as $\A_{ij}$ = 1 if districts $i$ and $j$ share a border, and 0 otherwise. \Cref{fig:covid} illustrates a snapshot of this dataset on December 1, 2020.
 
 
-\begin{figure}[t]
-    \hypertarget{butterflies}{}
-    \label{fig:butterflies}
+\begin{figure}[b]
     \begin{center}
-        \includegraphics[width=0.95\linewidth]{Figures/butterflies.jpg}
-        % \includegraphics[width=0.9\linewidth]{images/outputs.jpg}
+        \includegraphics[width=0.6\linewidth]{Figures/UK_covid.pdf}
     \end{center}
-    \caption{\small{The output from the first experiment is depicted. In the top left quadrant, the input images are shown across a range of noise levels and missing pixel percentages, with missing pixels chosen uniformly at random. Below that, in the lower left quadrant, the corresponding reconstructed images are shown. The right half of the plot is the same, except here entire columns and rows of pixels are removed at random.}}
+    \caption{\small{The seven day rolling rate of new covid cases reported per 100,000 residents in each lower tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in gray.}}
+    \label{fig:covid}
 \end{figure}
 
 
+Before beginning the experiments, we performed two preprocessing steps on the raw signal data. First, we took the logarithm of 10 plus the original case rate. This was to eliminate the long tail in the case rate histogram, transforming it to be closer to a Gaussian. We then normalised by subtracting the overall mean and dividing by the standard deviation. The resultant signal, of shape $372 \times 1138$, we refer to as $\Y_0$. Note that 4.8\% of the entries in $\Y_0$ were already missing from the original dataset (mostly occurring in the earlier stages of the pandemic).
+
+The experiment was conducted as follows. First, we removed data from $\Y_0$ such that a total fraction $m$ was no longer present. This created two matrices: $\Y$, the partially observed signal with missing values filled with zeros; and $\Ss$, the corresponding binary sensing matrix. Data was removed in four distinct ways. First, node/times were selected uniformly at random for removal (`uniform'). Second, strings of 100 days, beginning at a random date, were removed for individual randomly selected districts (`strings'). Third, the entire time series for randomly chosen districts was removed (`districts'). Finally, the signal across every node at randomly selected dates was removed (`dates'). These four techniques for data removal are depicted for clarity in \cref{fig:missing_data}. For each technique, we solved the signal reconstruction problem using the GSR model described in this chapter and compared its performance to other baseline reconstruction strategies. In particular, for uniform and string removal, we compared it to linear interpolation in time and longitudinal averaging across all districts. For date removal, we compared it to interpolation in time only, since longitudinal averaging is not possible in this case. Finally, for district removal, we compared it to longitudinal averaging, since linear interpolation in time is not possible in this case. For each model, for each method of data removal, we measured the Root Mean Square Error (RMSE) across the reconstructed entries, over four increasing values of $m$. The results are shown in \cref{tab:gsr_real_data_experiemnts}. 
+
+
+
+\begin{figure}[t]
+    \begin{center}
+        \includegraphics[width=0.6\linewidth]{Figures/missing.pdf}
+    \end{center}
+    \caption{\small{A visual depiction of the four ways we removed data. Black lines/dots indicate data that was removed. }}
+    \label{fig:missing_data}
+\end{figure}
+
+
+\definecolor{best}{rgb}{0.6,0.99,0.58}
+
+
+
+\begin{table*}[t]
+    \centering
+    \footnotesize 
+    \def\arraystretch{1.4}
+    \begin{tabular}{lcccccccccc}
+    \toprule
+    & \multicolumn{4}{c}{Uniform} & \phantom{a} & \multicolumn{4}{c}{Strings} \\
+    \cmidrule{2-5} \cmidrule{7-10} 
+    $m$ & 0.1   & 0.3 & 0.5 & 0.7 &&  0.1   & 0.3  & 0.5 & 0.7  \\ \midrule \rule{0pt}{0.5cm}
+    GSR & 0.037 & 0.040 & \colorbox{best!35}{0.048} & 0.081 && \colorbox{best!35}{0.230} &  \colorbox{best!35}{0.249} & \colorbox{best!35}{0.247} & \colorbox{best!35}{0.243} \\ \rule{0pt}{6ex} 
+    Linear interp & \colorbox{best!35}{0.034} & \colorbox{best!35}{0.039} &  0.049 & \colorbox{best!35}{0.070} && 0.540 & 0.531 & 0.520 & 0.526 \\ \rule{0pt}{6ex}
+    Longitudinal avrg & 0.350 & 0.348 &  0.347 & 0.348 && 0.341 & 0.350 & 0.356 & 0.347  \\[0.2cm] \midrule \rule{0pt}{4ex}
+    & \multicolumn{4}{c}{Dates} & \phantom{a} & \multicolumn{4}{c}{Districts} \\
+    \cmidrule{2-5} \cmidrule{7-10} 
+    $m$ & 0.1   & 0.3 & 0.5 & 0.7 &&  0.1   & 0.3  & 0.5 & 0.7  \\ \midrule \rule{0pt}{0.5cm}
+    GSR & 0.038 & 0.055 & 0.058 & 0.075  && \colorbox{best!35}{0.202} & \colorbox{best!35}{0.249} & \colorbox{best!35}{0.271} & \colorbox{best!35}{0.273} \\ \rule{0pt}{6ex} 
+    Linear interp & \colorbox{best!35}{0.035} & \colorbox{best!35}{0.038} & \colorbox{best!35}{0.046} & \colorbox{best!35}{0.066} && NA & NA & NA & NA \\ \rule{0pt}{6ex}
+    Longitudinal avrg & NA & NA & NA & NA && 0.318 & 0.333 & 0.347 & 0.345 \\[0.2cm] \bottomrule
+    \end{tabular}
+    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each value of $m$, the best performing model is highlighted in green. Entries where the model is not applicable is indicated by NA. }
+    \label{tab:gsr_real_data_experiemnts} 
+\end{table*}
+
+\newpage
+
+The findings reveal that the GSR method demonstrates superior performance by a noticeable margin when substantial segments of time series data are removed from a specific district. This is evidenced by the low RMSE across all values of $m$ for the `strings' and `districts' removal techniques. Notice also that GSR significantly outperforms longitudinal averaging in both instances, suggesting that the incorporation of topological relations between districts has yielded substantial advantages. On the other hand, when individual dates are removed, meaning only brief sections of the time series are likely missing within any given district, GSR remains competitive, but linear interpolation tends to exhibit slightly better performance. This observation is logical for this dataset, as the metric is calculated using a 7-day rolling average, resulting in a highly smooth signal over time. GSR, however, remains the most versatile technique, as it can be applied across all patterns of missing data. 
+
+ 
 \section{Convergence properties}
 
 \label{sec:convergence}
 
 In this section, we conduct a thorough theoretical analysis of the convergence properties of both the SIM and the CGM. As we will demonstrate, their respective convergence rates are heavily influenced by the values of the hyperparameters $\beta$, which describes the strength of the graph filter, $\gamma$, which determines the regularization strength, and $m=|\mathcal{S}'|/NT$, which represents the fraction of values missing from the original graph signal. This helps provide an explanation for the empirical convergence behaviour, and offers insight into trade-offs when it comes to hyperparameter selection. Furthermore, it allows users to make an informed decision with regard to selecting an appropriate method, considering the inherent characteristics of their specific problem. 
 
-It is well-known that the worst-case number of iterations required to reduce the error below some specific tolerance level for matrix splitting methods is inversely proportional to $-\log \rho(\M^{-1}\N)$, where $\rho(\cdot)$ denotes the spectral radius (absolute value of the maximum eigenvalue) of a matrix. This fact can be found in references such as \cite{Demmel1997}. For completeness, we also provide a brief proof in \cref{the:SIM_convergence}. In the specific context of our graph signal reconstruction algorithm as outlined in \cref{sec:SIM}, $\M$ and $\N$ have the following values.  
+It is well-known that the worst-case number of iterations required to reduce the error below some specific tolerance level for matrix splitting methods is inversely proportional to $-\log \rho(\M^{-1}\N)$, where $\rho(\cdot)$ denotes the spectral radius (absolute value of the maximum eigenvalue) of a matrix \citep{Demmel1997}. For completeness, we provide a brief proof of this in \cref{the:SIM_convergence}. In the specific context of our graph signal reconstruction algorithm as outlined in \cref{sec:SIM}, $\M$ and $\N$ have the following values.  
 
 
 $$
@@ -760,43 +805,57 @@ where  $\U = \U_T \otimes \U_N$, $\D_\J = \diag{\vecc{\J}}$, and $\D_{\Ss'} = \d
     n_\text{SIM} \propto  -\frac{1}{\log\rho\left(\U \D_\J \U^\top \D_{\Ss'} \right)}
 \end{equation}
 
-Note that the matrix $\J$ [see \cref{eq:Jnt} for its definition] has entries that depend on both the the regularisation parameter $\gamma$ and the spectral scaling matrix $\G$, which is itself a function of the graph filter parameter(s) $\beta$ [see \cref{eq:Gba,eq:Gba2}]. The matrix $\D_{\Ss'}$  has entries that depend on the structure of the missing data in the graph signal. Therefore we expect that $\rho$, and consequently the number of steps required for convergence $n_\text{SIM}$, may be affected by all three of these variables.  
+Note that the matrix $\J$ [see \cref{eq:Jnt} for its definition] has entries that depend on both the the regularisation parameter $\gamma$ and the spectral scaling matrix $\G$, which is itself a function of the graph filter parameter(s) $\beta$ [see \cref{eq:Gba,eq:Gba2}]. The matrix $\D_{\Ss'}$ has entries that depend on the structure of the missing data in the graph signal. Therefore should we expect that the spectral radius, $\rho$, and consequently the number of steps required for convergence, $n_\text{SIM}$, can be affected by all three.  
 
-Similarly, in the conjugate gradient method, the worst-case number of steps required to achieve some termination condition is well-known to be proportional to $\sqrt{\kappa}$, where $\kappa$ is the condition number of the coefficient matrix \cite{Kelley1995}. In our case, the coefficient matrix is given in \cref{eq:Z_post}. Therefore, we should expect that the number of iterations required for convergence of the CGM will scale as
+Similarly, in the conjugate gradient method, the worst-case number of steps required to achieve a specific termination criterion is well-known to be proportional to $\sqrt{\kappa}$, where $\kappa$ represents the condition number of the coefficient matrix, i.e. the ratio between the largest and smallest eigenvalue \cite{Kelley1995}. In our particular scenario, the coefficient matrix is provided in \cref{eq:Z_post}. Therefore, we should expect that the number of iterations required for convergence of the CGM will scale as
 
 \begin{equation}
     \label{eq:n_CGM}
      n_\text{CGM} \propto \sqrt{\kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I_{NT} \; \right)}
 \end{equation}
 
-where $\D_\G = \diag{\vecc{\G}}$. Once again, this expression contains the matrix $\G$, which depends on the strength of the graph filter function parameter $\beta$, the matrix $\D_{\Ss'}$, which depends on the missingness structure, and the precision parameter $\gamma$. Consequently, we should expect that in general convergence of the CGM is affected by all three of these variables. 
+where $\D_\G = \diag{\vecc{\G}}$. Once again, this expression contains the matrix $\G$, which depends on the strength of the graph filter function parameter $\beta$, the matrix $\D_{\Ss}$, which depends on the structure of this missing data, and the precision parameter $\gamma$. Consequently, we should expect that, in general, convergence of the CGM is affected by all three of these variables. 
 
-Whilst it is not possible in general to obtain an analytic expression for $\rho$ or $\kappa$ as a function of $\gamma, \beta$ and $m$, we can nonetheless provide useful insight into how each of these variables can be expected to affect convergence. We achieve this by considering two distinct limits: one in which the graph filter is very strong (i.e $\beta$ is very large) and one in which the graph filter is very weak (i.e. $\beta$ is very small). 
+Whilst it is not possible in general to obtain an analytic expression for $\rho$ or $\kappa$ as a function of $\gamma, \beta$ and $m$, we can nonetheless gain useful insight into how each of these variables can be expected to affect convergence. We achieve this by considering two distinct limits: one in which the graph filter is very strong (i.e $\beta$ is very large) and one in which the graph filter is very weak (i.e. $\beta$ is very small). 
 
 \subsection{Upper bound on convergence: the weak filter limit}
 
-Consider the limiting case of a weak filter, where all spectral components are allowed to pass through unaffected. In this case, a graph filter $\HH$ [see \cref{eq:graph_filter}], which appears in the prior distribution for $\F$ [see \cref{eq:F_prior}], becomes the identity operation, i.e. $\HH \vecc{\Y} = \vecc{\Y}$. This means no topological information is included in the prior for $\F$ at all. Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters_2d}, we can conceptualise this as the limit where the parameter characterising the graph filter $\beta \rightarrow 0$ (or, more generally, the limit as $\betaa \rightarrow [0, 0]$ for an anisotropic graph filter). Since all spectral components are maintained, every element of the spectral scaling matrix $\G$ will be equal to one. Given \cref{eq:Jnt}, this further implies the every entry in the matrix $\J$ becomes $1 / (1 + \gamma)$. 
+Consider the limiting case of a weak filter, where all spectral components are allowed to pass through unaffected. In this case, a graph filter $\HH$ [see \cref{eq:graph_filter}], which appears in the prior distribution for $\F$ [see \cref{eq:F_prior}], becomes the identity matrix $\I_{NT}$. This means no topological information is included in the prior for $\F$ at all. Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters_2d}, we can conceptualise this as the limit where the parameter characterising the graph filter $\beta \rightarrow 0$ (or, more generally, the limit as $\betaa \rightarrow [0, 0]$ for an anisotropic graph filter). Since all spectral components are maintained, every element of the spectral scaling matrix $\G$ will be equal to one. Given \cref{eq:Jnt}, this further implies the every entry in the matrix $\J$ becomes $1 / (1 + \gamma)$. 
 
 $$
 \lim_{\beta \rightarrow 0} \; \D_\G = \I_{NT}, \aand \lim_{\beta \rightarrow 0} \; \D_\J = \frac{1}{1 + \gamma} \I_{NT}
 $$
 
-Now consider the spectral radius $\rho$ of the update matrix in the SIM. Given this limiting value of $\D_\J$, this can be directly evaluated as
+Now consider the spectral radius $\rho$ of the update matrix in the SIM. Given this limiting value of $\D_\J$, it can be directly evaluated as
 
-\begin{align}
-    \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \U^\top \D_{\Ss'} \Big) \notag \\
-    &= \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big) \notag \\
-    &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} 
-\end{align}
+% \begin{align}
+%     \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \U^\top \D_{\Ss'} \Big) \notag \\
+%     &= \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big) \notag \\
+%     &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} 
+% \end{align}
+
+\begin{equation}
+    \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big)
+    = \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big)
+    = \frac{1}{1 + \gamma} \label{eq:beta_lim_0} 
+\end{equation}
+
 
 Next, consider the condition number $\kappa$ of the coefficient matrix in the CGM. Again, since in this limit $\D_\G = \I$, it can be directly evaluated as 
 
 
-\begin{align}
-    \lim_{\beta \rightarrow 0} \; \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right) &= \kappa  \left(  \, \U^\top \D_{\Ss} \U + \gamma \I \; \right) \notag \\[0.2cm]
-    &= \kappa  \left(  \, \U^\top \left( \D_{\Ss} + \gamma \I \right) \U \; \right) \notag \\[0.3cm]
-    &= \frac{1 + \gamma}{\gamma}
-\end{align}
+% \begin{align}
+%     \lim_{\beta \rightarrow 0} \; \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right) &= \kappa  \left(  \, \U^\top \D_{\Ss} \U + \gamma \I \; \right) \notag \\[0.2cm]
+%     &= \kappa  \left(  \, \U^\top \left( \D_{\Ss} + \gamma \I \right) \U \; \right) \notag \\[0.3cm]
+%     &= \frac{1 + \gamma}{\gamma}
+% \end{align}
+
+
+\begin{equation}
+    \lim_{\beta \rightarrow 0} \; \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right)
+    = \kappa  \left(  \, \U^\top \left( \D_{\Ss} + \gamma \I \right) \U \; \right)
+    = \frac{1 + \gamma}{\gamma}
+\end{equation}
 
  Given \cref{eq:n_SIM,eq:n_CGM}, we can characterise the number of iterations required to reach some convergence criterion in the weak filter limit for the SIM and CGM respectively as
 
@@ -870,8 +929,7 @@ Since the matrix in brackets is just the vector $\vecc{\Ss'}^\top$ repeated in e
 Now consider the condition number $\kappa$ of the CGM coefficient matrix. I the strong filter limit, this is given by  
 
 \begin{align}
-    \lim_{\beta \rightarrow \infty} & \quad \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right)  \notag \\[0.2cm]
-    &= \kappa  \left(  \, \mathbf{\Delta} \U^\top \D_{\Ss} \U \mathbf{\Delta}  + \gamma \I \; \right) \notag \\[0.3cm]
+    \lim_{\beta \rightarrow \infty} \quad \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right)  &= \kappa  \left(  \, \mathbf{\Delta} \U^\top \D_{\Ss} \U \mathbf{\Delta}  + \gamma \I \; \right) \notag \\[0.3cm]
     &= \kappa  \left(  \, 
     \begin{bmatrix} 
         \uu_1^\top \\ 
@@ -908,7 +966,7 @@ In particular, at small $\gamma$, the CGM still runs with complexity proportiona
 
 \subsection{Practical implications and method selection}
 
-In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we examine these expressions more closely and distil out the key features that are relevant for implementing these methods in practical scenarios.
+In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we examine these expressions more closely and distil out the key features that are relevant for implementing these methods in practice.
 
 
 \begin{table*}[t]
