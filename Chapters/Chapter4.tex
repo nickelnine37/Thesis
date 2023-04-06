@@ -992,7 +992,37 @@ Whilst the convergence rates of both the SIM and CGM have the same directional r
 
 \subsection{Experimental validation}
 
-In order to verify aspects of this theoretically predicted behaviour, we ran a simple experiment using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance, and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in [0, 1]^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. This was carried out for three values of $m$: 0.05, 0.5 and 0.95, representing low, medium and high prevalence of missing data respectively. For each value of $m$, we compute the solution using both algorithms over a grid of 50 $\beta$ values and 50 $\gamma$ values which were logarithmically spaced between $10^{-1}$-$10^2$ and $10^{-4}$-$10^1$ respectively. The results are shown in \cref{fig:3d_iteration_plots}. 
+In order to verify aspects of this theoretically predicted behaviour, we ran several experiments using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance, and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in [0, 1]^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. In the following experiments, we completed this procedure for various values of $m$, $\beta$ and $\gamma$, and compared the empirical number of iterations required for convergence against the theoretical predictions determined in \cref{sec:convergence}. 
+ 
+\subsubsection{Experiment 1: testing the strong and weak filter limits}
+
+In the first experiment, we fix $\beta$ at zero and $\infty$, and measure the number of iterations required for convergence over a range of values of $m$ and $\gamma$. Since these correspond to the weak and strong filter limits respectively, we expect that the convergence rate should be bounded by a function proportional to those given in \cref{tab:conv_SIM_CGM}. First, we set $\beta=0$. Note that, in this case, $m$ has no effect on the convergence rate of the SIM or CGM (which we also find empirically to be the case). We therefore varied $\gamma$ alone in 50 logarithmically spaced increments from $10^{-4}$ to $10^2$. The results are shown in \cref{fig:gamma_2d_plot}. As is visible, the functions broadly follow the expected convergence rate given by the theoretical prediction, performing slightly better in practice in both cases. Note that this is the expected behaviour, since the limits give a \textit{worst case} scaling rate. In both cases, we also scaled the theoretical prediction (corresponding to a vertical shift in the log-log plot) to fit the experimental data. This is also valid, since the theoretical predictions give a function proportional to the number of iterations rather than the number of iterations itself. For the SIM, this factor was approximately 10, and for the CGM this factor was approximately 4.5. 
+ 
+
+\begin{figure}[t]
+    \begin{center} 
+    \includegraphics[width=0.7\linewidth]{Figures/gamma_plot_2d.pdf}
+    \end{center}
+    \caption{\small{The number of iterations required for convergence in the weak filter limit for the SIM an CGM both theoretically and empirically, as a function of $\gamma$.}}
+    \label{fig:gamma_2d_plot}
+\end{figure}
+
+
+For the second part of experiment 1, we set $\beta = \infty$, corresponding to the strong filter limit. In this case, we expect the number of iterations to be a function of both $m$ and $\gamma$ as specified in \cref{tab:conv_SIM_CGM}. Therefore, we varied $\gamma$ in 50 logarithmically spaced increments from $10^{-6}$ to $10^2$ and $m$ in 50 linearly spaced increments from 0.01 to 0.99. For each unique pair of $m$ and $\gamma$, we then counted the number of iterations required for convergence and compared this to the theoretical predictions. The results are shown in \cref{fig:m_gamma_3d_plot}. Again, the empirical results broadly follow the theoretical functions which, as before, are scaled to fit the data. As with the weak filter limit, we again see that empirical scaling rate is slightly better than the worst case theoretical prediction. 
+
+\begin{figure}[t]
+    \begin{center} 
+    \includegraphics[width=\linewidth]{Figures/m_gamma_3d_plot.pdf}
+    \end{center}
+    \caption{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colormap corresponds to vertical height and is nomalised across each plot to aid comparison. }}
+    \label{fig:m_gamma_3d_plot}
+\end{figure}
+
+
+\subsubsection{Experiment 2: Testing intermediate values of \texorpdfstring{$\beta$}{beta}}
+
+
+In the second experiment, we test the number of iterations required for convergence for intermediate values of $\beta$. Note that the analysis carried out in \cref{sec:convergence} applies only for extremal values of $\beta$, meaning the intermediate behaviour is not clearly defined, and will depend on the filter chosen in practice. This was carried out for three values of $m$: 0.05, 0.5 and 0.95, representing low, medium and high prevalence of missing data respectively. For each value of $m$, we compute the solution using both algorithms over a grid of 50 $\beta$ values and 50 $\gamma$ values which were logarithmically spaced between $10^{-1}$-$10^2$ and $10^{-4}$-$10^1$ respectively. The results are shown in \cref{fig:3d_iteration_plots}. 
 
 
 \begin{figure}[t]
@@ -1005,7 +1035,7 @@ In order to verify aspects of this theoretically predicted behaviour, we ran a s
 
 This experiment validates several key aspects of the theoretical convergence analysis. Firstly, notice that the basic behaviour that the number of iterations rises in all cases as $\beta$ and $\gamma$ get closer to zero. Furthermore, in all cases, regardless of the value of $m$ or $\beta$, convergence is very fast when $\gamma$ is large. We also observe the predicted behaviour that the number of iterations plateaus as a function of decreasing $\gamma$ when $\beta$ is large for the SIM while it continues to increase for the CGM. However, for this data, the CGM level seems to remain below that of the SIM in this limit. 
 
-One key result of this experiment that aligns with the theoretical prediction is that convergence is accelerated as $m$ rises for the CGM but convergence slows as $m$ rises for the SIM. In particular, for this dataset, $n_\text{SIM} \leq n_\text{CGM}$ for all values of $\gamma$ and $\beta$ when $m=0.05$, but $n_\text{CGM} \leq n_\text{SIMM}$ for all values of $\gamma$ and $\beta$ when $m=0.95$. This is particularly impactful as it strongly indicates the CGM should be preferable when data is sparely observed and the SIM should be preferable when the data is densely observed. 
+One key result of this experiment that aligns with the theoretical prediction is that convergence is accelerated as $m$ rises for the CGM but convergence slows as $m$ rises for the SIM. In particular, for this dataset, $n_\text{SIM} \leq n_\text{CGM}$ for all values of $\gamma$ and $\beta$ when $m=0.05$, but $n_\text{CGM} \leq n_\text{SIMM}$ for all values of $\gamma$ and $\beta$ when $m=0.95$. This is particularly impactful as it strongly indicates the CGM should be preferable when data is sparsely observed and the SIM should be preferable when the data is densely observed. 
 
 
 \section{Conclusions}

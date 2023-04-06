@@ -283,3 +283,77 @@ In each of these expressions we have a fraction for which both the numerator and
     Since $\gamma$ is strictly positive and $m$ must be in the range $0 \leq m \leq 1$, clearly the first expression is always positive whereas the second is always negative. 
     
 \end{proof}
+
+\begin{theorem}
+    \label{the:RNC_post}
+    In the RNC model, the posterior distribution over the combined parameter vector $\thetaa$ is given by 
+
+    \begin{equation}
+        \thetaa \, | \, \Y \sim \mathcal{N}\left(\widetilde{\PP}^{-1} \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}, \, \widetilde{\PP}^{-1}\right)
+    \end{equation}
+
+    where 
+
+    \begin{equation}
+        \widetilde{\PP} \in \R^{(NT + M) \times (NT + M)}= 
+        \begin{bmatrix}
+         \D_\Ss + \gamma \HH^{-2} & \D_\Ss  \X \\
+         \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+        \end{bmatrix}
+    \end{equation}
+
+\end{theorem}
+
+\begin{proof}
+
+    The distribution of $\Y$ given $\thetaa$ is given in \cref{eq:Y_given_theta_rnc}. This can also be written as
+
+    \begin{equation}
+        \vecc{\Y} \, | \, \thetaa \sim \mathcal{N}\left(  \big[ \D_\Ss \;\; \D_\Ss \X \big]\thetaa  , \; \D_\Ss \right)
+    \end{equation}
+
+    The prior for $\thetaa$ is given in equation \cref{eq:theta_prior}. Therefore, using Bayes rule, we can write 
+
+    \begin{align*}
+        -2\log \pi(\thetaa | \Y) &\propto \Big(\vecc{\Y} - \big[ \D_\Ss \;\; \D_\Ss \X \big] \thetaa \Big)^\top \D_\Ss^{-1} \Big(\vecc{\Y} - \big[ \D_\Ss \;\; \D_\Ss \X \big] \thetaa \Big) \\[0.2cm]
+        & + \thetaa^\top  \begin{bmatrix}
+            \gamma^{-1} \HH^{2} & \mathbf{0}\\
+            \mathbf{0} & \lambda^{-1} \I_M   
+           \end{bmatrix} ^{-1} \thetaa
+    \end{align*}
+
+    Using the same trick as in \cref{the:F_posterior}, where we parametrise $\Ss$ as $\Ss = \lim_{\epsilon \rightarrow 0} \Ss_{\epsilon}$. Given this, we can rewrite the above expression as 
+
+    \begin{align*}
+        -2\log \pi(\thetaa | \Y) &\propto \Big(\vecc{\Y} - \big[ \I_{NT} \;\; \X \big] \thetaa \Big)^\top \D_\Ss\Big(\vecc{\Y} - \big[ \I_{NT} \;\; \X \big] \thetaa \Big) \\[0.2cm]
+        & + \thetaa^\top  \begin{bmatrix}
+            \gamma \HH^{-2} & \mathbf{0}\\
+            \mathbf{0} & \lambda \I_M   
+           \end{bmatrix} \thetaa
+    \end{align*}
+
+    Collecting like terms, and dropping a constant not dependent on $\thetaa$, this can be written as 
+
+    \begin{align*}
+        -2\log \pi(\thetaa | \Y) &\propto -2 \thetaa^\top \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix} + \thetaa^\top \begin{bmatrix}
+            \D_\Ss + \gamma \HH^{-2} & \D_\Ss  \X \\
+            \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+           \end{bmatrix} \thetaa
+    \end{align*}
+
+    Using the conjugacy of the normal distribution, we can conclude by direct inspection that the posterior covariance matrix is given by $\widetilde{\PP}^{-1}$, and the posterior mean is given by 
+
+    $$
+    \widetilde{\PP}^{-1} \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}
+    $$
+
+    where 
+
+    $$
+    \widetilde{\PP} = \begin{bmatrix}
+        \D_\Ss + \gamma \HH^{-2} & \D_\Ss  \X \\
+        \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+       \end{bmatrix}
+    $$
+
+\end{proof}
