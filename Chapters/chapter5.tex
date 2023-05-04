@@ -137,7 +137,8 @@ The final step to convert this into a non-parametric regression model is to appl
 The trick is to characterise each inner product in terms of a predefined function such that $\boldsymbol{\phi}(\x_i)^\top\boldsymbol{\phi}(\x_j) = \kappa(\x_i, \x_j)$. This means that instead of mapping the explanatory variables via $\boldsymbol{\phi}$ and computing the inner product directly, it is done in a single operation, leaving the mapping implicit. This means we can replace the matrix $\PHI^\top \PHI$ with a so-called kernel (or \textit{Gram}) matrix $\K \in \R^{T \times T}$, which has entries defined by 
 
 \begin{equation}
-    \K_{ij} =  \kappa(\x_i, \x_j)
+    \label{eq:kernel_matrix}
+    \K_{ij} = \kappa(\x_i, \x_j)
 \end{equation}
 
 where $\kappa(\cdot, \cdot)$ is any valid Mercer kernel \citep{Rasmussen2005}. A common example is the Gaussian kernel given below. 
@@ -171,7 +172,12 @@ As before, $\D_\Ss = \diag{\vecc{\Ss}}$.
 
 \subsection{Relation to graph signal reconstruction}
 
-Despite arising from a different set of modelling assumptions, kernel graph regression as described in \cref{sec:kgr_model_desc} bares a stark mathematical resemblance to graph signal reconstruction.  To see this, compare the KGR posterior described in \cref{eq:F_post_kgr,eq:P_post_kgr} to the GSR posterior described in \cref{eq:F_post_gsr,eq:P_post_gsr}. In the original GSR model, the posterior precision matrix is given by $\D_\Ss + \gamma \HH^{-2}$, and in the case of KGR it is given by $\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2}$. In each case, it is the sum of $\D_\Ss$ and a Hermitian matrix. To make this analogy clearer, we can expand the second term of each expression in terms of its respective eigendecomposition. For GSR, this is
+\label{sec:KGR_and_GSR}
+
+Despite arising from a different set of modelling assumptions, Kernel Graph Regression as described in \cref{sec:kgr_model_desc} bares a stark mathematical resemblance to Graph Signal Reconstruction. The only key difference between the specification of these two models is that in GSR, the prior distribution over $\vecc{\F}$ has covariance $\HH^2$ [see \cref{eq:F_prior}], and in KGR it has covariance $\K \otimes \HH_N^2$ [see \cref{eq:F_prior3}]. Intuitively speaking, the prior used in the GSR model encodes the belief that the underlying graph signal should be smooth with respect to the topology of the 2D Cartesian product graph. On the other hand, the prior used in the KGR model encodes the belief that the predicted signal should be smooth with respect to the topology of the 1D graph and the explanatory variables, i.e. graph signals $\y_i$ and $\y_j$ are expected to be similar if the vectors $\x_i$ and $\x_j$ are similar. 
+
+
+As a result of the differences in their respective priors, the posterior precision matrix for $\vecc{\F}$ is given by $\D_\Ss + \gamma \HH^{-2}$ in the case of GSR and $\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2}$ in the case of KGR. In both cases, it is the sum of $\D_\Ss$ and a Hermitian matrix. To make this correspondence clearer, we can expand the second term of each expression in terms of its respective eigendecomposition. For GSR, this is
 
 \begin{align*}
     \D_\Ss + \gamma \HH^{-2} &= \D_\Ss + \gamma \big(\U_T \otimes \U_N \big) \, \diag{\vecc{\G}}^{-2} \, \big(\U_T^\top \otimes \U_N^\top \big) \\
@@ -206,6 +212,8 @@ $$
 $$
 
 As such, the iterative algorithms developed in \cref{chap:gsr_2d} can be largely recycled with only minor modifications. However, it is important to bear in mind that the value of the maximum entry in $\G$ is one, whereas the maximum value in $\bar{\G}$ is $\sqrt{\rho(\K)}$. This has some implications for the SIM and CGM convergence rate, as explored in the following sections. 
+
+
  
 
 \subsection{Solving for the posterior mean}
@@ -288,7 +296,7 @@ As with the SIM, this action can be performed with $O(N^2T + NT^2)$ multiplicati
 
 \subsection{Model description}
 
-In this model, we consider a sequence of real-valued signals $\y_t \in \R^{N}$, which are regularly sampled over a static $N$-node graph and may contain arbitrary missing values. As with both GSR and KGR, the missing values in each signal are indicated by a corresponding binary sensing vector $\s_t \in [0, 1]^{N}$. At each node of this graph, for each time instant under consideration, there exists a length-$M$ vector of explanatory variables $\x_{nt} \in \R^{M}$. The objective is to make us of both the node-level covariates and the network topology to estimate the missing values in the graph signal. A visual depiction of the data available in this kind of scenario is given in \cref{fig:RNC_diagram}. The input data for this model can be described by 
+In this model, we consider a sequence of real-valued signals $\y_t \in \R^{N}$, which are regularly sampled over a static $N$-node graph and may contain arbitrary missing values. As with both GSR and KGR, the missing values in each signal are indicated by a corresponding binary sensing vector $\s_t \in [0, 1]^{N}$. At each node, $n$, of this graph, for each time instant, $t$, under consideration, there exists a length-$M$ vector of explanatory variables $\x_{nt} \in \R^{M}$. The objective is to make use of both the node-level covariates and the network topology to estimate the missing values in the graph signal. A visual depiction of the data available in this kind of scenario is given in \cref{fig:RNC_diagram}, which can be described by 
 
 \begin{align*}
     \text{input data} &= \Big\{ \left( \big\{ \x_{nt} \in \R^M \big\}_{n=1}^N, \; \y_t \in \R^N, \; \s_t \in [0, 1]^N \right)\Big\}_{t=1}^T \\[0.2cm]
@@ -318,6 +326,7 @@ For the purposes of this section, we also introduce the special matrix $\X$, whi
 In this section we consider several extensions to a model known as Regression with Network Cohesion (RNC) \citep{Li2019}. In our version of the model, we assume that every element of the observed graph signal $\Y$ can be represented as the sum of an intercept term, a linear combination of the node-level covariates, and some Gaussian noise. However, the intercept term is flexible in the sense that each node/time can have a distinct value. To avoid underspecification, the model postulates that the intercepts are smooth with respect to the graph's topology. This is represented as follows. 
 
 \begin{equation}
+    \label{eq:rnc_stat_model_wc}
     \vecc{\Y} = \vecc{\Ss} \circ \big( \vecc{\C} + \X \w  + \vecc{\E} \big)
 \end{equation}
 
@@ -395,7 +404,7 @@ On the other hand, we can find an effective preconditioner $\widetilde{\PSI}  \i
 \end{equation}
 
 
-To obtain a suitable value for $\widetilde{\PSI}$, first let us define the eigendecomposition of $\X^\top\D_\Ss \X$. Note that this has a cost of $O(M^3)$ to compute. 
+To obtain a suitable value for $\widetilde{\PSI}$, first let us define the eigendecomposition of $\X^\top\D_\Ss \X$. 
 
 \begin{equation}
     \X^\top\D_\Ss \X = \U_M \LAM_M \U_M^\top
@@ -427,10 +436,89 @@ where, as before, $\U = \U_T \otimes \U_N $. We choose this preconditioner becau
         \end{bmatrix}
 \end{equation*}
 
-Note that the upper left block can be multiplied onto a length $NT$ vector with complexity 
+Note that the upper left block can be multiplied onto a length $NT$ vector with complexity $O(N^2T + NT \log T)$, by leveraging the properties of the Kronecker product and making use of the Fast Cosine Transform (FCT). The upper right block of this matrix consists of $M$ length $NT$ column vectors, which can be computed with complexity $O(MN^2T + MNT \log T)$ and multiplied onto a length $M$ vector with complexity $O(NTM)$. This also applies to the lower left block, which is the transpose of the upper right, and can be multiplied onto a length $M$ vector in the same number of operations. Finally, the lower right block can be multiplied onto a length $M$ vector with $M$ operations. Therefore, the overall complexity of multiplying the entire matrix onto a vector of length $NT + M$ is $O(N^2T + NT \log T)$. 
 
 % Unfortunately, it is difficult to precisely quantify the spectrum of this block matrix. 
 
 
 
-\section{Dynamic Regression with Network Cohesion (DRNC)}
+\section{Network regression with both global and local explanatory variables (KG-RNC)}
+
+In \cref{sec:kgr_mdp}, we introduced Kernel Graph Regression (KGR) with arbitrary missing values as a non-parametric regression technique, applicable for modelling scenarios where a series of graph signals need to be predicted based on exogenous or `global' explanatory variables. This concept is visually represented in \cref{fig:KGR_diagram}. On the other hand, Regression with Network Cohesion (RNC), discussed in \cref{sec:rnc_mdp}, is suitable for situations where `local' explanatory variables are associated with individual nodes over time, as depicted in \cref{fig:RNC_diagram}.
+
+In certain cases, both global and local explanatory variables may coexist. For example, consider a network of businesses where firms are connected based on industry similarity or supply chain integration. In this scenario, the objective may be to predict quarterly revenue growth using variables affecting all firms, such as inflation and interest rates, while also considering firm-level local variables like employee turnover or debt ratio.
+
+The input data in such a scenario can be summarised as follows
+
+\begin{align*}
+    \text{input data} &= \left\{\Xt \in \R^{N \times T \times M}, \; \X' \in \R^{T \times M'}\; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T} \right\}
+\end{align*}
+
+Once again, $\Y$ is a sequence of partially observed graph signals and $\Ss$ is the corresponding binary sensing matrix  defining which values are missing. $\Xt$ represents the tensor of local explanatory variables, where each node at each time has an associated length-$M$ feature vector. In the example, this would represent the firm-level variables such as employee turnover and debt ratio. $\X'$ is the matrix of global explanatory variables, where the $t$-th row represents the global length-$M'$ feature vector at each time $t$. In this section we also continue to use the notation $\X$ (without the prime) to denote the matrix which is constructed by horizontally stacking the $M$ vectorized slices $\Xt_{::m}$, resulting in an object of shape $(NT \times M)$, as defined in \cref{eq:X_RNC}. 
+
+Leveraging the methods developed for KGR and RNC in \cref{sec:kgr_mdp,sec:rnc_mdp}, we can naturally integrate both $\Xt$ and $\X'$ into the problem. The RNC model supposes that the observed graph signal is a noisy partial observation of a smooth underlying signal $\C$ added to a regularised linear combination of node-level covariates. Therefore, RNC combines aspects of graph signal reconstruction and ridge regression. As discussed in \cref{sec:KGR_and_GSR}, KGR can be understood as a small modification of the graph signal reconstruction problem, where the underlying signal $\F$ is instead assumed to be smooth with respect to both the 1D network and the explanatory variables, rather than a 2D Cartesian product graph. This involved altering the prior distribution over $\F$ to include the kernel matrix $\K$ which is a function of the global variables $\X'$, as defined in \cref{eq:kernel_matrix}. 
+
+Similarly, we can modify the prior over the flexible intercept term $\C$ in the RNC model. Instead of using a prior covariance of $\gamma \HH^2$, we can employ a covariance matrix $\gamma \K \otimes \HH_N^2$, where $\K$ is the kernel matrix and $\HH_N$ is a graph filter acting upon the 1D network, as in the KGR model. Since the RNC model is defined in terms of the aggregate parameter vector $\thetaa$, we can adjust its prior distribution accordingly.
+
+\begin{equation}
+    \label{eq:theta_prior2}
+    \thetaa \sim \mathcal{N}\left( \mathbf{0}, \; \begin{bmatrix} \gamma^{-1} \K \otimes \HH_N^2 & \mathbf{0} \\ \mathbf{0} & \lambda^{-1} \I_M \end{bmatrix} \right)
+\end{equation}
+
+Just as with KGR, this new model, which we refer to as Kernel Graph Regression with Network Cohesion (KG-RNC), is algebraically equivalent to the RNC model under the transformation 
+
+$$
+\U \rightarrow \bar{\U}, \aand \G \rightarrow \bar{\G}
+$$
+
+where $\K$ has an eigendecomposition $\V \LAM_K \V^\top$ and $\bar{\U}$ and $\bar{\G}$ are defined by
+
+$$
+\bar{\U} = \V \otimes \U_N, \aand     \bar{\G}_{nt} = g\left(\lambda^{(N)}_n\right) \sqrt{\lambda^{(K)}_t} \quad \rightarrow \quad \D_{\bar{\G}} = \LAM_K^{1/2} \otimes g\left(\LAM_N\right) 
+$$
+
+Given the prior for $\thetaa$ in \cref{eq:theta_prior2}, and the likelihood which is identical to that of the RNC model given in \cref{eq:Y_given_theta_rnc}, the posterior distribution is given by 
+
+\begin{equation}
+    \thetaa \, | \, \Y \sim \mathcal{N}\left(\hat{\PP}^{-1} \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}, \, \hat{\PP}^{-1}\right)
+\end{equation}
+
+where 
+
+\begin{equation}
+    \hat{\PP} \in \R^{(NT + M) \times (NT + M)}= 
+    \begin{bmatrix}
+     \D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} & \D_\Ss  \X \\
+     \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+    \end{bmatrix}
+\end{equation}
+
+Once again, we can solve the linear system for the mean using the CGM, with a symmetric preconditioner $\hat{\PSI}$.  
+
+\begin{equation}
+    \left( \hat{\PSI}^\top \begin{bmatrix}
+        \D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} & \D_\Ss  \X \\
+        \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
+       \end{bmatrix}  \hat{\PSI} \right) \left( \hat{\PSI}^{-1} \thetaa \right)   = \hat{\PSI}^\top \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}
+\end{equation}
+
+where 
+
+\begin{equation}
+    \hat{\PSI} =  \begin{bmatrix}
+        \bar{\U} \D_{\bar{\G}} & \mathbf{0} \\
+        \mathbf{0} & \U_M \D_M 
+    \end{bmatrix}
+\end{equation}
+
+The new preconditioned coefficient matrix in this case is given by 
+
+\begin{equation*}
+    \hat{\PSI}^\top \hat{\PP}  \hat{\PSI} = 
+       \begin{bmatrix}
+        \D_{\bar{\G}} \bar{\U}^\top \D_\Ss \bar{\U} \D_{\bar{\G}} + \gamma \I_{NT}  &  \D_{\bar{\G}} \bar{\U}^\top \D_\Ss \X \U_M \D_M \\[0.1cm] 
+        \D_M \U_M^\top \X^\top \D_\Ss \bar{\U} \D_{\bar{\G}} & \I_M
+        \end{bmatrix}
+\end{equation*}
+
+which can be efficiently multiplied onto a length $NT + M$ vector by leveraging the properties of the Kronecker product. Note that, in this case, the complexity of this multiplication is no longer $O(N^2T + NT \log T)$, but is now $O(N^2T + NT^2)$, since we cannot make use of the Fast Cosine Transform to multiply the matrix $\V \otimes \U$ onto a vector. 
