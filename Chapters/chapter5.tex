@@ -37,13 +37,13 @@ For the scenario involving local explanatory variables, we enhance a model known
 
 \label{sec:kgr_model_desc}
 
-Consider a sequence of graph signals $\y_t \in \R^M$, measured on a static $N$-node graph, each of which is accompanied by a corresponding explanatory vector $\x_t \in \R^M$ that encompasses $M$ distinct characteristics. Each graph signal may have unique and arbitrary missing data, as indicated by a binary vector $\s_t \in [0, 1]^N$, where ones represent successfully collected data and zeros signify missing data. Any absent data in $\y_t$ should be filled with zeros. Hence, the input data for this problem can be concisely described as follows. 
+Consider a sequence of $T$ real-valued graph signals measured over a static $N$-node graph, for which an arbitrary subset of the elements of each signal may be missing, including potentially the entire signal at certain time points. At each time $t$, there also exists a vector of variables $\x_t \in \R^M$ encompassing $M$ distinct explanatory features. Each graph signal may have unique and arbitrary missing data, as indicated by a binary vector where ones represent successfully collected data and zeros signify missing data. Any absent data in $\y_t$ should be filled with zeros. Hence, the input data for this problem can be concisely described as follows. 
 
 
-\begin{align*}
-    \text{input data} &= \Big\{\left(\x_t \in \R^{M}, \; \y_t \in \R^{N}, \; \s_t \in [0, 1]^{N} \right)\Big\}_{t=1}^T \\[0.2cm]
-    &= \X \in \R^{T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}
-\end{align*}
+\begin{equation*}
+    \text{KGR input data} = \Big\{ \X \in \R^{T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T} \Big\}
+\end{equation*}
+
 
  In the following, we assume that the explanatory variables do not contain missing values. However, if any missing values are present, conventional methods such as those described in \cite{Little2019} can be employed to fill them. It should be noted that, with this model specification, there is no rigid distinction between in-sample and out-of-sample prediction. To indicate a particular value of $\x_t$ for which a comprehensive prediction should be generated, one can set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
 
@@ -296,16 +296,17 @@ As with the SIM, this action can be performed with $O(N^2T + NT^2)$ multiplicati
 
 \subsection{Model description}
 
-In this model, we consider a sequence of real-valued signals $\y_t \in \R^{N}$, which are regularly sampled over a static $N$-node graph and may contain arbitrary missing values. As with both GSR and KGR, the missing values in each signal are indicated by a corresponding binary sensing vector $\s_t \in [0, 1]^{N}$. At each node, $n$, of this graph, for each time instant, $t$, under consideration, there exists a length-$M$ vector of explanatory variables $\x_{nt} \in \R^{M}$. The objective is to make use of both the node-level covariates and the network topology to estimate the missing values in the graph signal. A visual depiction of the data available in this kind of scenario is given in \cref{fig:RNC_diagram}, which can be described by 
+In this model, we consider a sequence of $T$ real-valued signals, which are regularly sampled over a static $N$-node graph, and may contain arbitrary missing values. As with KGR and GSR, this is represented using an $(N \times T)$ matrix $\Y$, with missing values set to zero and further clarified with the binary sensing matrix $\Ss \in [0, 1]^{N \times T}$ which holds zeros at entries where the corresponding element of $Y$ is missing data, and ones elsewhere. In this model each node, $n$, at each time instant, $t$, under consideration, has an associated length-$M$ vector of explanatory variables $\x_{nt} \in \R^{M}$. The objective is to make use of both the node-level explanatory variables and the network topology to estimate the missing values in the graph signal. A visual depiction of the data available in this kind of scenario is given in \cref{fig:RNC_diagram}. 
 
-\begin{align*}
-    \text{input data} &= \Big\{ \left( \big\{ \x_{nt} \in \R^M \big\}_{n=1}^N, \; \y_t \in \R^N, \; \s_t \in [0, 1]^N \right)\Big\}_{t=1}^T \\[0.2cm]
-    &= \Xt \in \R^{N \times T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}
-\end{align*}
+\begin{equation*}
+    \text{RNC input data} = \Big\{ \Xt \in \R^{N \times T \times M}, \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}\Big\}
+\end{equation*}
 
-In this context, the matrices $\Y$ and $\Ss$ retain the same meanings as in previous sections, while $\Xt$ now represents an order-3 tensor, with three independent axes signifying node number, time instant, and covariate number, respectively. In the following sections, we index/slice this tensor of explanatory variables, $\Xt$, in various ways, therefore, it is beneficial to establish some notational standards for this purpose. In general, we adhere to the conventions outlined in \cite{Kolda2009}, which are also similar to those found in \cite{Kiers2000}. 
+Here, we have introduced the notation $\Xt$, which is an order-3 tensor, to 
 
-To refer to an individual element of an order-3 tensor (i.e. a scalar entry), we use the notation $\Xt_{ntm}$. The object generated by fixing two indices and letting a third vary (i.e. a vector) is referred to in this context as a fibre. Using tensor notation, the vector of covariates $\x_{nt} \in \R^{M}$, which exists at every node, at every time point, can alternatively be written as $\Xt_{nt:}$. A two-dimensional section of a tensor (i.e. a matrix), where two indices can vary and a single index is fixed, is known as a slice. For example, we could consider the slice given by a specific covariate measured across the whole graph, at every time instant, for which we would use the notation $\Xt_{::m}$. \Cref{fig:X_tensor_indexing} gives a visual representation of several ways of indexing/slicing an order-3 tensor. 
+with three independent axes signifying node number $n$, time instant $t$, and covariate number $m$, respectively. In the following sections, we index/slice this tensor of explanatory variables, $\Xt$, in various ways, therefore, it is beneficial to establish some notational standards for this purpose. In general, we adhere to the conventions outlined in \cite{Kolda2009}, which are also similar to those found in \cite{Kiers2000}. 
+
+To refer to an individual element of an order-3 tensor (i.e. a scalar entry), we use the notation $\Xt_{ntm}$. The object generated by fixing two indices and letting a third vary (resulting in a vector) is referred to in this context as a fibre. Using tensor notation, the vector of covariates $\x_{nt} \in \R^{M}$, which exists at every node, at every time point, can alternatively be written as $\Xt_{nt:}$. A two-dimensional section of a tensor (i.e. a matrix), where two indices can vary and a single index is fixed, is known as a slice. For example, we could consider the slice given by a specific covariate measured across the whole graph, at every time instant, for which we would use the notation $\Xt_{::m}$. \Cref{fig:X_tensor_indexing} gives a visual representation of several ways of indexing/slicing an order-3 tensor. 
 
 
 \begin{figure}[t] 
@@ -316,7 +317,7 @@ To refer to an individual element of an order-3 tensor (i.e. a scalar entry), we
 \end{figure}
 
 
-For the purposes of this section, we also introduce the special matrix $\X$, which is constructed by horizontally stacking the $M$ vectorized slices $\Xt_{::m}$, resulting in an object of shape $(NT \times M)$. 
+For the purposes of this section, we also define the special matrix $\X$, which is constructed by horizontally stacking the $M$ vectorized slices $\Xt_{::m}$, resulting in an object of shape $(NT \times M)$. 
 
 \begin{equation}
     \label{eq:X_RNC}
@@ -330,7 +331,7 @@ In this section we consider several extensions to a model known as Regression wi
     \vecc{\Y} = \vecc{\Ss} \circ \big( \vecc{\C} + \X \w  + \vecc{\E} \big)
 \end{equation}
 
-In this context, $\C \in \R^{N \times T}$ represents the flexible intercept term, $\w \in \R^{M}$ the vector of regression coefficients, and $\E \in \R^{N \times T}$ a matrix of independent and identically distributed Gaussian noise with unit variance. Furthermore, the above expression can be restated in terms of a single model coefficient vector $\thetaa$, by making use of the definition of $\X \in \R^{NT \times M}$ given in \cref{eq:X_RNC}, as follows.
+In this context, $\C \in \R^{N \times T}$ represents the flexible intercept term, $\w \in \R^{M}$ the vector of regression coefficients, and $\E \in \R^{N \times T}$ a matrix of independent and identically distributed Gaussian noise with unit variance. The key assumption of the RNC model is that the intercept term $\C$ is smooth with respect to the topology of the entire $T-V$ Cartesian product graph. Furthermore, the above expression can be restated in terms of a single model coefficient vector $\thetaa$, by making use of the definition of $\X \in \R^{NT \times M}$ given in \cref{eq:X_RNC}, as follows.
 
 \begin{equation}
     \label{eq:rnc_stat_model_theta}
