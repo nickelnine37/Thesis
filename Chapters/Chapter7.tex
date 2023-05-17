@@ -4,15 +4,61 @@
 
 \lhead{Chapter 5. \emph{Signal Uncertainty: Estimation and Sampling}} % 
 
-So far in this thesis we have introduced several Bayesian GSP models and focused on tractable methods for finding mean of the associated Gaussian posterior. In this chapter, we turn our attention to the posterior covariance and 
+So far in this thesis we have introduced several Bayesian GSP models and focused on tractable methods for finding mean of the associated Gaussian posterior. In this chapter, we turn our attention to the posterior \textit{covariance}, which presents several new interesting challenges. Invariably, these issues stem from the dimensionality the covariance matrix, which in each case is the inverse of a large Kronecker-structured operator. For example, consider the two-dimensional graph signal reconstruction problem defined in \cref{sec:gsr_cpg}. The posterior mean has shape $(N \times T)$ and the posterior covariance matrix has shape $(NT \times NT)$. For a modest-sized problem comprising a 200-node graph measured over 365 time points, the (known) precision matrix will have over $5 \times 10^9$ elements, corresponding to over 20GB of memory with 32-bit floating-point numbers. Even if this could be held in RAM, inverting a matrix of this size would be intractable on consumer-grade hardware. This problem is only compounded when considering the tensor-valued models introduced in \cref{chap:nd_gsp}, where the covariance matrices have $O(N^2)$ elements, where $N = \prod N_i$. \Cref{tab:post_cov} lists the posterior covariance matrices that appear in these models, along with their associated dimensionality. 
+
+\setcellgapes{8pt}
+\makegapedcells
+
+\begin{table}[ht]
+    \def\arraystretch{1.5}
+    \centering
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \textbf{Model} & \textbf{Covariance} & \textbf{Element count}\\
+    \hline
+    GSR & $\left(\D_{\St} + \gamma \HH^{-2}\right)^{-1}$ & $ N^2 $\\ 
+    \hline
+    KGR & $\left(\D_{\St} + \gamma \K^{-1} \otimes \HH^{-2}\right)^{-1}$ & $(N + T)^2$\\ 
+    \hline
+    RNC & $\begin{bmatrix}
+        \D_\St + \gamma \HH^{-2} & \D_\St  \X \\
+        \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
+       \end{bmatrix}^{-1}$ & $(N + M)^2$ \\ 
+    \hline
+    KG-RNC & $\begin{bmatrix}
+        \D_\St + \gamma \K^{-1} \otimes \HH^{-2} & \D_\St  \X \\
+        \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
+       \end{bmatrix}^{-1}$ & $(N + T + M)^2$ \\
+    \hline
+\end{tabular}
+\caption{The posterior covariance matrix appearing in the tensor GSR, KGR, RNC and KR-RNC models.}
+\label{tab:post_cov}
+\end{table}
 
 
-\section{Introduction}
+Given these challenges, the goal of this chapter is to to gain insight into the uncertainty about the predicted posterior mean, whilst circumventing the need to instantiate, invert or decompose large matrices directly in memory. To this end, we specify two separate but related tasks of interest. The first is to estimate the marginal variance, i.e. the diagonal of the posterior covariance matrix. Whilst this disregards information about the correlation between elements, it still gives valuable insight into prediction uncertainty whilst remaining tractable to store in memory. As such, the first objective of this chapter is to design an efficient and effective algorithm to predict the posterior marginal variance for a tensor-valued graph signal reconstruction problem. In particular, we show how it is possible to make a comprehensive estimate by computing only a small number $Q \ll N$ of the elements directly, which can be further enhanced using an active learning strategy. 
 
-\label{sec:var_intro}
+The second task is to sample directly from the posterior. Whilst a straightforward approach may be to use some Markov Chain Monte Carlo (MCMC) variant, this has some well-documented drawbacks such as serial correlation of samples, which can lead to slow convergence, especially when the dimensionality of the problem is large. Our method by contrast alleviates this issue, with an approach that is more akin to direct sampling via Cholesky decomposition. However, since direct decomposition of the posterior covariance matrix is intractable, we instead borrow a technique known as perturbation optimisation which uses algebraic tricks to transform the problem, making direct sampling achievable. 
 
+The methods derived in this chapter are designed to be applicable to tensor-valued GSP problems covered in \cref{chap:nd_gsp}. However, since the two-dimensional methods covered in \cref{chap:gsr_2d,chap:kgr_rnc_2d} can be considered special cases of the more general MWGSP format, these too are covered. 
 
-\section{Posterior Estimation}
+\section{Predictive algorithms for the posterior marginal variance in GSR}
+
+Consider the posterior distribution of the underlying tensor $\Ft$ as specified in \cref{sec:tensor_gsr} on Multiway Graph Signal Reconstruction. Recall that, in its vectorised form, it was given by 
+
+\begin{equation}
+    \f \, | \, \y \sim \Norm{\PP^{-1} \y}{\PP^{-1}}
+\end{equation}
+
+where 
+
+\begin{equation}
+    \PP = \D_{\St} + \gamma \HH^{-2}
+\end{equation}
+
+The goal of this section is to estimate the diagonal of the covariance matrix $\PP^{-1}$ without directly evaluating the matrix in full. As established in previous sections, it is possible to solve a linear system of the form $\PP^{-1} \z$ efficiently, where $\z$ is an arbitrary length-$N$ vector, using the SIM or CGM. Therefore, a straightforward approach to computing the marginal variance in full is immediately available: to compute the $n$-th column of $\PP^{-1}$, we can just solve the linear system $\PP^{-1} \e_n$, where $\e_n$ is the $n$-th unit basis vector. Therefore, in order to compute the entire marginal variance in full we simply solve this system $N = \prod N_i$ times, one for each $n \in [1, 2, ..., N]$, dropping all but the $n$-th element of the resultant solution each time. 
+
+However, the drawback on this scheme is also immediately apparent. To compute each element of the marginal variance, we must complete a full linear system solve, which itself has complexity of $O(N \sum N_i)$ for each sub-iteration. 
 
 \subsection{Log-variance prediction}
 
