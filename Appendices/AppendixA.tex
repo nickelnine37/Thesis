@@ -125,10 +125,10 @@
     \vecc{\Y} \, | \, \Z \sim \mathcal{N}\Big(\vecc{\Ss \circ \big(\U_N \, (\G \circ \Z) \, \U_T^\top\big)}, \; \D_{\Ss}\Big)
     $$
     
-    Similarly, since the prior specified for $\F$ is $\mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \HH^2\big)$, this implies that the prior over $\Z$ is simply
+    Similarly, since the prior specified for $\F$ is $\mathcal{N}\big(\zero, \, \gamma^{-1} \HH^2\big)$, this implies that the prior over $\Z$ is simply
     
     $$
-    \vecc{\Z} \sim \mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \I_{NT} \big) 
+    \vecc{\Z} \sim \mathcal{N}\big(\zero, \, \gamma^{-1} \I_{NT} \big) 
     $$
     
     To see this, consider the following
@@ -212,7 +212,7 @@ Subtracting \cref{eq:SIM_F_true} from \cref{eq:SIM_F_update} gives
 where we denote the error at the $k$-th iteration as $\vecc{\E_k} = \vecc{\F_k} - \vecc{\F}$. From this it is clear to see that convergence will be achieved so long as the spectral radius $\rho(\M^{-1}\N)$ is less than one. If this condition holds then,
 
 \begin{equation}
-    \lim_{k \rightarrow \infty} \vecc{\E_{k}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_0} = \mathbf{0} .
+    \lim_{k \rightarrow \infty} \vecc{\E_{k}} = \lim_{k \rightarrow \infty} (\M^{-1} \N)^{k} \, \vecc{\E_0} = \zero .
 \end{equation}
 
 In general, the number of iterations required to achieve some specified reduction in the magnitude of the error is proportional to one over the logarithm of the spectral radius
@@ -317,8 +317,8 @@ In each of these expressions we have a fraction for which both the numerator and
     \begin{align*}
         -2\log \pi(\thetaa | \Y) &\propto \Big(\vecc{\Y} - \big[ \D_\Ss \;\; \D_\Ss \X \big] \thetaa \Big)^\top \D_\Ss^{-1} \Big(\vecc{\Y} - \big[ \D_\Ss \;\; \D_\Ss \X \big] \thetaa \Big) \\[0.2cm]
         & + \thetaa^\top  \begin{bmatrix}
-            \gamma^{-1} \HH^{2} & \mathbf{0}\\
-            \mathbf{0} & \lambda^{-1} \I_M   
+            \gamma^{-1} \HH^{2} & \zero\\
+            \zero & \lambda^{-1} \I_M   
            \end{bmatrix} ^{-1} \thetaa
     \end{align*}
 
@@ -327,8 +327,8 @@ In each of these expressions we have a fraction for which both the numerator and
     \begin{align*}
         -2\log \pi(\thetaa | \Y) &\propto \Big(\vecc{\Y} - \big[ \I_{NT} \;\; \X \big] \thetaa \Big)^\top \D_\Ss\Big(\vecc{\Y} - \big[ \I_{NT} \;\; \X \big] \thetaa \Big) \\[0.2cm]
         & + \thetaa^\top  \begin{bmatrix}
-            \gamma \HH^{-2} & \mathbf{0}\\
-            \mathbf{0} & \lambda \I_M   
+            \gamma \HH^{-2} & \zero\\
+            \zero & \lambda \I_M   
            \end{bmatrix} \thetaa
     \end{align*}
 

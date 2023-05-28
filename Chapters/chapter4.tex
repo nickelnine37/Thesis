@@ -1,6 +1,6 @@
 \chapter{Multivariate Regression Models for Time-Varying Graph Signals}
 
-\lhead{Chapter 5. \emph{Multivariate Regression Models for Time-Varying Graph Signals}}
+\lhead{Chapter 4. \emph{Multivariate Regression Models for Time-Varying Graph Signals}}
 
 \label{chap:kgr_rnc_2d}
 
@@ -45,7 +45,7 @@ Consider a sequence of $T$ real-valued graph signals measured over a static $N$-
 \end{equation*}
 
 
- In the following, we assume that the explanatory variables do not contain missing values. However, if any missing values are present, conventional methods such as those described in \cite{Little2019} can be employed to fill them. It should be noted that, with this model specification, there is no rigid distinction between in-sample and out-of-sample prediction. To indicate a particular value of $\x_t$ for which a comprehensive prediction should be generated, one can set the corresponding value of $\y_t = \s_t = \mathbf{0}$. 
+ In the following, we assume that the explanatory variables do not contain missing values. However, if any missing values are present, conventional methods such as those described in \cite{Little2019} can be employed to fill them. It should be noted that, with this model specification, there is no rigid distinction between in-sample and out-of-sample prediction. To indicate a particular value of $\x_t$ for which a comprehensive prediction should be generated, one can set the corresponding value of $\y_t = \s_t = \zero$. 
 
 As in \cref{sec:problem_statement_2d}, the graph signals can be stacked together into a matrix $\Y$ of shape $(N \times T)$. Note that this in contrast to the typical shape found in multivariate regression, which is most commonly $(T \times N)$ with the index referring to each sample varying first, however, we adopt the opposite convention here for the reasons outlined \cref{sec:gsp_cpg}. 
 
@@ -92,7 +92,7 @@ To determine the posterior distribution of the model coefficients $\W$, it is ne
 
 \begin{equation}
 \label{eq:W_prior}
-\vecc{\W} \sim \mathcal{N}\left(\mathbf{0}, \; \gamma^{-1} \I_P \otimes \HH_N^{2}\right)
+\vecc{\W} \sim \mathcal{N}\left(\zero, \; \gamma^{-1} \I_P \otimes \HH_N^{2}\right)
 \end{equation}
 
 Here, $\HH_N \in \R^{N}$ represents a graph filter constructed in accordance with one of the univariate filter functions defined in \cref{tab:iso_filters}, while $\gamma$ serves as a hyperparameter denoting the prior precision. The rationale for this prior, as explicated in \cite{Venkitaraman2020}, is as follows. Consider a random graph signal formulated as $\W \boldsymbol{\phi}$, where both $\W$ and $\boldsymbol{\phi}$ have Gaussian i.i.d. entries with zero mean and unit variance. The probability distribution of their product will also be an i.i.d. multivariate Gaussian with zero mean. By applying a graph filter $\HH_N$ to smooth this signal, the resulting signal will exhibit the same probability distribution as $\W \boldsymbol{\phi}$, assuming $\W$ was drawn from the distribution specified in \cref{eq:W_prior}. Consequently, this prior serves to enhance the likelihood of smooth signals.
@@ -118,7 +118,7 @@ Therefore, we can rewrite the model in terms of the new transformed variable as 
 
 \begin{equation}
     \label{eq:F_prior2}
-    \vecc{\F} \sim \mathcal{N}\Big(\mathbf{0}, \; \gamma^{-1} \big(\PHI^\top \PHI \big) \otimes \HH_N^{2}\Big)
+    \vecc{\F} \sim \mathcal{N}\Big(\zero, \; \gamma^{-1} \big(\PHI^\top \PHI \big) \otimes \HH_N^{2}\Big)
 \end{equation}
 
 
@@ -151,7 +151,7 @@ Therefore, the prior distribution over $\F$ is given in terms of $\K$ by
 
 \begin{equation}
     \label{eq:F_prior3}
-    \vecc{\F} \sim \mathcal{N}\Big(\mathbf{0}, \; \gamma^{-1} \K \otimes \HH_N^{2}\Big)
+    \vecc{\F} \sim \mathcal{N}\Big(\zero, \; \gamma^{-1} \K \otimes \HH_N^{2}\Big)
 \end{equation}
 
 In a similar manner to \cref{sec:problem_statement_2d}, the posterior distribution for $\F | \Y$ is given by 
@@ -355,7 +355,7 @@ In order to complete the specification of the Bayesian model, we need a prior di
 
 \begin{equation}
     \label{eq:theta_prior}
-    \thetaa \sim \mathcal{N}\left( \mathbf{0}, \; \begin{bmatrix} \gamma^{-1} \HH^2 & \mathbf{0} \\ \mathbf{0} & \lambda^{-1} \I_M \end{bmatrix} \right)
+    \thetaa \sim \mathcal{N}\left( \zero, \; \begin{bmatrix} \gamma^{-1} \HH^2 & \zero \\ \zero & \lambda^{-1} \I_M \end{bmatrix} \right)
 \end{equation}
 
 Here, $\HH \in \R^{NT \times NT}$ is a graph filter defined to act over the entire T-V product graph. This block matrix including $\HH$ and $\I_M$ both encodes the smoothness assumption for the flexible intercept term, and provides regularisation for the regression coefficients $\w$. Given this, the posterior distribution over $\thetaa$ is given by 
@@ -384,8 +384,8 @@ In the case of RNC, there is no simple or convenient way to reuse the SIM method
 \begin{equation*}
     \M = 
     \begin{bmatrix}
-        \I_{NT} + \gamma \HH^{-2} & \mathbf{0} \\
-        \mathbf{0} & \lambda \I_M   
+        \I_{NT} + \gamma \HH^{-2} & \zero \\
+        \zero & \lambda \I_M   
        \end{bmatrix}, 
        \aand \N = \begin{bmatrix}
         \D_{\Ss'} & -\D_\Ss  \X \\
@@ -421,8 +421,8 @@ We propose that an effective preconditioner is given by
 
 \begin{equation}
     \widetilde{\PSI} =  \begin{bmatrix}
-        \U \D_\G & \mathbf{0} \\
-        \mathbf{0} & \U_M \D_M 
+        \U \D_\G & \zero \\
+        \zero & \U_M \D_M 
     \end{bmatrix}
 \end{equation}
 
@@ -463,7 +463,7 @@ Similarly, we can modify the prior over the flexible intercept term $\C$ in the 
 
 \begin{equation}
     \label{eq:theta_prior2}
-    \thetaa \sim \mathcal{N}\left( \mathbf{0}, \; \begin{bmatrix} \gamma^{-1} \K \otimes \HH_N^2 & \mathbf{0} \\ \mathbf{0} & \lambda^{-1} \I_M \end{bmatrix} \right)
+    \thetaa \sim \mathcal{N}\left( \zero, \; \begin{bmatrix} \gamma^{-1} \K \otimes \HH_N^2 & \zero \\ \zero & \lambda^{-1} \I_M \end{bmatrix} \right)
 \end{equation}
 
 Just as with KGR, this new model, which we refer to as Kernel Graph Regression with Network Cohesion (KG-RNC), is algebraically equivalent to the RNC model under the transformation 
@@ -507,8 +507,8 @@ where
 
 \begin{equation}
     \hat{\PSI} =  \begin{bmatrix}
-        \bar{\U} \D_{\bar{\G}} & \mathbf{0} \\
-        \mathbf{0} & \U_M \D_M 
+        \bar{\U} \D_{\bar{\G}} & \zero \\
+        \zero & \U_M \D_M 
     \end{bmatrix}
 \end{equation}
 

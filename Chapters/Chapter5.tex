@@ -3,7 +3,7 @@
 \chapter{Regression and Reconstruction with Tensor-Valued
 Muliway Graph Signals}
 
-\lhead{Chapter 6. \emph{Regression and Reconstruction with
+\lhead{Chapter 5. \emph{Regression and Reconstruction with
 Muliway Graph Signals}}
 
 \label{chap:nd_gsp}
@@ -429,7 +429,7 @@ In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}),
 where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\Et$ is a random tensor where each element has an independent normal distribution with with unit variance. That is,
 
 \begin{equation}
-    \vecrm{\Et} \, \sim \, \mathcal{N}(\mathbf{0}, \, \I)
+    \vecrm{\Et} \, \sim \, \mathcal{N}(\zero, \, \I)
 \end{equation}
 
 Given this distribution over the model noise, the conditional distribution of $\Yt |  \Ft$ is given by 
@@ -447,7 +447,7 @@ Or, more concisely,
 where $\D_{\St} = \diag{\vecrm{\St}}$. In order to encode the belief that the underlying tensor $\Ft$ is smooth with respect to the topology of the graph, we can make use of the following prior distribution. 
 
 \begin{equation}
-    \f \, \sim \, \mathcal{N}\left( \mathbf{0}, \, \gamma^{-1} \HH^2 \right) 
+    \f \, \sim \, \mathcal{N}\left( \zero, \, \gamma^{-1} \HH^2 \right) 
 \end{equation}
 
 where $\HH$ is constructed from a graph filter function in the manner specified in \cref{eq:H_def_dd}. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
@@ -524,7 +524,7 @@ using the fast GFT/IGFT algorithms described in \hyperlink{al:GFT_dd}{\textbf{4}
     \caption{The tensor SIM for GSR}
     \begin{algorithmic}
         \vspace{0.15cm}
-        \Require{Observation tensor $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
+        \Require{Observed tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
         \vspace{0.15cm}
         \Require{Sensing tensor $\St \in [0, 1]^{N_1 \times N_2 \times ... \times N_d}$}
         \vspace{0.15cm}
@@ -536,7 +536,7 @@ using the fast GFT/IGFT algorithms described in \hyperlink{al:GFT_dd}{\textbf{4}
         \vspace{0.5cm}
         \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
         \vspace{0.15cm}
-        \State{Initialise $\Gt, \Jt, \St'$}
+        \State{Initialise empty $\Gt, \Jt, \St'$}
         \vspace{0.5cm}
         \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
         \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
@@ -590,19 +590,19 @@ The tensor version of the CGM also follows naturally from the two-dimensional ca
 
 \begin{equation}
     \label{eq:lin_system_precon_dd}
-    \f^{\star} = \PHI \left( \PHI^\top \left(\D_\St + \gamma \HH^{-2}\right)\PHI \right)^{-1}\PHI^\top \y
+    \f^{\star} = \PSI \left( \PSI^\top \left(\D_\St + \gamma \HH^{-2}\right)\PSI \right)^{-1}\PSI^\top \y
 \end{equation}
 
 where, in the tensor case, 
 
 \begin{equation}
-    \PHI = \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\Gt}} = \U \D_\Gt
+    \PSI = \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\Gt}} = \U \D_\Gt
 \end{equation}
 
 This means \cref{eq:lin_system_precon_dd} can be expressed as 
 
 \begin{equation}
-    \f^{\star} = \PHI \left( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N \right)^{-1}\PHI^\top \y
+    \f^{\star} = \PSI \left( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N \right)^{-1}\PSI^\top \y
 \end{equation}
 
 Note that, once again, this preconditioned coefficient matrix can be multiplied onto any appropriate tensor $\Zt$ efficiently by making use of the chained Kronecker multiplication procedure given in algorithm \hyperlink{KronMatMul}{\textbf{4}}. As with the SIM, this can be performed with $O(N \sum N_i)$ multiplications. In particular, 
@@ -618,7 +618,7 @@ Note that, once again, this preconditioned coefficient matrix can be multiplied 
     \caption{The tensor CGM for GSR}
     \begin{algorithmic}
         \vspace{0.15cm}
-        \Require{Observation tensor $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
+        \Require{Observed tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
         \vspace{0.15cm}
         \Require{Sensing tensor $\St \in [0, 1]^{N_1 \times N_2 \times ... \times N_d}$}
         \vspace{0.15cm}
@@ -630,7 +630,7 @@ Note that, once again, this preconditioned coefficient matrix can be multiplied 
         \vspace{0.5cm}
         \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
         \vspace{0.15cm}
-        \State{Initialise $\Gt'$}
+        \State{Initialise empty $\Gt$}
         \vspace{0.5cm}
         \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
         \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\

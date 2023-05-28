@@ -2,7 +2,7 @@
 
 \label{chap:gsr_2d}
 
-\lhead{Chapter 4. \emph{Regression and Reconstruction on Cartesian Product Graphs}}
+\lhead{Chapter 3. \emph{Regression and Reconstruction on Cartesian Product Graphs}}
 
 In this chapter, we are concerned with the reconstruction of signals defined over the nodes of a Cartesian product graph. In particular, we are pose the reconstruction problem in terms of Bayesian inference, where a smooth underlying signal must be inferred given a noisy partial observation. The key goal of this chapter is formulate a Bayesian model for this purpose, and to examine scalable techniques for obtaining the posterior mean. 
 
@@ -292,7 +292,7 @@ where now $g$ is chosen to be an anisotropic graph filter such as one of those l
     % \begin{center}
     \includegraphics[width=0.9\linewidth]{Figures/filter_types_butterfly.pdf}
     % \end{center}
-    \caption[A time-vertex Cartesian product graph]{A graphical depiction of a time-vertex Cartesian product graph}
+    \caption[A visual representation of applying an isotropic and anisotropic graph filter]{A visual representation of applying an isotropic and anisotropic graph filter. Here, the graph signal is an image, which can be thought of as existing on the nodes of a Cartesian product graph constructed by taking the product of two chain graphs. }
     \label{fig:filters}
 \end{figure}
 
@@ -403,7 +403,7 @@ Note that the covariance matrix $\diag{\vecc{\Ss}}$ is semi-positive definite by
 
 \begin{equation}
     \label{eq:F_prior}
-    \vecc{\F} \sim \mathcal{N}\big(\mathbf{0}, \, \gamma^{-1} \HH^2\big)
+    \vecc{\F} \sim \mathcal{N}\big(\zero, \, \gamma^{-1} \HH^2\big)
 \end{equation}
 
 Next, given an observation $\Y$, we use Bayes' rule to find the posterior distribution over $\F$. This is given by
@@ -732,7 +732,7 @@ In this subsection, we evaluate our GSR method using a dataset consisting of dai
     \begin{center}
         \includegraphics[width=0.6\linewidth]{Figures/UK_covid.pdf}
     \end{center}
-    \caption{\small{The seven day rolling rate of new covid cases reported per 100,000 residents in each lower tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in gray.}}
+    \caption[Snapshot of the Covid-19 case rate in the UK]{\small{The seven day rolling rate of new covid cases reported per 100,000 residents in each lower tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in gray.}}
     \label{fig:covid}
 \end{figure}
 
@@ -933,10 +933,10 @@ Now consider the condition number $\kappa$ of the CGM coefficient matrix. I the 
     &= \kappa  \left(  \, 
     \begin{bmatrix} 
         \uu_1^\top \\ 
-        \mathbf{0}^\top \\
+        \zero^\top \\
         \vdots \\ 
-        \mathbf{0}^\top 
-    \end{bmatrix} \D_{\Ss}  \Big[ \uu_1, \, \mathbf{0}, \, \dots, \,\mathbf{0} \Big]
+        \zero^\top 
+    \end{bmatrix} \D_{\Ss}  \Big[ \uu_1, \, \zero, \, \dots, \,\zero \Big]
     + \gamma \I \; \right) \notag \\[0.2cm]
     &= \kappa  \left(  \, \frac{1}{NT}  \begin{bmatrix}
         |\mathcal{S}| & 0 & 0 & \dots \\
@@ -1014,7 +1014,7 @@ For the second part of experiment 1, we set $\beta = \infty$, corresponding to t
     \begin{center} 
     \includegraphics[width=\linewidth]{Figures/m_gamma_3d_plot.pdf}
     \end{center}
-    \caption{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colormap corresponds to vertical height and is nomalised across each plot to aid comparison. }}
+    \caption[Strog Filter Limit convergence experiments]{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colormap corresponds to vertical height and is nomalised across each plot to aid comparison. }}
     \label{fig:m_gamma_3d_plot}
 \end{figure}
 
@@ -1029,7 +1029,7 @@ In the second experiment, we test the number of iterations required for converge
     \begin{center} 
     \includegraphics[width=\linewidth]{Figures/3d_iterations.pdf}
     \end{center}
-    \caption{\small{Six 3D surfaces are shown representing the number of iterations required for convergence for three values of $m$ for both the SIM and CGM algorithms. In each plot, the $x$-axis represents the filter parameter $\beta$, and the $y$-axis represents the regularisation parameter $\gamma$. The colormap, which is normalsied equally across all plots, tracks the vertical height. }}
+    \caption[Convergence experiments]{\small{Six 3D surfaces are shown representing the number of iterations required for convergence for three values of $m$ for both the SIM and CGM algorithms. In each plot, the $x$-axis represents the filter parameter $\beta$, and the $y$-axis represents the regularisation parameter $\gamma$. The colormap, which is normalsied equally across all plots, tracks the vertical height. }}
     \label{fig:3d_iteration_plots}
 \end{figure}
 
