@@ -1,457 +1,60 @@
+\chapter{Signal Uncertainty: Estimation and Sampling} % Main chapter title
 
+\label{chap:variance} % Change X to a consecutive number; for referencing this chapter elsewhere, use \ref{ChapterX}
 
-\chapter{Regression and Reconstruction with Tensor-Valued
-Muliway Graph Signals}
+\lhead{Chapter 5. \emph{Signal Uncertainty: Estimation and Sampling}} % 
 
-\lhead{Chapter 6. \emph{Regression and Reconstruction with
-Muliway Graph Signals}}
+So far in this thesis we have introduced several Bayesian GSP models and focused on tractable methods for finding mean of the associated Gaussian posterior. In this chapter, we turn our attention to the posterior \textit{covariance}, which presents several new interesting challenges. These challenges stem from the dimensionality the associated covariance matrix which, in each case, is the inverse of a large Kronecker-structured operator. For example, consider the two-dimensional graph signal reconstruction problem defined in \cref{sec:gsr_cpg}. The posterior mean has shape $(N \times T)$ and the posterior covariance matrix has shape $(NT \times NT)$. For a modest-sized problem comprising a 200-node graph measured over 365 time points, the (known) precision matrix will have over $5 \times 10^9$ elements, corresponding to over 20GB of memory with 32-bit floating-point numbers. Even if this could be held in RAM, inverting a matrix of this size would be intractable on consumer-grade hardware. This problem is only compounded when considering the tensor-valued models introduced in \cref{chap:nd_gsp}, where the covariance matrices have $O(N^2)$ elements, where $N = \prod N_i$. \Cref{tab:post_cov} lists the posterior covariance matrices that appear in these models, along with their associated dimensionality. 
 
-\label{chap:nd_gsp}
+\setcellgapes{8pt}
+\makegapedcells
 
-
-Multiway Graph Signal Processing (MWGSP) is an emerging framework for analysing signals with multiple distinct axes (or `ways'), where the relation between elements within each axis is described by a graph topology \citep{Stanley2020}. For example, consider an fMRI experiment where cerebral blood flow is measured at a set of 3D voxels across time, for multiple subjects, in response to various stimuli. This dataset could be modelled as a six-way graph signal with the three spatial coordinates and the one time coordinate forming a four-way hypergrid graph, the subjects forming a graph based on characteristics, and the stimuli forming a graph based on similarity \citep{Cichocki2015}. A visual depiction of this is given in \cref{fig:fMRI_diagram}. 
- 
-\vspace{1.5cm}
-
-\begin{figure}[h] 
-    \begin{center}
-        \includegraphics[width=\linewidth]{Figures/fMRI_Digaram.pdf}
-    \end{center}
-   \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of a six-way graph signal originating from a hypothetical fMRI experiment. } 
-    \label{fig:fMRI_diagram}
-\end{figure} 
-
-
-\begin{figure}[b] 
-    \begin{center}
-        \includegraphics[width=0.4\linewidth]{Figures/coloured_tensor.pdf}
-    \end{center}
-   \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of an order-3 tensor signal with graphs underlying each axis, which are linked together to form a Cartesian product graph.} 
-    \label{fig:coloured_tensor}
-\end{figure}  
-
-The goal of this chapter is to extend the methods developed in \cref{chap:gsr_2d,chap:kgr_rnc_2d} such that they can accommodate multiway graph signals. In particular, Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) can all be understood as a special two-dimensional case of their more general MWGSP counterpart. In this chapter, we translate all three models into a their $d$-dimensional form, and demonstrate how to solve efficiently for the posterior mean.  
-
-
-Multiway signals are described using tensors, which can be represented as $d$-dimensional arrays. Tensor algebra is well-established in fields such as physics and mechanics \citep{Renteln2013}, however it is less widespread in the graph signal processing community. As such, the first section of this chapter sets out some conceptual and notational standards regarding tensors, which are core to the present and proceeding chapters. 
-
-
-We begin \cref{sec:dd_gsp} by defining the Cartesian product of more than two graphs, and discuss the algebraic and spectral structure of the resultant objects. Next, we cover the tensor representation of multiway graph signals and give the general definition of a graph-spectral operators in $d$-dimensions. We also discuss issues surrounding computational efficiency and how the so called `vec-trick', utilised in prior chapters, can be generalised to the tensor setting. In \cref{sec:tensor_gsr}, we begin the core contributions of this chapter by generalising Bayesian GSR as defined in \cref{chap:gsr_2d} to the MWGSP setting. This necessitates an updated version of the SIM and CGM to accommodate tensor-valued data in arbitrary dimensions, which we give in \cref{sec:SIM_dd,sec:CGM_dd}. Next, in \cref{sec:kgr_dd}, we generalise KGR for the non-parametric prediction of multiway graph signals as a function of exogenous variables. Finally, in \cref{sec:rnc_dd}, we the generalise RNC as defined in \cref{sec:rnc_mdp} in much the same way.  
-
-
-
-\section{Multiway Graph Signal Processing}
-
-\label{sec:dd_gsp}
-
-\subsection{The Cartesian product of more than two graphs}
-
-In \cref{sec:graph_products_defined} we gave the general definition of a product between two graphs and highlighted four standard examples, namely the Cartesian, direct, strong and lexicographic products. Each of these product types can be straightforwardly extended to more than two factor graphs by applying their respective definition recursively. For example, consider the Cartesian product between graphs $\mathcal{G}_A = \{\mathcal{V}_A, \mathcal{E}_A\}$, $\mathcal{G}_B = \{\mathcal{V}_B, \mathcal{E}_B\}$ and $\mathcal{G}_C = \{\mathcal{V}_C, \mathcal{E}_C\}$ where $|\mathcal{V}_A| = A$, $|\mathcal{V}_B| = B$ and $|\mathcal{V}_C| = C$. This can be written as 
-
-\begin{equation}
-    \mathcal{G} \; = \; \mathcal{G}_A \, \square \; \mathcal{G}_B \, \square \; \mathcal{G}_C \; = \; \{\mathcal{V}, \, \mathcal{E}\}
-\end{equation}
-
-The new vertex set, $\mathcal{V}$, is given by the Cartesian product of the individual vertex sets, arranged in lexicographic order. 
-
-\begin{equation}
-    \mathcal{V} = \mathcal{V}_A \times \mathcal{V}_B \times \mathcal{V}_C = \{(a, \, b, \, c) \in \mathbb{N}^3 \, | \, a \leq A, \; b \leq B, \text{and} \;  c \leq C\}
-\end{equation}
-
-The new edge set, $\mathcal{E}$, is given by recursively applying conditions 1 and 7 from, \cref{sec:graph_products_defined} to the new node set. In particular, any two nodes $(a, \, b, \, c)$ and $(a', b', c')$ are connected in $\mathcal{E}$ if they satisfy any of the following three conditions. 
-
-\vspace{0.5cm}
-
-\begin{table}[h]
+\begin{table}[hb]
     \def\arraystretch{1.5}
     \centering
-    \begin{tabular}{lclclc}
-        1. & $[a, \, a'] \in \mathcal{E}_A$    & and & $b = b'$  & and & $c = c'$             \\
-        2. & $a = a'$    & and & $[b, \, b'] \in \mathcal{E}_B$   & and & $c = c'$             \\
-        3. & $a = a'$    & and & $b = b'$  & and & $[c, \, c'] \in \mathcal{E}_C$              \\
-    \end{tabular}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \textbf{Model} & \textbf{Covariance matrix} & \textbf{Element count}\\
+    \hline
+    GSR & $\left(\D_{\St} + \gamma \HH^{-2}\right)^{-1}$ & $ \prod N_i^2 $\\ 
+    \hline
+    KGR & $\left(\D_{\St} + \gamma \K^{-1} \otimes \HH^{-2}\right)^{-1}$ & $T^2\prod N_i^2$\\ 
+    \hline
+    RNC & $\begin{bmatrix}
+        \D_\St + \gamma \HH^{-2} & \D_\St  \X \\
+        \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
+       \end{bmatrix}^{-1}$ & $\Big(\prod N_i + M\Big)^2$ \\ 
+    \hline
+    KG-RNC & $\begin{bmatrix}
+        \D_\St + \gamma \K^{-1} \otimes \HH^{-2} & \D_\St  \X \\
+        \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
+       \end{bmatrix}^{-1}$ & $\Big(T\prod N_i + M\Big)^2$ \\
+    \hline
+\end{tabular}
+\caption{The posterior covariance matrix appearing in the tensor GSR, KGR, RNC and KR-RNC models.  }
+\label{tab:post_cov}
 \end{table}
 
+\setcellgapes{2pt}
 
-\begin{figure}[t]
-    \begin{center}
-        \includegraphics[width=\linewidth]{Figures/3D_CPG.pdf}
-    \end{center}
-    \caption[Graphical depiction of a 3D Cartesian product graph]{Graphical depiction of a 3D Cartesian product graph}
-    \label{fig:3D_CPG}
-\end{figure}
 
-\Cref{fig:3D_CPG} gives a visual representation of a Cartesian product graph formed from three simple factor graphs. Notice that the size of the new vertex and edge set both grow very quickly. In particular, 
+Given these challenges, the goal of this chapter is to to gain insight into the uncertainty about the predicted posterior mean, whilst circumventing the need to instantiate, invert or decompose large matrices directly in memory. To this end, we specify two separate but related tasks of interest:
 
-$$
-|\mathcal{V}| = |\mathcal{V}_A| |\mathcal{V}_B| |\mathcal{V}_C| \aand |\mathcal{E}| =  |\mathcal{E}_A| |\mathcal{V}_B| |\mathcal{V}_C| + |\mathcal{V}_A| |\mathcal{E}_B| |\mathcal{V}_C| + |\mathcal{V}_A| |\mathcal{V}_B| |\mathcal{E}_C|
-$$
-
-Happily, the adjacency matrix of a Cartesian product graph $\A$ has a straightforward representation in terms of the factor adjacency matrices (here $\A_A$, $\A_B$ and $\A_C$). Specifically, it is given by their Kronecker sum. 
-
-\begin{align}
-    \A &= \A_A \oplus \A_B \oplus \A_C \notag \\
-    &= \A_A \otimes \I_B \otimes \I_C  + \I_A \otimes \A_B \otimes \I_C + \I_A \otimes \I_B \otimes \A_C
-\end{align}
-
-In general, we can consider the Cartesian product of $d$ factor graphs with adjacency matrices denoted as $\A^{(1)} \in \R^{N_1 \times N_2}, \A^{(2)} \in \R^{N_2 \times N_2}, \dots \A^{(d)} \in \R^{N_d \times N_d}$. The full adjacency matrix will have size $N \times N$, where $N = \prod N_i$, and is given by  
-
-\begin{alignat}{4}
-    \A = \A^{(1)} & \oplus \A^{(2)} & \oplus \;\; ... \;\; & \oplus \A^{(d)} \notag \\[0.1cm]
-    = \A^{(1)} & \otimes \I_{N_2} & \otimes \;\; ... \;\; & \otimes \I_{N_d} +  \notag \\[0.1cm]
-    \I_{N_1} & \otimes \A^{(2)} & \otimes \;\; ... \;\; & \otimes \I_{N_d} + \;\; \ldots \;\; +  \notag \\[0.1cm]
-    \I_{N_1} & \otimes \I_{N_2} & \otimes \;\; ... \;\; & \otimes \A^{(d)}  
-\end{alignat}
+\begin{enumerate}
     
-This can be written compactly as 
+    \item \textit{To estimate the posterior marginal variance}. Given a large, known precision matrix with a Kronecker structure, the task is to estimate the diagonal of the associated covariance matrix (its inverse). Whilst the most straightforward approach would be simply to invert the precision matrix directly and take the diagonal, this will be too memory intensive for most practical applications. Computing the marginal variance alone disregards information about the correlation between elements, but still gives valuable insight into prediction uncertainty whilst remaining tractable to store in memory. Therefore, the first task is to produce a scalable algorithm for estimating the diagonal of the posterior covariance matrix. 
+    \item \textit{To sample directly from the posterior}. For many applications, the ability to draw independent samples directly from the posterior is of significant interest. However, due to the size of the relevant matrices, direct Cholesky decomposition approaches will be intractable for most realistic use cases. Therefore, the second task is to produce an algorithm that can efficiently draw independent random samples from the posterior, whilst avoiding the memory and computational difficulties associated with the most straightforward approaches. 
+\end{enumerate}
 
-\begin{equation}
-    \A = \bigoplus_{i=1}^d  \A^{(i)}
-\end{equation}
+The chapter is structured as follows. First, in \cref{sec:post_var_pred}, we consider different approaches for estimating the posterior marginal variance. In particular, we compare a recent stochastic technique for estimating a matrix diagonal \citep{Bekas2007, Tang2012} with several custom regression models which leverage intuition about the network structure of the problem. We show that, by including these network effects, our method significantly outperforms the aforementioned stochastic technique on a test dataset. Next, in \cref{sec:sampling}, we make use of a recently proposed technique for direct sampling known as Perturbation Optimisation (PO) \citep{Vono2022}. PO is relevant when the precision matrix can be split into a sum of matrices with a known eigenvalue decomposition which, as we will show, is always the case in our models. This allows us to draw independent samples from the posterior distribution for the same computational cost as is required to calculate the posterior mean which, as established in \cref{chap:nd_gsp}, can be achieved efficiently using iterative methods. 
 
-Similarly, the Laplacian of the product graph, $\LL$, can be written as the Kronecker sum of the individual factor graph Laplacians $\LL^{(i)}$. 
+The methods derived in this chapter are designed to be applicable to tensor-valued GSP problems covered in \cref{chap:nd_gsp}. However, since the two-dimensional methods covered in \cref{chap:gsr_2d,chap:kgr_rnc_2d} can be considered special cases of the more general MWGSP format, these too are included under the same framework. 
 
-\begin{equation}
-    \LL = \bigoplus_{i=1}^d  \LL^{(i)}
-\end{equation}
+\section{Estimating the posterior marginal variance}
 
-We can perform eigendecomposition on each of the individual graph Laplacians as follows. 
+\label{sec:post_var_pred}
 
-\begin{equation}
-    \LL^{(i)} = \U^{\,(i)} \LAM^{(i)} (\U^{\,(i)})^\top
-\end{equation}
-
-\noindent where $ \U^{(i)}$ is an orthogonal matrix such that each column is an eigenvector of $\LL^{(i)}$, and $\LAM^{(i)}$ is a diagonal matrix containing the corresponding eigenvalues, which are typically listed in ascending order. 
-
-$$
-\LAM^{(i)} = 
-\begin{bmatrix}
-    \lambda_1^{(i)}, &                 &        &                 \\
-                     & \lambda_2^{(i)} &        &                 \\
-                     &                 & \ddots &                 \\
-                     &                 &        & \lambda_{N_i}^{(i)} \\
-\end{bmatrix}
-$$
-
-Given this, the Laplacian of the product graph can be decomposed as follows. 
-
-\begin{align}
-    \LL &= \bigoplus_{i=1}^d \U^{\,(i)} \LAM^{(i)} (\U^{\,(i)})^\top \notag \\[0.2cm]
-    &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \left(\bigoplus_{i=1}^d \LAM^{(i)} \right) \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
-    &= \U \LAM \U^\top 
-\end{align}
-
-\noindent where 
-
-\begin{equation}
-    \label{eq:U_LAM_def}
-    \U =  \bigotimes_{i=1}^d  \U^{\,(i)} , \quad \text{and} \quad \LAM =  \bigoplus_{i=1}^d \LAM^{(i)}
-\end{equation}
-
-
-As with the Kronecker sum, here we have used the notation $\bigotimes_{i=1}^d  \U^{\,(i)}$ to denote the chained Kronecker product of matrices $\{\U^{\,(i)}  \}$. 
-
-\subsection{Representing \textit{d}-dimensional graph signals}
-
-Since each node in a $d$-dimensional product graph is specified by $d$ independent indices, a signal $\Yt$ existing over the nodes has a natural representation as a tensor of order $d$. One way to conceptualise a $d$-dimensional tensor signal is as a multi-dimensional array with $d$ independent axes. If the $i$-th factor graph has $N_i$ vertices, then $\Yt$ will be of shape $(N_1, \, N_2 , ... N_d)$. An individual element of this tensor signal can be specified via a vector index $\nn = [n_1,\, n_2,\, ...,\, n_d]$, where $1\leq n_i \leq N_i$.
-
-Alternatively, signals can be represented as a vector of length $N = \prod N_i$. This is essential if we are to interpret the $\otimes$ symbol strictly as a Kronecker product, rather than a tensor or outer product. Under the Kronecker interpretation, the chained use of $\otimes$ used in expressions such as \cref{eq:U_LAM_def} results in matrices of shape $N \times N$, providing a linear map from $\R^{N} \rightarrow \R^{N}$. Therefore, for an operator to act on a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, we need a method of mapping tensors with shape $(N_1, \, N_2 , ... N_d)$ to vectors of length $N$. In order for this vectorisation process to be consistent with the operators, it should result in a vectors whose elements are arranged in lexicographic order. In some fields, this is referred to as \textit{row-major} vectorisation since, in the case of an order-2 tensor, the index representing the row varies before the column index. In the following, we symbolise this operation mathematically as $\vecrm{\cdot}: \R^{N_1 \times N_2 \times ... \times N_d} \rightarrow \R^N$, and its reverse operation as $\tenrm{\cdot}: \R^N \rightarrow \R^{N_1 \times N_2 \times ... \times N_d}$. We use the `RM' subscript to indicate explicitly that this process is occurring in row-major order, since the standard $\vecc{\cdot}$ function defined for matrices is most commonly assumed to act in column-major order.  
-
-In the following, we use bold lower-case symbols (e.g. $\y$) to indicate graph signals existing in their vector form, and bold upper-case calligraphic symbols (e.g. $\Yt$) to indicate graph signals in their multi-dimensional array form. That is, 
-
-\begin{align*}
-    \y = \vecrm{\Yt} \quad \implies \quad \Yt  = \tenrm{\y}
-\end{align*}
-
-\Cref{fig:ten_to_vec} shows gives a visual summary of the process of converting between these two representations for an order-3 tensor. 
-
-
-\begin{figure}[t]
-    \begin{center}
-        \includegraphics[width=\linewidth]{Figures/Tensor_Digaram.pdf}    
-    \end{center}
-    \caption[Conversion between a multidimensional array and a vector]{A graphical depiction of the process of converting an order-3 tensor between its multidimensional array and vector form in row-major order. Note that the elements in the vectorised signal are lexicographically ordered. }
-    \label{fig:ten_to_vec}
-\end{figure}
-
-
-To calculate the vector index $k$ which a tensor element with index $\nn = [n_1,\, n_2,\, ...,\, n_d]$ is mapped to in row-major order, we can apply the following formula.  
-
-\begin{equation}
-    \label{eq:vec}
-    k = 1 + \sum_{i=1}^d \Big( \prod_{j=i+1}^d N_j \Big) \, (n_i - 1)
-\end{equation}
-
-(Note the $\pm1$ disappear when indexing begins from zero). The reverse operation, i.e. mapping a vector element index $k$ to a tensor index $\nn$ can be achieved by running the algorithm \hyperlink{vectoten}{\textbf{3}}. 
-
-
-\begin{algorithm}[b]
-    \hypertarget{vectoten}{}
-    \label{al:vectoten}
-    \caption{Mapping a vector element to a tensor element in row major order}
-    \begin{algorithmic}
-    \vspace{0.15cm}
-    \Require{The target vector element $k$} 
-    \vspace{0.1cm}
-    \Require{The shape of the output tensor $(N_1, N_2, ..., N_d)$} 
-    \vspace{0.25cm}
-    \State{$k \leftarrow  k - 1$}
-    \vspace{0.25cm}
-    \For{$i$ \textbf{from} $d$ \textbf{to} 1}
-    \vspace{0.25cm}
-    \State{$n_i \leftarrow  k \mod N_i$}
-    \vspace{0.15cm}
-    \State{$k \leftarrow \lfloor k / N_i \rfloor$} 
-    \vspace{0.15cm}
-    \EndFor
-    \vspace{0.25cm}
-    \Ensure{$(n_1 + 1, n_2 + 1, ..., n_d + 1)$}
-    \end{algorithmic}
-\end{algorithm}
-
-
-
-Given these two operations, two arrays of any consistent shape can be mapped between one another by first vectorising according to \cref{eq:vec}, and then converting to a tensor using the given algorithm.
-
-
-
-\subsection{GSP in \textit{d}-dimensions}
-
-
-
-Consider a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ represented in its multi-dimensional array form. In direct analogy to the two dimensional case given in \cref{eq:GFT_2d,eq:IGFT_2d}, we can define the Graph Fourier Transform (GFT) and its corresponding inverse (IGFT) of this signal as follows. 
-
-\begin{alignat}{2}
-\label{eq:gft_nd}
-    \text{GFT}(\Yt) & = \tenrm{\U^\top \y} && = \tenrm{\left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \vecrm{\Yt} } \\
-\label{eq:igft_nd}
-    \text{IGFT}(\Yt) & = \tenrm{\U \y} && = \tenrm{\left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right) \vecrm{\Yt} }
-\end{alignat}
-
-The concept of a graph filter for signals defined on a Cartesian product graph follows naturally from this definition. Just as in the one and two-dimensional case, a graph filter is constructed by first taking the GFT of a signal, then applying some scaling function to each spectral component, then transforming back into the vertex domain via the IGFT. In the simplest case, we can consider an isotropic graph filter function $g(\lambda, \beta)$, such as one of those defined in \cref{tab:iso_filters}. A filter $\HH$, defined to act on a vectorised graph signal, can be represented as an $N \times N$ matrix, constructed as follows. 
-
-
-\begin{align}
-    \label{eq:H_def_dd}
-    \HH &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) g\left(\bigoplus_{i=1}^d \LAM^{(i)}; \beta \right) \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
-        &= \U \, \diag{\vecrm{\Gt}} \, \U^\top
-\end{align}
-
-
-Here, $\Gt$ represents the spectral scaling tensor, which has element $\nn = [n_1,\, n_2,\, ...,\, n_d]$ given by 
-
-\begin{equation}
-    \label{eq:Gn_dd1}
-    \Gt_{\nn} = g\left(\sum_{i=1}^d \lambda^{(i)}_{n_i}; \, \beta\right)
-\end{equation}
-
-In certain special filter types, such as the diffusion filter, this function may be multiplicatively separable. In this case, we have that 
-
-\begin{equation}
-    \Gt_{\nn} = \prod_{i=1}^d g\left(\lambda^{(i)}_{n_i}; \, \beta\right)
-\end{equation}
-
-This further implies that the graph filter $\HH$ can be decomposed as 
-
-\begin{equation}
-    \HH = \bigotimes_{i=1}^d \HH^{(i)}, \where \HH^{(i)} = \U^{(i)} g \big(\LAM^{(i)}\big) \left(\U^{(i)}\right)^\top
-\end{equation}
-
-However, in the following, we typically don't consider this special case and assume that the graph filter function is non-separable in general. 
-
-The concept of a multi-way graph filter can be further generalised to include anisotropic filter functions, where the intensity of the filtering operation is not restricted to be equal in each dimension. \Cref{tab:anis_filters} gives some examples of anisotropic graph filter functions defined to act in an arbitrary number of dimensions. 
-
-\begin{table}[t]
-    \def\arraystretch{1.7}
-    \small
-    \begin{center}
-        \begin{tabular}{|l|c|}
-            \hline
-            \textbf{Filter}   & $g(\lambdaa; \,\betaa)$                                            \\
-            \hline
-            1-hop random walk & $(1 + \betaa^\top\lambdaa)^{-1}$                                   \\
-            \hline
-            Diffusion         & $\exp(-\betaa^\top\lambdaa)$                                       \\
-            \hline
-            ReLu              & $\max (1 - \betaa^\top\lambdaa, 0)$                                \\
-            \hline
-            Sigmoid           & $2 \big( 1 + \exp(\betaa^\top\lambdaa)\big)^{-1}$                  \\
-            \hline
-            Bandlimited       & $1, \,\text{if} \; \betaa^\top\lambdaa \leq 1 \; \text{else} \; 0$ \\
-            \hline
-        \end{tabular}
-    \end{center}
-    \caption{Anisotropic graph filter functions in an arbitrary number of dimensions}
-    \label{tab:anis_filters}
-\end{table}
-
-
-In this case, the spectral scaling tensor is given by 
-
-\begin{equation}
-    \label{eq:Gn_dd2}
-    \Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)
-\end{equation}
-
-where $\betaa \in \R^{d}$ is the parameter vector characterising the filter intensity in each dimension, and $\lambdaa(\nn) \in \R^d$ is a vector holding the $n_i$-th eigenvalue of each graph Laplacian in the Cartesian product. 
-
-$$
-\lambdaa(\nn) = 
-\begin{bmatrix}
-    \lambda^{(1)}_{n_1} & \lambda^{(2)}_{n_2} & \dots & \lambda^{(d)}_{n_d}    
-\end{bmatrix}^\top
-$$
-
-In general, we can define any spectral transformation in tensor terms as follows. 
-
-\begin{equation}
-    \Yt' = \text{IGFT} \left( \Gt \circ \text{GFT}(\Yt) \right)
-\end{equation}
-
-\subsection{Fast computation of the \textit{d}-dimensional GFT and IGFT}
-
-\label{sec:fast_kron_dd}
-
-Consider the definition of the GFT and IGFT of a $d$-dimensional graph signal given in \cref{eq:gft_nd,eq:igft_nd}. In both cases, we are required to compute the result of a chained Kronecker product matrix acting on a length-$N$ vector. Whilst the obvious approach to computing this product would have time and memory complexity of $O(N^2)$, a much more efficient implementation can be achieved by taking advantage of the Kronecker structure of the matrix. Specifically, the memory and time complexity of this operation can be reduced to $O(N)$ and $O(N\sum N_i)$ respectively. The importance of this fact cannot be understated, as it enables scaling to much larger product graphs that would otherwise be possible. 
-
-This general algorithm for achieving this is well-known, and can be summarised as follows. Consider the application of a chained Kronecker product matrix acting on a vector $\y$. 
-
-$$
-\y = \left( \U^{(1)} \otimes \U^{(2)} \otimes ... \otimes \U^{(d)}\right) \z
-$$
-
-This can be factorised as follows
-
-$$
-\y = \left( \U^{(1)} \otimes \I \otimes ... \otimes \I \right)\left( \I \otimes \U^{(2)} \otimes ... \otimes \I \right) ... \left( \I \otimes \I \otimes ... \otimes \U^{(d)} \right) \z
-$$
-
-As is visible, the original multiplication has now been broken into $d$ stages. However, the $i$-th stage can be completed with $N \times N_i$ multiplications by reshaping the vector in the appropriate way and leveraging the properties of the Kronecker product. The reshaping operation can be completed using strided permutation matrices which can be applied in practice for virtually zero computational cost \citep{Granata1992}. This idea is also key to the FFT and related algorithms, which can be understood as finding a recursive Kronecker structure in the Fourier matrix \citep{Tolimieri2013}. 
-
-Work on efficient computational procedures for this operation can be traced back to \cite{Roth1934} who formulated the original 2-dimensional ``vec trick" algorithm. The $d$-dimensional generalisation was proposed in \cite{Pereyra1973} and improved in \cite{DeBoor1979}. More recent work, such as \cite{Fackler2019}, has focused on further optimisations such as minimising data transit times and parallel processing. 
-
-Furthermore, if the $i$-th factor graph in the Cartesian product is a path or ring graph, then the corresponding matrix transformation can be completed with only $N \log N_i$ multiplications by making use of the FCT/FST/FFT algorithms. In the extreme case, where every factor graph has this special structure, the computational complexity reaches parity with the multidimensional FFT algorithm, and will have a runtime complexity of $O(N \log N)$ \citep{Smith1995}. 
-
-In order to execute computations of this nature in a way that is maximally efficient, we have developed the Python library \textit{PyKronecker}, which is described in detail in \cite{Antonian2023}. This library offers a high-level API for constructing Kronecker-based operators and applying them to either vectors or tensors, whilst optimising the underlying computation using parallel GPU processing and Just In Time (JIT) compilation. In the following, it will be assumed that all chained Kronecker product matrices are applied to vectors/tensors using an efficient implementation. This is essential for computing the $d$-dimensional GFT and IGFT, the basic pseudocode for which is shown in algorithm \hyperlink{al:GFT_dd}{\textbf{4}}. Note that the `reshape' operation should always be applied using the row-major convention. This is the standard convention in languages such as C and Python's NumPy library \citep{Harris2020}, but not in languages such as Matlab and Fortran. 
-
-\begin{algorithm}[t]
-    \hypertarget{al:GFT_dd}{}
-    \label{al:GFT_dd}
-    \caption{Efficient GFT and IGFT in $d$-dimensions}
-    \begin{algorithmic}
-    \vspace{0.25cm}
-    \Require{List of Laplacian eigenvector matrices $\left\{\U^{(i)} \in \R^{N_{i} \times N_{i}}\right\}_{i=1}^d$} 
-    \vspace{0.8cm}
-    \Function{GFT}{$ \Yt \in \R^{N_1 \times N_2 \times ... \times N_d} $}
-    \vspace{0.25cm}
-    \For{$i$ \textbf{from} 1 \textbf{to} $d$}
-    \vspace{0.25cm}
-    \State{$\Yt\leftarrow \text{reshape}\Big(\Yt,  \;\big(N_i,\, N / N_i \big) \Big)$}
-    \vspace{0.25cm}
-    \State{$\Yt \leftarrow \left( \left(\U^{(i)}\right)^\top \; \Yt  \right)^\top$} 
-    \vspace{0.25cm}
-    \EndFor
-    \vspace{0.25cm}
-    \State{\textbf{return} $\text{reshape}\Big(\Yt, \; \big(N_1, \, N_2, \; ..., \; N_d \big) \Big)$}
-    \vspace{0.25cm}
-    \EndFunction
-    \vspace{1cm}
-    \Function{IGFT}{$ \Zt \in \R^{N_1 \times N_2 \times ... \times N_d} $}
-    \vspace{0.25cm}
-    \For{$i$ \textbf{from} 1 \textbf{to} $d$}
-    \vspace{0.25cm}
-    \State{$\Zt\leftarrow \text{reshape}\Big(\Zt,  \;\big(N_i,\, N / N_i \big) \Big)$}
-    \vspace{0.25cm}
-    \State{$\Zt \leftarrow \left( \U^{(i)} \; \Zt  \right)^\top$} 
-    \vspace{0.25cm}
-    \EndFor
-    \vspace{0.25cm}
-    \State{\textbf{return} $\text{reshape}\Big(\Zt, \; \big(N_1, \, N_2, \; ..., \; N_d \big) \Big)$}
-    \vspace{0.25cm}
-    \EndFunction
-    \vspace{0.25cm}
-    \end{algorithmic}
-\end{algorithm}
-
-
-\note{A note on tensor notation}{
-    The use of tensor algebra is well established in fields such as phyics and mechanics \citep{Renteln2013,Abraham1988}, however, it is less widespread in the signal processing community. For this reason, we choose to adopt a notation that leans more on standard linear algebra, however, all the equations and algorithms discussed in the following chapters could be alternatively written in a purer form of tensor notation. For example, consider the IGFT of a tensor signal $\Zt$. In our notation, this is written as
-
-    \vspace{0.3cm}
-
-    \begin{equation}
-        \label{eq:LA_MM}
-        \Yt = \text{ten}_{\text{RM}}\left(\left(\bigotimes_{i=1}^d  \U^{\,(i)}\right) \text{vec}_\text{RM}\left(\Zt\right) \right)    
-    \end{equation}
-
-    \vspace{0.3cm}
-
-    As is visible, this describes the process in terms of regular matrix-vector multiplication, but requires the additional definition of the $\vecrm{\cdot}$ and $\tenrm{\cdot}$ operations. Alternatively, this expression could be written using tensor indexing and Einstein summation notation as follows. 
-    
-    \vspace{0.3cm}
-
-    \begin{equation}
-    \label{eq:TEN_MM}
-    \Yt^{\, i_1, i_2, ..., i_d} = \left(\U^{(1)}\right)^{i_1}_{j_1}\left(\U^{(2)}\right)^{i_2}_{j_2} ... \left(\U^{(d)}\right)^{i_d}_{j_d} \, \Zt^{\, j_1, j_2, ..., j_d}
-    \end{equation}
-
-    \vspace{0.3cm}
-
-    Note that here the indices $j_1, j_2, ..., j_d$ on the right hand side are implicitly summed over. This eliminates the need to consider vectorisation at all and is perhaps a more elegant way of describing the $d$-dimensional GFT/IGFT. However, there are multiple indices to keep track of which becomes somewhat unaesthetic in a variable number of dimensions.
-
-    \vspace{0.3cm}
-    
-    Both forms offer different trade-offs, however, there is no practical difference when it comes to executing the signal precessing algorithms themselves. Note that, as described in \cref{sec:fast_kron_dd}, the full $N \times N$ matrix implied by \cref{eq:LA_MM} is never actually instantiated in memory (see algorithm \hyperlink{KronMatMul}{\textbf{4}}).
-
-}
-
-\section{Tensor Graph Signal reconstruction}
-
-\label{sec:tensor_gsr}
-
-The model we use to describe graph signal reconstruction in the multi-dimensional setting is as follows. Consider a tensor signal $\Yt$ of shape $\big(N_1, \, N_2, \, ... \, N_d \big)$ with elements interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph. Only a partial set $\mathcal{S} = \{\nn_1, \, \nn_2, \, ... \}$ of the vector elements of $\Yt$ are available at observation time, with unobserved values set to zero. The goal is to estimate the signal value at these unobserved entries. 
-
-The binary sensing tensor $\St$, of the same shape as $\Yt$, indicates which elements of $\Yt$ were observed in the following way 
-
-\begin{equation}
-    \St_{\nn} = \begin{cases}
-        1 & \text{if} \;\; \nn \in \mathcal{S} \\
-        0 & \text{otherwise}
-    \end{cases}
-\end{equation}
-
-In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\Yt$ is a noisy partial observation of an underlying tensor $\Ft$ which is smooth with respect to the topology of the Cartesian product graph. This is represented in the following statistical model. 
-
-\begin{equation}
-    \Yt = \St \circ \big(\Ft + \Et \big)
-\end{equation}
-
-where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\Et$ is a random tensor where each element has an independent normal distribution with with unit variance. That is,
-
-\begin{equation}
-    \vecrm{\Et} \, \sim \, \mathcal{N}(\mathbf{0}, \, \I)
-\end{equation}
-
-Given this distribution over the model noise, the conditional distribution of $\Yt |  \Ft$ is given by 
-
-\begin{equation}
-    \vecrm{\Yt} \, | \, \vecrm{\Ft} \, \sim \, \mathcal{N}\Big(\vecrm{\St \circ \Ft}, \; \diag{\vecrm{\St}}\Big)
-\end{equation}
-
-Or, more concisely, 
-
-\begin{equation}
-    \y \, | \, \f \, \sim \, \mathcal{N}\big(\s \circ \f, \; \D_{\St} \big)
-\end{equation}
-
-where $\D_{\St} = \diag{\vecrm{\St}}$. In order to encode the belief that the underlying tensor $\Ft$ is smooth with respect to the topology of the graph, we can make use of the following prior distribution. 
-
-\begin{equation}
-    \f \, \sim \, \mathcal{N}\left( \mathbf{0}, \, \gamma^{-1} \HH^2 \right) 
-\end{equation}
-
-where $\HH$ is constructed from a graph filter function in the manner specified in \cref{eq:H_def_dd}. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
-
+Consider the multiway Graph Signal Reconstruction problem as defined in \cref{chap:nd_gsp}. Here, the goal is to estimate a smooth underlying signal, $\Ft$, with shape $(N_1, N_2, ..., N_d)$, given a partially observed graph signal, $\Yt$, and binary sensing tensor, $\St$, both of which have the same shape as $\Ft$. In \cref{sec:tensor_gsr}, we demonstrate that the posterior distribution over $\f \in \R^N = \vecrm{\Ft}$, given $\y \in \R^N  = \vecrm{\Yt}$, is
 
 \begin{equation}
     \f \, | \, \y \sim \Norm{\PP^{-1} \y}{\PP^{-1}}
@@ -460,241 +63,278 @@ where $\HH$ is constructed from a graph filter function in the manner specified 
 where 
 
 \begin{equation}
-    \PP = \D_{\St} + \gamma \HH^{-2}
+    \label{eq:P_posterior}
+    \PP \in \R^{N \times N} = \D_{\St} + \gamma \HH^{-2}
 \end{equation}
 
-Therefore, the mean of this posterior is obtained by solving the following linear system.
+The goal of this section is to estimate the diagonal of the covariance matrix $\PP^{-1}$ without directly evaluating the matrix in full. For the sake of brevity, we focus on estimating the posterior marginal variance for the GSR model alone in this section. However, the methods discussed can easily be generalised to KGR, RNC and KG-RNC by making suitable modifications. 
 
-\begin{equation}
-    \label{eq:lin_system_dd}
-    \f^{\star} = \left(\D_\St + \gamma \HH^{-2}\right)^{-1} \y
-\end{equation}
+\subsection{A baseline approach}
 
-Once again, we are faced with a similar set of problems to those outlined in \cref{sec:problem_statement_2d}. Namely, the coefficient matrix is very large and potentially ill-defined. This can be solved by turing to iterative methods such as the SIM and CGM, which are repeated here in their form adapted for the general tensor case. 
+\label{sec:var_baseline}
 
-\subsection{Tensor SIM}
+As previously established, it is possible to efficiently solve a linear system of the form $\PP^{-1} \z$, where $\z$ is an arbitrary length-$N$ vector, using the SIM or CGM. Therefore, a straightforward approach to computing the marginal variance in full is immediately available: to compute the $n$-th column of $\PP^{-1}$, we can solve the linear system $\PP^{-1} \e_n$, where $\e_n$ is the $n$-th unit basis vector. Consequently, to compute the entire marginal variance in full, we solve this system $N = \prod N_i$ times, once for each $n \in [1, 2, ..., N]$, retaining only the $n$-th element of the resultant solution each time.
+    
+Whilst this strategy has lower time and memory complexity than performing direct inversion of $\PP$, it still presents significant computational challenges. Since obtaining each element of the marginal variance necessitates solving a linear system, the whole process takes $N$ times longer than the computation of the mean, which itself can be intensive for large problems. It is clear that this approach is not scalable. A natural question, then, is whether the full marginal variance can be \textit{estimated} for a lower computational cost. 
 
-\label{sec:SIM_dd}
 
-Generalising the SIM, which we describe in \cref{sec:SIM}, to the tensor setting is straightforward. In particular, \cref{eq:lin_system_dd} can be solved by splitting the coefficient matrix $\left(\D_\St + \gamma \HH^{-2}\right)$ into $\M - \N$, where $\M$ and $\N$ take on the following values
+\subsection{Matrix diagonal estimation}
+
+\label{sec:logvar_bekas}
+
+One notable recent approach for estimating the diagonal of an arbitrary matrix comes from \cite{Bekas2007}, which was subsequently updated in \cite{Tang2012}. Here, the authors propose a stochastic technique, based on the earlier work of \cite{Hutchinson1990}, which was designed to estimate the trace of a matrix. The authors define the estimator for $\diag{\PP^{-1}}$ as follows. 
  
 \begin{equation}
-    \M = \gamma \HH^{-2} + \I, \aand \N = \D_{\St'}
+    \label{eq:bekas}
+    \diag{\PP^{-1}} \approx \left(\sum_{r=1}^R \ve_r \circ \PP^{-1} \ve_r \right) \oslash \left(\sum_{k=1}^s \ve_r \circ \ve_r \right)
 \end{equation}
 
-where $\D_{\St'} = \diag{\mathbf{1} - \vecrm{\St}}$. In this case, the inverse of $\M$ has the form 
+Here, $\oslash$ denotes element-wise division, and $\circ$ is the Hadamard product (element-wise multiplication) as before. In the original specification, the vectors $\{\ve_r\}$ have entries of $\pm 1$ which are drawn uniformly at random. This estimator converges to the true diagonal of $\PP^{-1}$ as $R \rightarrow \infty$ \citep{Bekas2007}. For this technique to be scalable, it is necessary for the system $\PP^{-1} \ve$ to be solved efficiently for an arbitrary vector $\ve$ (which it can in our case, using the SIM or CGM). Furthermore, the algorithm requires $\PP^{-1} \ve$ to be computed for $R$ different values of $\ve_r$. Therefore the overall complexity of this approach is proportional to $R$. For this estimator to be better than the baseline approach outlined in \cref{sec:var_baseline}, we must reach an acceptable level of accuracy for $R \ll N$. 
 
 
-\begin{align}
-\M^{-1} &= \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\Jt}}\, \left(\bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \notag \\[0.2cm]
-&= \U \, \D_\Jt \, \U^\top
-\end{align}
+\subsection{A supervised learning approach}
 
-where the tensor $\Jt$ has entries with the vector index $\nn = [n_1,\, n_2,\, ...,\, n_d]$ given by 
+In this subsection we introduce the key contribution of the first half of this chapter. The basic idea is as follows. Using the approach outlined in \cref{sec:var_baseline}, we can compute the `true' variance at a limited number, $Q$, of the elements by solving the linear system $\PP^{-1}\e_n$, and retaining only the $n$-th element of the resultant vector, for a set of elements $\mathcal{Q}$. Next, we \textit{predict} the the marginal variance at all the other elements not in the set $\mathcal{Q}$. If we can construct a set of artificial explanatory variables associated with each element, then this becomes a standard supervised learning problem. 
+
+Since variance is strictly positive, we choose to predict the \textit{log}-variance rather than the variance itself. This transformation changes the prediction range from the positive values of $[0, \infty]$ to the full range of $[-\infty, \infty]$, which is more suitable for standard regression techniques. We define the target variable, denoted as $\Omegat$, as follows.
 
 \begin{equation}
-    \Jt_{\nn} = \frac{\Gt_{\nn}^2}{\Gt_{\nn}^2 + \gamma}.
+    \Omegat \in \R^{N_1 \times N_2 \times ... \times N_d} = \tenrm{\text{log}\left(\diagi{\PP^{-1}}\right)}
 \end{equation}
 
-Here, the entries of $\Gt$ are given by either \cref{eq:Gn_dd1} or \cref{eq:Gn_dd2}, which correspond to an isotropic or anisotropic filter function respectively. In a very similar manner to \cref{eq:sim_update}, the SIM update equation is given by 
+Note that here we have introduced the notation $\diagi{\cdot}$, which denotes a function mapping the diagonal of an $(N \times N)$ matrix into a length-$N$ vector. Therefore, the whole expression can be understood as taking the diagonal of the covariance matrix $\PP^{-1}$, performing an element-wise logarithm, and transforming this into a tensor, $\Omegat$,  of shape $(N_1, N_2, ..., N_d)$ in row major order. The objective of the regression algorithms discussed in this section is to predict the tensor $\Omegat$.
+
+To make this prediction, we first compute a subset of the elements of $\Omegat$. Since $\Omegat$ is an order-$d$ tensor, its elements are indexed by a length-$d$ integer vector, $\nn$. Therefore we can describe the indices that we choose to compute by the set $\mathcal{Q} = \{\nn_1, \nn_2, ..., \nn_Q \}$. Additionally, we define the binary tensor $\Qt$, which also indicates which elements of $\Omegat$ have been computed. 
 
 \begin{equation}
-    \label{eq:sim_update_dd}
-    \f_{k+1} = \M^{-1}\N \f_{k} + \M^{-1} \y
+    \Qt_{\nn} = \begin{cases}
+        1 & \text{if} \;\; \nn \in \mathcal{Q} \\
+        0 & \text{otherwise}
+    \end{cases}
 \end{equation}
 
-Note that each step can be achieved with time complexity $O(N \sum N_i)$ by making use of the fast Kronecker algorithm for computing the $d$-dimensional GFT/IFGT highlighted in \cref{sec:fast_kron_dd}. To be explicit, this update formula can be computed efficiently as 
 
-\begin{align*}
-    \Ft_{k+1} &= \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\St' \circ \Ft_{k}\big)\Big)  + \Ft_{0} \\[0.2cm]
-    \text{where} \quad \Ft_{0} &= \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\Yt \big)\Big) 
-\end{align*}
+For each index $\nn$, the corresponding element of $\Omegat$ can be computed as 
 
-or, equivalently,
+\begin{equation}
+    \Omegat_\nn = \tenrm{\log \left( \PP^{-1} \e_n \right)}_{\nn}
+\end{equation}
 
-\begin{align*}
-    \Delta \Ft_{k+1} &= \text{IGFT}  \Big( \Jt \circ \text{GFT}\big(\St' \circ \Delta \Ft_{k}\big)\Big)  \\[0.2cm]
-    \text{where} \quad \Delta \Ft_{0} &= \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\Yt \big)\Big)  
-\end{align*}
+For a vector index $\nn = [n_1, n_2, ..., n_d]$, the corresponding unit vector $\e_n$ is 
 
-using the fast GFT/IGFT algorithms described in \hyperlink{al:GFT_dd}{\textbf{4}}. For clarity, the full SIM algorithm is given in algorithm \hyperlink{al:SIM_dd}{\textbf{5}}. 
+\begin{equation}
+\e_n = \e_{n_1} \otimes \e_{n_2} \otimes ... \otimes \e_{n_d}
+\end{equation}
+
+The linear system $\PP^{-1} \e_n$ can then be solved efficiently using either the tensor SIM or CGM as discussed in \cref{sec:SIM_dd,sec:CGM_dd}. We refer to the process of computing these elements of $\Omegat$ as \textit{querying}. The result, after $Q$ queries, is a partial observation of the matrix $\Omegat$, where $Q$ of its entries have been filled in, and the rest are set to zero. We refer to this tensor as $\Omegat_Q$. 
+
+
+\begin{equation}
+    \Omegat_Q = \Qt \circ \Omegat
+\end{equation}
+
+As mentioned, we also need a set of explanatory variables to help predict the unknown elements of $\Omegat$. In particular, every element, $\nn$, should have an associated feature vector, $\x_\nn$, which should have some explanatory power over $\Omegat_\nn$. In this way, the problem becomes a regular supervised learning task where the goal is to predict $\Omegat$ given the labelled training pairs $\{\Omegat_\nn, \x_\nn\}_{\nn \in \mathcal{Q}}$. If each feature vector has length $k$, the explanatory variables as a whole can be described by the tensor $\Xt$ with shape $(N_1, ..., N_d, k)$. The question then becomes how to construct the tensor $\Xt$ such that it is likely to explain the posterior marginal variance well. 
+
+By inspecting \cref{eq:P_posterior}, it is clear that the marginal variance can only depend on $\St$, and $\HH$, since these are the only matrices appearing in the posterior covariance ($\gamma$ can be considered a constant for the purpose of this problem). $\HH$ itself also depends on the graph filter used and the structure of the graph. Therefore, we should choose features which capture different aspects of these objects. 
+
+\begin{table}[t]
+    \renewcommand{\arraystretch}{1.7}
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+    \hline
+     & \textbf{Description} & \textbf{Representation}\\
+    \hline
+    $\Xt_{:,1}$ &  Constant & $\mathbf{1}_{(N_1, N_2, ..., N_d)}$ \\
+    \hline
+    $\Xt_{:,2}$ & Missing observations & $\St'$  \\
+    \hline
+    $\Xt_{:,3}$ & Missing obs filtered & $\text{IGFT} \Big(\Gt \circ \text{GFT}\big(\Xt_{:,2}\big)\Big)$ \\
+    \hline 
+    $\Xt_{:,4}$ &  Diagonal of $\HH$ & $\tenrm{\diagi{\HH}}$ \\
+    \hline 
+    $\Xt_{:,5}$ & Diagonal of $\HH^2$ & $\tenrm{\diagi{\HH^2}}$ \\
+    \hline
+    $\Xt_{:,6}$ &  N-neighbours & $\tenrm{\A \mathbf{1}_N}$\\
+    \hline
+    $\Xt_{:,7}$  & N-neighbours filtered &  $\text{IGFT} \Big(\Gt \circ \text{GFT}\big(\Xt_{:,6}\big)\Big)$ \\
+    \hline
+\end{tabular}
+\caption{\small{The explanatory variables used to predict the posterior log-variance. Note that $\Xt_{:,4}$ and $\Xt_{:,5}$ have an efficient computation - see \cref{the:efficient_H_diag} }}
+\label{tab:post_cov_features}
+\end{table}
+
+
+In the following, we use $k=7$ different descriptors which are summarised in \cref{tab:post_cov_features}. For the features that include a filtering operation ($\Xt_{:,3}$ and $\Xt_{:,7}$), we use the same filter parameters that were used in the original GSR specification. As in the RNC model of \cref{sec:rnc_dd}, we can combine these tensor variables together into a single matrix $\X$ as follows. 
+
+\begin{equation}
+    \X \in \R^{N \times 7} = \begin{bmatrix} \vecrm{\Xt_{:, 1}} & \vecrm{\Xt_{:, 2}} & \dots & \vecrm{\Xt_{:, 7}} \end{bmatrix}    
+\end{equation}
+
+
+
+\subsubsection{Solving with Ridge Regression}
+
+\label{sec:logvar_RR}
+
+The first strategy we use to predict the posterior log-variance is simply ridge regression. Here, we model the posterior log-variance $\Omegat$ as a linear combination of the features given in \cref{tab:post_cov_features}, with the optimal weighting, $\w$, learned from the observed data. In particular, the predicted value of $\Omegat$, which we label $\Omegat^\star$ is given simply by 
+
+$$
+\Omegat^\star = \tenrm{\X \w^\star}
+$$
+
+where 
+
+$$
+\w^\star = \left(\X^\top \D_\Qt \X + \lambda \I_N\right)^{-1} \X^\top  \vecrm{\Omegat_Q}
+$$
+
+Note that since $\D_\Qt = \diag{\vecrm{\Qt}}$ is a sparse diagonal matrix, the product $\X^\top \D_\Qt \X$ can be computed efficiently with $O(k^2Q)$ operations. This model includes a regularisation parameter $\lambda$ which must be set ahead of time (or potentially learned via cross validation).
+
+
+\subsubsection{Solving with RNC}
+
+\label{sec:logvar_RNC}
+
+The next strategy we use to predict the marginal variance is tensor Regression with Network Cohesion (RNC), as set out in \cref{sec:rnc_dd}. This extends ridge regression by including a flexible intercept term, $\Ct$, which is assumed to be smooth with respect to the graph topology. Since we expect that posterior uncertainty should propagate via closely connected nodes, it is reasonable to assume that $\Omegat$ varies smoothly over the network. In this case, the predicted value for $\Omegat$ is given by 
+
+
+\begin{equation}
+    \Omegat^\star = \Ct^\star + \tenrm{\X \w^\star}
+\end{equation}
+
+where
+
+\begin{equation}
+    \begin{bmatrix}
+        \vecrm{\Ct^\star} \\ \w^\star 
+    \end{bmatrix} = \begin{bmatrix}
+        \D_\Qt + \gamma \HH^{-2} & \D_\Qt \X \\
+        \X^\top \D_\Qt & \X^\top \D_\Qt \X + \lambda \I_7
+    \end{bmatrix}^{-1} \begin{bmatrix}
+        \vecrm{\Omegat_Q} \\ \X^\top \vecrm{\Omegat_Q}
+    \end{bmatrix}
+\end{equation} 
+
+
+Once again, this linear system can be solved efficiently using the SIM or CGM as discussed in \cref{sec:rnc_dd}. 
+
+
+\subsubsection{Ridge regression with learned filter parameters}
+
+\label{sec:logvar_LFP}
+
+The final novel method we consider for prediction of the posterior log-variance is based on the empirical observation that the predictions made by ridge regression can be improved by adjusting the parameters that characterise the graph filter used to construct features $\Xt_{:,3}$ and $\Xt_{:,7}$. However, it is difficult to tell ahead of time the direction and magnitude of the optimal adjustment. For this reason, we propose a new estimator for $\Omegat$ that simultaneously learns the coefficients multiplying each feature in \cref{tab:post_cov_features}, as well as the filter parameters characterising $\Xt_{:, 3}$ and $\Xt_{:, 7}$, which can vary independently. This can be expressed as follows. 
+
+\begin{equation}
+    \Omegat^\star = \tenrm{\X(\betaa^\star) \w^\star}
+\end{equation}
+
+Note that now $\X$ is a function of the filter parameters $\betaa$. In order to find the optimal values for both $\w^\star$ and $\betaa^\star$, we use the following loss function. 
+
+\begin{equation}
+    \label{eq:LFP_loss}
+    \xi(\w, \betaa) = || \Omegat_Q - \Qt \circ \tenrm{\X(\betaa) \w} ||^2_F + \lambda \left(||\w||^2 + ||\betaa - \betaa_0 ||^2\right)
+\end{equation}
+
+
+where $\betaa_0$ represents the parameters characterising the original graph filter in the base GSR problem. Minimising the expression in \cref{eq:LFP_loss} is in general a non-convex optimisation problem. However, a reasonable initial estimate for $\w$ is easily attainable by solving the ridge regression problem. From there, only minor adjustments are necessary for significant improvement in predictive performance. Therefore, off-the-shelf nonlinear optimisation algorithms such as quasi-Newton methods like BFGS can be readily applied \citep{Fletcher2013}. 
+
+
+\subsection{Query strategies}
+
+\label{sec:query_strats}
+
+So far in this discussion we have not addressed the question of how to select which elements of $\Omegat$ to query. The simplest approach is to uniformly select samples at random. However, although unbiased, this can lead to a high variance estimator, particularly when the query size is very small. A preferable approach is to select elements in a principled way, such that the variance of the estimator is reduced for a small sample size. This is likely to be achieved when the associated features of the samples are representative of the population at large. 
+
+Here we make use of a simple but effective query strategy. First, cluster the elements $\{ \nn \}$ into $K \leq Q$ groups based on the data matrix $\X$. Any clustering algorithm can be used here: a simple and fast option is $K$-means \citep{MacQueen1967, Hartigan1979}. Next, generate a query set $\mathcal{Q}$ by randomly choosing a new data point from each cluster in order. This simple approach is made explicit in \cref{al:K_means}. 
 
 \begin{algorithm}[t]
-    \hypertarget{al:SIM_dd}{}
-    \caption{The tensor SIM for GSR}
-    \begin{algorithmic}
-        \vspace{0.15cm}
-        \Require{Observation tensor $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
-        \vspace{0.15cm}
-        \Require{Sensing tensor $\St \in [0, 1]^{N_1 \times N_2 \times ... \times N_d}$}
-        \vspace{0.15cm}
-        \Require{Factor graph Laplacians $\{\LL^{(i)} \in \R^{N_i \times N_i}\}_{i=1}^d $}
-        \vspace{0.15cm}
-        \Require{Regularisation parameter $\gamma \in \R^{+}$}
-        \vspace{0.15cm}
-        \Require{Graph filter function $g(\, \cdot\, \,; \betaa \in \R^{d})$}
-        \vspace{0.5cm}
-        \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
-        \vspace{0.15cm}
-        \State{Initialise $\Gt, \Jt, \St'$}
-        \vspace{0.5cm}
-        \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
-        \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
-        \hspace*{0.7cm} $\ddots$
-        \For{$n_d$ \textbf{from} 1 \textbf{to} $N_d$}
-        \vspace{0.25cm}
-        \State{$\nn \leftarrow [n_1, n_2, ..., n_d]$}
-        \vspace{0.15cm}
-        \State{$\Gt_{\nn} \leftarrow g\big(\lambdaa(\nn); \, \betaa\big)$ }
-        \vspace{0.15cm}
-        \State{$\Jt_{\nn} \leftarrow \Gt_{\nn}^2 \, / \, (\Gt_{\nn}^2 + \gamma)$ }
-        \vspace{0.15cm}
-        \State{$\St_{\nn}' \leftarrow 1 - \St_\nn$}
-        \vspace{0.25cm}
-        \EndFor
-        \EndFor \\
-        \hspace*{0.1cm} \reflectbox{$\ddots$}
-        \EndFor
-        \vspace{0.5cm}
-        \State{$\Delta\Ft \leftarrow \text{IGFT}  \Big( \Jt \circ \text{GFT}\big( \Yt \big)\Big) $}
-        \vspace{0.15cm}
-        \State{$ \Ft  \leftarrow \Delta\Ft$}
-        \vspace{0.15cm}
-        \While{$|\Delta\Ft| > \text{tol}$}
-        \vspace{0.15cm}
-        \State{$\Delta\Ft \leftarrow \text{IGFT} \Big( \Jt \circ \text{GFT}\big(\St' \circ \Delta \Ft_{k} \big)\Big) $}
-        \vspace{0.15cm}
-        \State{$ \Ft \leftarrow  \Ft  + \Delta\Ft$}
-        \vspace{0.15cm}
-        \EndWhile
-        \vspace{0.5cm}
-        \Ensure{$ \Ft $}
-        \vspace{0.15cm}
-        \label{al:SIM_dd}
-    \end{algorithmic}
-\end{algorithm}
-
-Once again, the worst-case scaling rate of the number of steps required for convergence, $n_{\text{SIM}}$, is bounded by
-
-$$
-\frac{1}{\log(1 + \gamma) - \log m} \; \leq \; n_{\text{SIM}} \; \leq \; \frac{1}{\log(1 + \gamma)}
-$$
-
-where $m$ is the fraction of data that is missing in the input tensor $\Yt$ (see \cref{sec:convergence}). As before, the true scaling rate will depend on the strength of the graph filter. 
-
-\subsection{Tensor CGM}
-
-\label{sec:CGM_dd}
-
-The tensor version of the CGM also follows naturally from the two-dimensional case outlined in \cref{sec:CGM}. In particular, \cref{eq:lin_system_dd} can be transformed into the following equivalent preconditioned linear system. 
-
-\begin{equation}
-    \label{eq:lin_system_precon_dd}
-    \f^{\star} = \PHI \left( \PHI^\top \left(\D_\St + \gamma \HH^{-2}\right)\PHI \right)^{-1}\PHI^\top \y
-\end{equation}
-
-where, in the tensor case, 
-
-\begin{equation}
-    \PHI = \left( \bigotimes_{i=1}^d  \U^{\,(i)} \right) \, \diag{\vecrm{\Gt}} = \U \D_\Gt
-\end{equation}
-
-This means \cref{eq:lin_system_precon_dd} can be expressed as 
-
-\begin{equation}
-    \f^{\star} = \PHI \left( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N \right)^{-1}\PHI^\top \y
-\end{equation}
-
-Note that, once again, this preconditioned coefficient matrix can be multiplied onto any appropriate tensor $\Zt$ efficiently by making use of the chained Kronecker multiplication procedure given in algorithm \hyperlink{KronMatMul}{\textbf{4}}. As with the SIM, this can be performed with $O(N \sum N_i)$ multiplications. In particular, 
-
-\begin{align*}
-    \Zt' &= \tenrm{\big( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I \big) \vecrm{\Zt}} \\[0.2cm]
-    &= \Gt \circ \text{GFT} \Big( \St \circ \text{IGFT} \big(\Gt \circ \Zt\big) \Big)  + \gamma \Zt
-\end{align*}
-
-
-\begin{algorithm}[t]
-    \hypertarget{al:CGM_dd}{}
-    \caption{The tensor CGM for GSR}
-    \begin{algorithmic}
-        \vspace{0.15cm}
-        \Require{Observation tensor $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$}
-        \vspace{0.15cm}
-        \Require{Sensing tensor $\St \in [0, 1]^{N_1 \times N_2 \times ... \times N_d}$}
-        \vspace{0.15cm}
-        \Require{Factor graph Laplacians $\{\LL^{(i)} \in \R^{N_i \times N_i}\}_{i=1}^d $}
-        \vspace{0.15cm}
-        \Require{Regularisation parameter $\gamma \in \R^{+}$}
-        \vspace{0.15cm}
-        \Require{Graph filter function $g(\, \cdot\, \,; \betaa \in \R^{d})$}
-        \vspace{0.5cm}
-        \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
-        \vspace{0.15cm}
-        \State{Initialise $\Gt'$}
-        \vspace{0.5cm}
-        \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
-        \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
-        \hspace*{0.7cm} $\ddots$
-        \For{$n_d$ \textbf{from} 1 \textbf{to} $N_d$}
-        \vspace{0.25cm}
-        \State{$\nn \leftarrow [n_1, n_2, ..., n_d]$}
-        \vspace{0.15cm}
-        \State{$\Gt_{\nn} \leftarrow g\big(\lambdaa(\nn); \, \betaa\big)$ }
-        \vspace{0.25cm}
-        \EndFor
-        \EndFor \\
-        \hspace*{0.1cm} \reflectbox{$\ddots$}
-        \EndFor
-        \vspace{0.5cm}
-        \State{Initialise $\Zt$}
-        \vspace{0.15cm}
-        \State{$\Rt \leftarrow \Gt \circ \text{GFT} \left( \Yt \right)$}
-        \vspace{0.15cm}
-        \State{$\Dt \leftarrow \Rt$}
-        \vspace{0.5cm}
-        \While{$|\Delta\RR| > \text{tol}$}
-        \vspace{0.25cm}
-        \State{$\At \leftarrow \Gt \circ \text{GFT} \Big( \St \circ \text{IGFT} \big(\Gt \circ \Dt \big) \Big)  + \gamma \Dt  $}
-        \vspace{0.15cm}
-        \State{$\alpha \leftarrow  \sum_{\nn} \Rt_{\nn}^2 \, / \, \sum_{\nn} \Rt_\nn \At_\nn $}
-        \vspace{0.15cm}
-        \State{$\Zt \leftarrow  \Zt + \alpha \Dt $}
-        \vspace{0.15cm}
-        \State{$\Rt \leftarrow  \Rt - \alpha \At $}
-        \vspace{0.15cm}
-        \State{$\delta \leftarrow \sum_{\nn} \Rt_{\nn}^2  \, / \, \sum_{\nn} (\Rt + \alpha \At)^2$}
-        \vspace{0.15cm}
-        \State{$\Dt \leftarrow  \Rt + \delta \Dt $}
-        \vspace{0.25cm}
-        \EndWhile
-        \vspace{0.5cm}
-        \Ensure{$\text{IGFT} \left(  \Gt \circ \Zt \right)$}
-        \vspace{0.15cm}
-    \end{algorithmic}
-    \label{al:CGM_dd}
+\begin{algorithmic}
+\vspace{0.05cm}
+\Require{Number of clusters $K$} 
+\vspace{0.05cm}
+\Require{Number of queries $Q$} 
+\vspace{0.05cm}
+\Require{Data matrix $\X \in \R^{N \times 7}$} 
+\vspace{0.15cm}
+\State{Group data into $K$ randomly ordered cluster sets $\{\mathcal{C}_k\}_{k=1}^{K}$ using $K$-means algorithm}
+\vspace{0.15cm}
+\State{Create empty query set $\mathcal{Q}$}
+\vspace{0.15cm}
+\For{$q$ from 1 to $Q$}
+\vspace{0.15cm}
+\State{Select next non-empty cluster set $\mathcal{C}$}
+\vspace{0.15cm}
+\State{Choose member $n_q$ from cluster set $\mathcal{C}$ at random}
+\vspace{0.15cm}
+\State{Add member $n_q$ to query set $\mathcal{Q}$ }
+\vspace{0.15cm}
+\State{Remove member $n_q$ from cluster set $\mathcal{C}$}
+\vspace{0.15cm}
+\EndFor
+\vspace{0.15cm}
+\Ensure{ Query set $\mathcal{Q}$}
+\vspace{0.15cm}
+\end{algorithmic}
+\caption{Querying based on representative samples}
+\label{al:K_means}
 \end{algorithm}
 
 
+\subsection{Comparison and analysis}
 
-Just as with the two-dimensional case, we can bound the condition number of the preconditioned coefficient matrix to find the worst case scaling rates in the limit of a weak and strong filter. As before, this falls between
+\label{sec:logvar_experiments} 
 
-$$
-\sqrt{\frac{1 - m + \gamma}{\gamma}} \; \leq \; n_{\text{CGM}} \; \leq \; \sqrt{\frac{1+\gamma}{\gamma}}
-$$
+In order to compare the performance of the various techniques discussed in this section, we ran the following simple experiment which was setup as follows. First, a product graph was generated by taking the Cartesian product of three random connected graphs, with 10, 15 and 20 nodes respectively, resulting in a graph with $10 \times 15 \times 20 = 3000$ total nodes. Next, we generated a random binary sensing tensor $\St$ of shape $(10, 15, 20)$ by setting elements to zero or one uniformly at random. Finally, we chose a anisotropic diffusion graph filter with $\betaa = [0.5, 0.7, 0.6]$, and set $\gamma$ to one. The task, then, was to predict the diagonal of $(\D_\St + \gamma \HH^{-2})^{-1}$ given the values as specified. Given the relatively small size of the problem, we could compute the true value of $\Omegat$ by running the baseline algorithm as discussed in \cref{sec:var_baseline} over 3000 elements. 
 
-\section{Kernel Graph Tensor Regression}
+Next, we compared the performance of each of the algorithms discussed in this section. They were the traditional diagonal estimation algorithm of \cite{Bekas2007} (Bekas) outlined in \cref{sec:logvar_bekas}, Ridge Regression (RR), as outlined in \cref{sec:logvar_RR}, Regression with Network Cohesion (RNC) as outlined in \cref{sec:logvar_RNC}, and finally ridge regression with Learned Filter Parameters (LFP), as outlined in \cref{sec:logvar_LFP}. For each strategy, we measured the performance of the estimator by computing the total square error of the predicted variance (not the log-variance), and the $R^2$ statistic of the predicted variance. To be explicit, these were calculated as follows. 
 
-\label{sec:kgr_dd}
+\begin{equation}
+    \text{Square error} = || \exp(\Omegat) - \exp(\Omegat^\star)||_F^2
+\end{equation}
 
-Hello
+\begin{equation}
+    R^2 = 1 - \frac{|| \exp(\Omegat) - \exp(\Omegat^\star)||_F^2}{ \raisebox{-0.1cm} { $|| \exp(\Omegat) - \overline{\exp(\Omegat)}||_F^2$ }}
+\end{equation}
 
-\section{Tensor Regression with Network Cohesion}
+where $\overline{\exp(\Omegat)}$ means the mean of $\exp(\Omegat)$ across all elements. For the case of the Bekas estimator, there was no need to exponentiate the prediction, since it estimates the posterior variance directly, not the log-variance. 
 
-\label{sec:rnc_dd}
+For each of these different estimators, we measured the performance via these two metrics across a range of values of $Q$, i.e. for different numbers of queries. In the case of the Bekas estimator, we measured the performance for different values of $R$ [see \cref{eq:bekas}]. Since each query requires solving the linear system $\PP^{-1}\e_n$, and each iteration of the Bekas algorithm requires solving the linear system $\PP^{-1}\ve_r$, these two measures have a direct correspondence in terms of total compute time. 
 
-Ahhhh
-
-\section{Application}
+For the case of RR, RNC and LFP, we also compared the performance when using a random query strategy, and the representative sampling query strategy as outlined in \cref{al:K_means}. The results are shows in \cref{fig:var_solvers}. On the $x$-axis, we show the number of queries (number of Bekas iterations) as a percentage of the total number of elements, i.e. $Q/N$ (or $R/N$ for Bekas). 
 
 
-\section{Conclusions}
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/VarSolvers.pdf}
+    \end{center}
+   \caption[Performance of various algorithms for predicting the posterior log-variance]{The performance of the various algorithms for predicting the posterior log-variance is shown as a function of the percentage of $\Omegat$ that has been queried. The top row shows the total square error of the posterior variance, and the bottom row shows the $R^2$ statistic. The left column shows results for random queries and the right column show the results when using representative queries as outlined in \cref{al:K_means}. Since the Bekas technique does not depend on this algorithm, it is repeated in the left and right columns for reference. } 
+    \label{fig:var_solvers}
+\end{figure} 
+
+The results show that the three supervised learning-based strategies (RR, RNC and LFP) all significantly out-perform Bekas on this synthetic dataset. Moreover, when coupled with the representative sampling strategy of \cref{al:K_means}, all three achieve an $R^2$ statistic of around 0.99 when only 1\% of the elements of $\Omegat$ are queried. These results clearly demonstrate the value of this sampling strategy, especially when the number of queries is low. On this dataset, \cref{al:K_means} has a significant positive impact on performance up to a query percentage of around 3\%, beyond which the difference is less pronounced. 
+
+Of the three supervised learning-based techniques, LFP tends to display the strongest performance at low query percentages, for both random and representative query strategies. RR and RNC have similar performance in this domain, with RNC improving more as the query percentage increases. 
+
+Overall, these results demonstrate that high accuracy predictions ($R^2$ of roughly 0.99) can be achieved for a very low query number relative to the total number of nodes $N$, especially when combined with \cref{al:K_means}. While limited to this particular graph signal processing application, the supervised learning strategy is clearly more effective than the more general technique of \cite{Bekas2007} on this dataset. 
+
+
+\section{Posterior Sampling}
+
+\label{sec:sampling}
+
+
+In this section we move to the second aim of this chapter which is to produce an algorithm for direct sampling from the posterior. 
+
+This technique has been dubbed Perturbation Optimisation (PO) since it draws perturbed versions of the mean vectors before using them to define the linear system to solve \citep{Papandreou2010, Orieux2012}. 
+
+
+\subsection{Perturbation optimization}
+
+
+
+\section{Estimation vs Sampling}
+
+\label{sec:comparison}
+
+\subsection{Experiments}
