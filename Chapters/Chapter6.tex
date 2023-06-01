@@ -94,6 +94,8 @@ Here, $\oslash$ denotes element-wise division, and $\circ$ is the Hadamard produ
 
 \subsection{A supervised learning approach}
 
+\label{sec:logvar_supervised}
+
 In this subsection we introduce the key contribution of the first half of this chapter. The basic idea is as follows. Using the approach outlined in \cref{sec:var_baseline}, we can compute the `true' variance at a limited number, $Q$, of the elements by solving the linear system $\PP^{-1}\e_n$, and retaining only the $n$-th element of the resultant vector, for a set of elements $\mathcal{Q}$. Next, we \textit{predict} the the marginal variance at all the other elements not in the set $\mathcal{Q}$. If we can construct a set of artificial explanatory variables associated with each element, then this becomes a standard supervised learning problem. 
 
 Since variance is strictly positive, we choose to predict the \textit{log}-variance rather than the variance itself. This transformation changes the prediction range from the positive values of $[0, \infty]$ to the full range of $[-\infty, \infty]$, which is more suitable for standard regression techniques. We define the target variable, denoted as $\Omegat$, as follows.
@@ -335,27 +337,27 @@ In this section we move on to the second aim of this chapter, which is to produc
 where 
 
 \begin{equation}
-    \PP \in \R^{N \times N} = \D_{\St} + \gamma \HH^{-2}
+    \PP \in \R^{N \times N} = \D_{\St} + \gamma \HH^{-2} = \D_{\St} + \gamma \U \D_\Gt^{-2} \U^\top 
 \end{equation}
 
 The most straightforward approach would be to perform Cholesky decomposition directly on the covariance matrix $\PP^{-1}$, such that $\PP^{-1} = \LL \LL^\top$, where $\LL$ is a lower triangular matrix. Every positive-definite matrix (and thus also every valid covariance matrix) has a unique Cholesky decomposition \citep{Horn2012}. Independent samples can then be drawn according to 
 
 \begin{equation}
     \label{eq:post_precision}
-    \x_i = \PP^{-1} \y + \LL \z_i
+    \f_i = \PP^{-1} \y + \LL \z_i
 \end{equation}
 
-where $\z_i \in \R^N$ is a random vector with components that are independent standard normal variates which can be generated, for example, by using the Box-Muller transform \citep{Box1958}. Similarly, if we can perform eigen-decomposition of the covariance matrix into $\PP^{-1} = \U \LAM \U^\top$, then samples can be drawn according to
+where $\z_i \in \R^N$ is a random vector with components that are independent standard normal variates which can be generated, for example, by using the Box-Muller transform \citep{Box1958}. Alternatively, if we can perform eigen-decomposition on the covariance matrix into $\PP^{-1} = \U \LAM \U^\top$, then samples can be drawn according to
 
 \begin{equation}
-    \x_i = \PP^{-1} \y + \U \LAM^{1/2} \z_i
+    \f_i = \PP^{-1} \y + \U \LAM^{1/2} \z_i
 \end{equation}
 
 Both these techniques assume that the covariance matrix $\PP^{-1}$ can be directly decomposed in a reasonable amount of time. However, in the case of the GSR problem, $\PP^{-1}$ is not directly available. We instead have a representation of $\PP$ in terms of a diagonal and Kronecker structured operator, as given in \cref{eq:post_precision}. For even a modestly-sized GSR problem, this makes these approaches numerically infeasible due to both computational cost and memory footprint. 
 
-\subsection{Perturbation optimization for GSR}
+\subsection{Perturbation optimization (PO)}
 
-\label{sec:GSR_PO}
+\label{sec:PO}
 
 Perturbation Optimisation (PO) is a technique for sampling from high-dimensional Gaussian distributions when the precision matrix $\PP$ is of the form 
 
@@ -364,20 +366,27 @@ Perturbation Optimisation (PO) is a technique for sampling from high-dimensional
     \PP = \sum_{k=1}^K \M_k^\top \RR_k^{-1} \M_k
 \end{equation}
 
-where $\left\{\RR_k\right\}$ are a set of alternative covariance matrices from which it is easier to draw samples from, and $\left\{\M_k\right\}$ are a set of arbitrary square matrices \citep{Papandreou2010, Orieux2012}. The PO algorithm gives a method for drawing samples from the distribution $\Norm{\zero}{\PP^{-1}}$, which is achieved by completing the following steps. 
+where $\left\{\RR_k\right\}$ are a set of alternative covariance matrices from which it is easier to draw samples from, and $\left\{\M_k\right\}$ are a set of arbitrary full-rank square matrices \citep{Papandreou2010, Orieux2012}. The PO algorithm gives a method for drawing samples from the distribution $\Norm{\zero}{\PP^{-1}}$, which is achieved by completing the following steps. 
 
 \begin{enumerate}
     \item Step P (Perturbation): For $k$ from 1 to $K$, draw samples $\etaa_k$ from $\Norm{\zero}{\RR_k}$
-    \item Step O (Optimization): Compute $\f$ as the minimiser of the criterion $$J(\f) = \sum_{k=1}^K \left(\etaa_k - \M_k \f \right)^\top \RR_k^{-1}\left(\etaa_k - \M_k \f \right)$$
+    \item Step O (Optimisation): Compute $\f$ as the minimiser of the criterion $$J(\f) = \sum_{k=1}^K \left(\etaa_k - \M_k \f \right)^\top \RR_k^{-1}\left(\etaa_k - \M_k \f \right)$$
 \end{enumerate}
  
-Once the optimisation step has been completed, the resultant vector, $\f$, will be distributed according to $\Norm{\zero}{\PP^{-1}}$. This can be trivially extended to non-centered distributions by adding the mean to the each sample. In the case of graph signal reconstruction, we have that 
+Once the optimisation step has been completed, the resultant vector, $\f$, will be distributed according to $\Norm{\zero}{\PP^{-1}}$. This can be trivially extended to non-centered distributions by adding the mean to the each sample. It's important to note that for PO to be an effective algorithm, it necessitates efficient resolution of the optimisation step. As we will see, in our case we can exploit the Kronecker structure of the relevant matrices to accomplish this step for the same computational cost as computing the mean.  
+
+\subsection{PO for Graph Signal Reconstruction}
+
+\label{sec:GSR_PO}
+
+
+In the case of graph signal reconstruction, we have that 
 
 $$
 \PP = \D_\St + \gamma \U \D_\Gt^{-2} \U^\top
 $$
 
-Since $\D_\St^2 = \D_\St$, we can substitute the following values. 
+Comparing this to the form required for PO given in \cref{eq:PO_sum}, we can substitute the following values. Note that, since $\D_\St$ is diagonal and binary, $\D_\St^2 = \D_\St$. 
 
 $$
 \M_1 = \D_\St, \quad  \RR_1 = \I_N, \quad \M_2 = \sqrt{\gamma} \, \U^\top, \quad  \RR_2 = \D_\Gt^2
@@ -401,7 +410,7 @@ This generates random vectors $\f$ distributed according to $\Norm{\zero}{\PP^{-
     \f = \PP^{-1} \left(\y + \D_\St \z_1 + \sqrt{\gamma} \, \U \D_\Gt^{-1} \z_2 \right)
 \end{equation}
 
-However, in this form, the solution has two issues. The first is that, due to multiplication by the matrix $\PP^{-1}$, the linear system may be ill-conditioned. The second is that $\z_2$ is multiplied by the matrix $\D_\Gt^{-1}$ which for certain filters, such as the bandlimited filter which maps some values to zero, $\D_\Gt^{-1}$ may map some values to infinity. Both problems can be solved by introducing the symmetric preconditioner $\PSI$ of \cref{sec:CGM_dd}. As before, this is given by 
+However, in its current form, the solution presents two issues. Firstly, the multiplication by the matrix $\PP^{-1}$ may result in an ill-conditioned linear system. Secondly, $\z_2$ is multiplied by the matrix $\D_\Gt^{-1}$, which, for certain filters like the bandlimited filter that maps some values to zero, may map some values to infinity. Both problems can be addressed by introducing the symmetric preconditioner $\PSI$ as discussed in \cref{sec:CGM_dd}. As previously stated, this is given by
 
 \begin{equation}
     \PSI = \U \D_\Gt
@@ -421,33 +430,60 @@ $$
 \Q = \PSI^\top \PP \PSI  = \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N 
 $$
 
-As before, the linear system $\Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)$ can then be solved using the CGM. For the sake of completeness, we now provide a brief proof that the expression given in \cref{eq:PO_sample_GSR} generates samples from the desired distribution. 
+With this preconditioner in place, the linear system $\Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)$ can then be solved efficiently using the CGM. For the sake of completeness, we now provide a brief proof that the expression given in \cref{eq:PO_sample_GSR} generates samples from the correct distribution. 
 
 \begin{theorem}
-    If $z_1, z_2 \sim \Norm{\zero}{\I_N}$, then $\f \sim \Norm{\PP^{-1} \y }{\PP^{-1}}$ where 
+    Consider the following expression for the vector $\f \in \R^N$. 
+
     $$
     \f = \PSI \Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)
     $$
+    
+    If $z_1, z_2 \sim \Norm{\zero}{\I_N}$, then $\f$ is distributed according to
+    
+    $$
+    \f \sim \Norm{\PP^{-1} \y }{\PP^{-1}}
+    $$ 
+
     \label{the:GSR_PO}
 \end{theorem}
 
 \begin{proof}
-    To prove this statement it suffices to show that the expected value of $\f$ is $\PP^{-1}\y$, and that the covariance is $\PP^{-1}$. First, let us begin with the expected value. 
+    To prove this statement it suffices to show that the expected value of $\f$ is $\PP^{-1}\y$, and that the covariance is $\PP^{-1}$. Note that the following identities hold. 
 
     \begin{align*}
-        \text{E}\left[\f\right] &= \text{E}\left[\PSI \Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right] \\
-        &= \PSI \Q^{-1} \left( \PSI^\top \y + \PSI^\top \D_\St \text{E}\left[\z_1\right]  + \sqrt{\gamma} \, \text{E}\left[\z_2\right] \right) \\
-        &= \PSI \Q^{-1} \PSI^\top \y \\
-        &= \PSI \left(\PSI^\top \D_\St \PSI + \gamma \I_N\right)^{-1} \PSI^\top \y \\
-        &= \left( \PSI^{-\top} \left(\PSI^\top \D_\St \PSI + \gamma \I_N \right) \PSI^{-1}  \right)^{-1}  \y \\
-        &= \left(\D_\St + \gamma \HH^{-2}\right)^{-1} \y \\
-        &= \PP^{-1} \y 
+        &(a) \;\; \Q = \PSI^\top \PP \PSI, \quad &&(b) \;\; \PP = \PSI^{-\top} \Q \PSI^{-1}, \\
+        &(c) \;\; \Q^{-1} = \PSI^{-1} \PP^{-1} \PSI^{-\top}, \quad &&(d) \;\; \PP^{-1} = \PSI \Q^{-1} \PSI^\top
     \end{align*}
+    
+    Let us begin with the expected value. 
+
+    \begin{equation*}
+        \text{E}\left[\f\right] = \text{E}\left[\PSI \Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right]
+    \end{equation*}
+
+    Since $\text{E}\left[\z_1\right] = \text{E}\left[\z_2\right] = \zero$, these two terms can be dropped from the expression, leaving 
+
+    \begin{equation*}
+        \text{E}\left[\f\right] = \PSI \Q^{-1} \PSI^\top \y
+    \end{equation*}
+
+    Making use of identity (d), this is then 
+
+    \begin{equation*}
+        \text{E}\left[\f\right] = \PP^{-1} \y
+    \end{equation*}
 
     Next, let us compute the covariance. 
 
+    \begin{equation*}
+        \text{Cov}\left[\f\right] = \text{Cov}\left[\PSI \Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right] 
+    \end{equation*}
+
+    Consider the three terms within the inner brackets. Since the first has no stochastic component, it does not contribute to the covariance and can therefore dropped. 
+
     \begin{align*}
-        \text{Cov}\left[\f\right] &= \text{Cov}\left[\PSI \Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right] \\
+        \text{Cov}\left[\f\right] &= \text{Cov}\left[\PSI \Q^{-1} \left(\PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right]  \\
         &= \PSI \Q^{-1} \left(\text{Cov}\left[ \PSI^\top \D_\St \z_1 \right] + \text{Cov}\left[\sqrt{\gamma} \,  \z_2\right]\right) \Q^{-1} \PSI^\top \\
         &= \PSI \Q^{-1} \left(\PSI^\top \D_\St \, \text{Cov}\left[  \z_1 \right] \D_\St \PSI + \gamma \, \text{Cov}\left[ \z_2\right]\right) \Q^{-1} \PSI^\top  \\
         &= \PSI \Q^{-1} \left(\PSI^\top \D_\St \PSI + \gamma \, \I_N \right) \Q^{-1} \PSI^\top  \\
@@ -455,9 +491,14 @@ As before, the linear system $\Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1
         &= \PSI \Q^{-1} \PSI^\top \\
         &= \PP^{-1}
     \end{align*}
+
+    We have therefore shown that $\text{E}\left[\f\right] = \PP^{-1} \y$ and that $\text{Cov}\left[\f\right] = \PP^{-1}$, completing the proof. 
+
 \end{proof}
 
-This results in a simple procedure for sampling from the posterior distribution of the GSR model, which is given in \cref{al:PO_GSR}. 
+Given the expression for $\f$ outlined in \cref{eq:PO_sample_GSR}, we have a straightforward procedure for sampling from the posterior distribution of the GSR model, as detailed in \cref{al:PO_GSR}. It's important to note that the primary computational load of this algorithm stems from solving the linear system using the CGM. Consequently, the computational complexity of drawing a single sample from the posterior distribution is equivalent to solving one linear system via the CGM.
+
+\vspace{0.5cm}
 
 \begin{algorithm}[h]
     \begin{algorithmic}
@@ -468,7 +509,7 @@ This results in a simple procedure for sampling from the posterior distribution 
     \vspace{0.15cm}
     \State{$\aaa \leftarrow \D_\Gt \U^\top \D_\St \z_1 $}
     \vspace{0.15cm}
-    \State{$\bb \leftarrow \sqrt{\gamma} \z_2$}
+    \State{$\bb \leftarrow \sqrt{\gamma} \, \z_2$}
     \vspace{0.15cm}
     \State{$\cc \leftarrow \aaa + \bb$}
     \vspace{0.15cm}
@@ -476,9 +517,9 @@ This results in a simple procedure for sampling from the posterior distribution 
     \vspace{0.15cm}
     \State{$\Q \leftarrow  \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N $}
     \vspace{0.15cm}
-    \State{$\thetaa \leftarrow \Q^{-1} \left(\PSI^\top \y + \cc \right) \quad $ (solve with the CGM)}
+    \State{$\f \leftarrow \Q^{-1} \left(\PSI^\top \y + \cc \right) \quad $ (solve with the CGM)}
     \vspace{0.15cm}
-    \State{$\f \leftarrow \PSI \thetaa $}
+    \State{$\f \leftarrow \PSI \f $}
     \vspace{0.15cm}
     \Ensure{$ \f $}
     \end{algorithmic}
@@ -492,6 +533,8 @@ So far in this section, we have shown how perturbation optimisation can be used 
 
 \subsubsection{PO with KGR}
 
+\label{sec:PO_KGR}
+
 In the case of Kernel Graph Regression (KGR), there is little change from the GSR algorithm. Recall how, as discussed in \cref{sec:KGR_and_GSR}, KGR bares a strong algebraic correspondence to GSR. In particular, the posterior distribution over the underlying graph signal $\f$ is given by 
 
 \begin{equation}
@@ -501,10 +544,10 @@ In the case of Kernel Graph Regression (KGR), there is little change from the GS
 where 
 
 \begin{equation}
-    \bar{\PP} = \D_\St + \bar{\U} \D_{\bar{\Gt}}^{-2} \bar{\U}^\top
+    \bar{\PP} = \D_\St + \gamma \bar{\U} \D_{\bar{\Gt}}^{-2} \bar{\U}^\top
 \end{equation}
 
-The values for $\bar{\U}$ and $\D_{\bar{\Gt}}$ are slightly modified from the GSR model. 
+The values for $\bar{\U}$ and $\D_{\bar{\Gt}}$ are modified from the GSR model as follows. 
 
 \begin{equation}
     \bar{\U} = \V \otimes \U, \aand \D_{\bar{\Gt}} = \diag{\vecrm{\bar{\Gt}}}
@@ -516,11 +559,13 @@ with the elements of $\Gt$ given by
     \Gt_{[t, \nn]} = g\big(\lambdaa(\nn); \, \betaa\big) \sqrt{\lambda^{(K)}_t} 
 \end{equation}
 
-With these modifications in place, we can reuse the algorithm developed in \cref{sec:GSR_PO}, since all the derivations otherwise remain the same. Therefore, in order to sample from the posterior distribution of the KGR model, we can simply reuse \cref{al:PO_GSR}, replacing all instances of $\U$ with $\bar{\U}$, and all instances of $\D_\Gt$ with $\D_{\bar{\Gt}}$. 
+With these modifications in place, we can make use of the same algorithm developed in \cref{sec:GSR_PO}, since all the derivations otherwise remain the same. Therefore, in order to sample from the posterior distribution of the KGR model, we can simply reuse \cref{al:PO_GSR}, replacing all instances of $\U$ with $\bar{\U}$, and all instances of $\D_\Gt$ with $\D_{\bar{\Gt}}$. 
 
 \subsubsection{PO with RNC}
 
-In the case of Regression with Network Cohesion (RNC), the algorithm has to be adjusted somewhat. Here, the relevant posterior distribution is over the parameter vector $\thetaa$, rather than the predicted signal $\f$. This posterior distribution is given by 
+\label{sec:PO_RNC}
+
+In the case of Regression with Network Cohesion (RNC), the algorithm must be adjusted. Here, the relevant posterior distribution is over the parameter vector $\thetaa$, rather than the predicted signal $\f$. This posterior distribution is given by 
 
 \begin{equation}
     \thetaa \sim \Norm{\widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}}{\widetilde{\PP}^{-1}}
@@ -531,7 +576,7 @@ where
 \begin{equation}
     \widetilde{\PP} \in \R^{(N + M) \times (N + M)}= 
     \begin{bmatrix}
-     \D_\St + \gamma \HH^{-2} & \D_\St  \X \\
+     \D_\St + \gamma \U \D_\Gt^{-2} \U^\top & \D_\St  \X \\
      \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
     \end{bmatrix}
 \end{equation}
@@ -542,7 +587,8 @@ $$
 \X^\top\D_\St \X = \U_M \LAM_M \U_M^\top
 $$
 
-where we define the diagonal matrix $\D_M $ as
+and additionally define the diagonal matrix $\D_M $ as
+
 $$
 \D_M = \big(\LAM_M + \lambda \I_M \big)^{-1/2}
 $$
@@ -556,16 +602,11 @@ $$
 \end{bmatrix}
 $$
 
-We now present the expression that can be used to sample from the posterior distribution of $\thetaa$. 
+We now present the expression that can be used to sample from the posterior distribution of $\thetaa$ in \cref{the:RNC_PO}.
 
 \begin{theorem}
-    If $z_1, z_2 \sim \Norm{\zero}{\I_{(N+M)}}$, then
-    
-    $$
-    \thetaa \sim \Norm{\widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}}{\widetilde{\PP}^{-1}}
-    $$ 
-    
-    where 
+
+    Consider the following expression for the vector $\thetaa \in \R^{N + M}$
 
     \begin{equation}
         \thetaa = \widetilde{\PSI} \widetilde{\Q}^{-1} \left(\widetilde{\PSI}^\top \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix} + \begin{bmatrix}
@@ -578,7 +619,7 @@ We now present the expression that can be used to sample from the posterior dist
         \label{eq:PO_sample_RNC}
     \end{equation}
 
-    and the matrix $\widetilde{\Q}$ is given by 
+    where the matrix $\widetilde{\Q}$ is given by 
 
     $$
     \widetilde{\Q} = \widetilde{\PSI}^\top \widetilde{\PP} \widetilde{\PSI}  = \begin{bmatrix}
@@ -587,12 +628,30 @@ We now present the expression that can be used to sample from the posterior dist
         \end{bmatrix}
     $$
 
+    If $z_1, z_2 \sim \Norm{\zero}{\I_{(N+M)}}$, then
+    
+    $$
+    \thetaa \sim \Norm{\widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}}{\widetilde{\PP}^{-1}}
+    $$ 
+    
+    \label{the:RNC_PO}
 \end{theorem}
 
 \begin{proof}
-As in \cref{the:GSR_PO}, it suffices to show that the expected value of $\thetaa$ is $ \widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}$, and that the covariance is  $\widetilde{\PP}^{-1}$. 
+As in \cref{the:GSR_PO}, it suffices to show that
 
-First, let us consider the expected value. Since $\E\left[\z_1\right] = \E\left[\z_1\right] = \zero$, the expected value of $\thetaa$ is 
+$$
+\E\left[\thetaa\right] = \widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}, \aand \text{Cov}\left[\thetaa  \right] = \widetilde{\PP}^{-1} 
+$$
+
+Note that the following identities hold. 
+
+    \begin{align*}
+        &(a) \;\; \widetilde{\Q} = \widetilde{\PSI}^\top \widetilde{\PP} \widetilde{\PSI}, \quad &&(b) \;\; \widetilde{\PP} = \widetilde{\PSI}^{-\top} \widetilde{\Q} \widetilde{\PSI}^{-1}, \\
+        &(c) \;\; \widetilde{\Q}^{-1} = \widetilde{\PSI}^{-1} \widetilde{\PP}^{-1} \widetilde{\PSI}^{-\top}, \quad &&(d) \;\; \widetilde{\PP}^{-1} = \widetilde{\PSI} \widetilde{\Q}^{-1} \widetilde{\PSI}^\top
+    \end{align*}
+
+First, let us consider the expected value. Since $\E\left[\z_1\right] = \E\left[\z_2\right] = \zero$, these terms do not contribute to the expected value of $\thetaa$. Therefore, $\E\left[\thetaa\right]$ is given by 
 
 \begin{align*}
     \E\left[\thetaa\right] &= \E\left[\widetilde{\PSI} \widetilde{\Q}^{-1} \widetilde{\PSI}^\top \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}\right] \\
@@ -629,7 +688,7 @@ For the covariance, let us consider each of the three terms within the brackets 
         \end{bmatrix} \\
 \end{align*}
 
-Now consider the covariance of the third term
+Now consider the covariance of the third term. 
 
 \begin{align*}
     \text{Cov}\left[\begin{bmatrix}
@@ -644,7 +703,7 @@ Now consider the covariance of the third term
     \end{bmatrix} \\[0.3cm]
     &= \begin{bmatrix}
         \gamma\, \I_N & \zero \\
-        \zero & \lambda \D_M
+        \zero & \lambda \D_M^2
     \end{bmatrix}
 \end{align*}
 
@@ -656,17 +715,26 @@ Note that these two matrices summed together give
         \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \D_M \LAM_M \D_M 
         \end{bmatrix} + \begin{bmatrix}
             \gamma\, \I_N & \zero \\
-            \zero & \lambda \D_M
+            \zero & \lambda \D_M^2
         \end{bmatrix} \\[0.3cm]
         &= \begin{bmatrix}
             \D_\Gt \U^\top \D_\St \U \D_\Gt  + \gamma\, \I_N &  \D_\Gt \U^\top \D_\St \X \U_M \D_M \\[0.1cm] 
-            \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \D_M \LAM_M \D_M + \lambda \D_M
+            \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \D_M \LAM_M \D_M + \lambda \D_M^2
             \end{bmatrix} \\[0.3cm]
         &= \begin{bmatrix}
             \D_\Gt \U^\top \D_\St \U \D_\Gt  + \gamma\, \I_N &  \D_\Gt \U^\top \D_\St \X \U_M \D_M \\[0.1cm] 
             \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \I_M
             \end{bmatrix} \\[0.3cm]
         &= \widetilde{\Q}
+\end{align*}
+
+Note that here we have used the fact that $\D_M \LAM_M \D_M + \lambda \D_M^2 = \I_M$. This is true since 
+
+\begin{align*}
+    \D_M \LAM_M \D_M + \lambda \D_M^2 &= \LAM_M \D_M^2 + \lambda \D_M^2 \\
+    &= (\LAM_M + \lambda \I_M) \D_M^2 \\
+    &= \D_M^{-2}  \D_M^2 \\
+    &= \I_M
 \end{align*}
 
 Therefore, the covariance of the entire expression is given by 
@@ -677,12 +745,144 @@ Therefore, the covariance of the entire expression is given by
     &= \widetilde{\PP}^{-1}
 \end{align*}
 
+We have therefore shown that 
+
+$$
+\E\left[\thetaa\right] = \widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}, \aand \text{Cov}\left[\thetaa  \right] = \widetilde{\PP}^{-1} 
+$$
+
+completing the proof. 
+
 \end{proof}
 
 
+Given this expression for $\thetaa$ stated in \cref{eq:PO_sample_RNC}, a simple procedure for sampling from the posterior distribution of the RNC model is available. This is given in \cref{al:PO_RNC}. 
 
-\section{Estimation vs Sampling}
+\begin{algorithm}[h]
+    \begin{algorithmic}
+    \vspace{0.15cm}
+    \State{Sample $\z_1$ from $\Norm{\zero}{\I_{(N + M)}}$}
+    \vspace{0.15cm}
+    \State{Sample $\z_2$ from $\Norm{\zero}{\I_{(N + M)}}$}
+    \vspace{0.25cm}
+    \State{$\aaa \leftarrow \begin{bmatrix}
+        \D_\Gt \U^\top \D_\St & \zero \\
+        \D_M \U_M^\top \X^\top \D_\St & \zero
+    \end{bmatrix} \z_1  $}
+    \vspace{0.25cm}
+    \State{$\bb \leftarrow \begin{bmatrix}
+        \sqrt{\gamma} \, \I_N & \zero \\
+        \zero & \sqrt{\lambda} \D_M
+    \end{bmatrix} \z_2$}
+    \vspace{0.25cm}
+    \State{$\cc \leftarrow \aaa + \bb$}
+    \vspace{0.25cm}
+    \State{$\PSI \leftarrow \begin{bmatrix}
+        \U \D_\Gt & \zero \\
+        \zero & \U_M \D_M 
+    \end{bmatrix}$}
+    \vspace{0.25cm}
+    \State{$\Q \leftarrow  \begin{bmatrix}
+        \D_\Gt \U^\top \D_\St \U \D_\Gt  + \gamma\, \I_N &  \D_\Gt \U^\top \D_\St \X \U_M \D_M \\[0.1cm] 
+        \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \I_M
+        \end{bmatrix}  $}
+    \vspace{0.25cm}
+    \State{$\thetaa \leftarrow \Q^{-1} \left(\PSI^\top \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix} + \cc \right) \quad $ (solve with the CGM)}
+    \vspace{0.25cm}
+    \State{$\thetaa \leftarrow \PSI \thetaa $}
+    \vspace{0.25cm}
+    \Ensure{$ \thetaa $}
+    \end{algorithmic}
+    \caption{Draw one sample from the RNC posterior distribution}
+    \label{al:PO_RNC}
+\end{algorithm}
+
+
+\subsubsection{PO with KG-RNC}
+
+\label{sec:PO_KGRNC}
+
+For the case of Kernel Graph Regression with Network Cohesion (KG-RNC), the situation is algebraically very similar to that of RNC. Just as the algorithm for sampling from the KGR model posterior can be obtained by making a small modification to the GSR case as discussed in \cref{sec:PO_KGR}, the same is true of KG-RNC, with only a small modification of the RNC algorithm. In particular, the posterior distribution over the parameter vector $\hat{\thetaa}$ is given by 
+
+\begin{equation}
+    \label{eq:KGRNC_post_PO}
+    \hat{\thetaa} \sim \mathcal{N}\left(\hat{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}, \, \hat{\PP}^{-1}\right)
+\end{equation}
+
+where 
+
+\begin{equation}
+    \hat{\PP} \in \R^{(N + M) \times (N + M)}= 
+    \begin{bmatrix}
+     \D_\St + \gamma \bar{\U} \D_{\bar{\Gt}}^{-2} \bar{\U}^\top & \D_\St  \X \\
+     \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
+    \end{bmatrix}
+\end{equation}
+
+Note that this is the same posterior distribution as in the RNC model, with the objects $\U$ and $\Gt$ replaced by $\bar{\U}$ and $\bar{\Gt}$. These have the same values as in \cref{sec:PO_KGR}. In particular
+
+\begin{equation}
+    \bar{\U} = \V \otimes \U, \aand \D_{\bar{\Gt}} = \diag{\vecrm{\bar{\Gt}}}
+\end{equation}
+
+with the elements of $\Gt$ given by 
+
+\begin{equation}
+    \Gt_{[t, \nn]} = g\big(\lambdaa(\nn); \, \betaa\big) \sqrt{\lambda^{(K)}_t} 
+\end{equation}
+
+Therefore, in order to draw samples from the distribution given in \cref{eq:KGRNC_post_PO}, we can simply reuse \cref{al:PO_RNC}, replacing every instance of $\U$ with $\bar{\U}$ and every instance of $\Gt$ with $\bar{\Gt}$. 
+
+\section{Variance Estimation: Prediction vs Sampling}
 
 \label{sec:comparison}
 
+So far in this chapter we have addressed estimation of the posterior marginal variance and direct sampling from the posterior as separate objectives. In \cref{sec:post_var_pred}, we proposed several methods based on a supervised learning approach, aiming to predict the entire marginal variance (i.e., the diagonal of the posterior covariance matrix), given our ability to ``query" a subset of these matrix elements. On the other hand, in \cref{sec:sampling}, we developed methods for direct sampling from the posterior. However, it's evident that a valid approach to estimating the marginal variance would be to simply draw samples, using the techniques discussed in \cref{sec:sampling}, and compute the sample variance as an estimator for the population variance. This naturally raises the question of whether this approach is superior to the supervised learning approaches discussed in \cref{sec:post_var_pred}. 
+
+Let us take the Graph Signal Reconstruction model as the primary example. If we have already computed the posterior mean, $\f^\star = \PP^{-1}\y$, then an unbiased estimator for the posterior marginal variance based on $K$ samples $\{\f_k\}_{k=1}^K$ is clearly
+
+\begin{equation}
+    \sigmaa^2_K = \frac{1}{K} \sum_{k=1}^K (\f_k - \f^\star)^2
+\end{equation}
+
+where the exponent is understood as element-wise. In order not to hold all $K$ samples in memory simultaneously, we can write this in recursive form as 
+
+\begin{equation}
+    \sigmaa^2_{K+1} = \frac{1}{K + 1} \left( K \sigmaa^2_K  + (\f_{k+1} - \f^\star)^2\right)
+\end{equation}
+
+The relative error of this estimator follows from the properties of the $\chi^2$ distribution, and is thus given by 
+
+\begin{equation}
+    r = \sqrt{\frac{2}{K}}
+\end{equation}
+
+meaning $K = 2 / r^2$ samples are necessary to reduce the relative error to a fraction $r$. For example, 50 samples would be required to reduce the relative error to $20\%$. However, one attractive feature of this estimator is that its accuracy is independent of the size of the graph. Whether this is also the case for the supervised learning estimators is not immediately clear. 
+
 \subsection{Experiments}
+
+In order to investigate the properties of these two approaches to estimating the posterior marginal variance, that is, the supervised learning approaches discussed in \cref{sec:post_var_pred}, and the sample variance approach highlighted in \cref{sec:comparison}, we ran the following experiment. Graphs, comprising the Cartesian product of three random fully-connected sub-graphs, were created in increasing size. For each, we generated a random pattern of missingness $\St$ by uniformly sampling each element from $[0, 1]$, and tested the three supervised learning approaches (with active learning), the Bekas diagonal estimator, and the sample-based approach for predicting the posterior marginal variance. As with the experiments in \cref{sec:logvar_experiments}, we used a diffusion filter with $\betaa = [0.5, 0.7, 0.6]$ and set $\gamma=1$. Each estimator was given a budget of 50 linear system solves, and its prediction performance was measured by the $R^2$ score. The result are show in \cref{fig:var_comparison}.
+
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=0.8\linewidth]{Figures/sample_diag_estimation.pdf}
+    \end{center}
+   \caption[Performance of the sampling strategy for predicting posterior marginal variance compared with the supervised learning strategies as a function of graph size]{The predictive performance, as measured by $R^2$, is shown for the three supervised learning strategies detailed in \cref{sec:logvar_supervised}, the Bekas diagonal estimator of \cref{sec:logvar_bekas}, and the sampling strategy of \cref{sec:comparison}. } 
+    \label{fig:var_comparison}
+\end{figure} 
+
+
+As visible, RR, RNC and LFP all have similar performance over the range of graph sizes, with $R^2$ never dropping below 0.9. Of the three, LFP once again achieves the highest accuracy, although the difference compared to RR and RNC is fairly small. The sample-based estimator achieves an $R^2$ of around 0.85-0.9 across the range of graph sizes, with performance dropping as low as 0.7 but mostly remaining within this bound. Its performance is also between that of the Bekas diagonal estimator and the three supervised learning techniques over the whole range. 
+
+While the supervised learning estimators are fairly consistent, there is some evidence that their performance is dropping as node number increases. Unfortunately, it is difficult to test this hypothesis since, in order to tets the accuracy scores, it is necessary to solve for the entire posterior variance meaning the number of linear system solves required to run this experiment increases rapidly as the number of nodes increases. 
+
+\section{Conclusions}
+
+In this chapter, we have presented a detailed examination of various methods related to the posterior covariance of the tensor GSP models previously introduced in \cref{chap:nd_gsp}. In the case of GSR, KGR, RNC and KG-RNC, the posterior distribution is a high-dimensional Gaussian with a precision matrix, $\PP$, characterised by Kronecker-structured operators. Their implicit dimensionality makes the direct decomposition and inversion of the posterior precision matrix challenging, necessitating the use of computationally efficient techniques that avoid the time and memory costs associated with more straightforward approaches.
+
+We concentrated on two distinct tasks. First, in \cref{sec:post_var_pred}, we aimed to estimate the posterior marginal variance, i.e. the diagonal of $\SIG = \PP^{-1}$. In particular, we compared a recent stochastic algorithm devised by \cite{Bekas2007} against three techniques utilising a supervised learning approach. This was achieved by first noting that it is possible to compute (or ``query'') a subset of the elements of $\PP^{-1}$ directly by solving the linear system $\PP^{-1} \e_n$, where $\e_n$ is a unit basis vector. Next, by creating a set of artificial explanatory variables associated with each element, the task of estimating the non-queried elements was framed in terms of a traditional supervised learning task. We proposed three separate estimators, namely Ridge Regression (RR), Regression with Network Cohesion (RNC), and Learned Filter Parameters (LFP), for prediction. On a synthetic dataset, all three were capable of achieving high accuracy ($R^2 > 0.99$) for a small fraction of the computational cost of computing the marginal variance in full. We also combined this with an active learning strategy which increased prediction accuracy further, especially at low query numbers.  
+
+In \cref{sec:sampling}, we focused on the task of drawing samples directly from the posterior distribution. To achieve this, we made use of a technique known as Perturbation Optimisation (PO) \citep{Orieux2012}, which takes advantage of the special structure of the posterior precision matrix  to reduce the computational cost to one linear system solve per sample. By coupling this with the symmetric preconditioner $\PSI$, we were able to remedy the numerical difficulties associated with the algorithm in its basic form to produce an efficient procedure using the CGM. We demonstrated that this procedure yielded the correct posterior distribution for the GSR, RNC, KGR, and KG-RNC algorithms in their general tensor form.  
+
+Finally, in \cref{sec:comparison}, we explored whether the sampling algorithm developed in \cref{sec:sampling} could serve as an alternative method for estimating the posterior marginal variance. By assessing the prediction accuracy over product graphs of increasing size, we found that the supervised learning techniques typically outperform the sampling strategy. However, for very large graphs, sampling may be preferable, as the relative error is independent of the graph's size, while the supervised learning techniques show some signs of performance degradation as the number of nodes grows. Further research into this question would be valuable.

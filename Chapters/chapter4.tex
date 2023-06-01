@@ -463,7 +463,7 @@ Similarly, we can modify the prior over the flexible intercept term $\C$ in the 
 
 \begin{equation}
     \label{eq:theta_prior2}
-    \thetaa \sim \mathcal{N}\left( \zero, \; \begin{bmatrix} \gamma^{-1} \K \otimes \HH_N^2 & \zero \\ \zero & \lambda^{-1} \I_M \end{bmatrix} \right)
+    \hat{\thetaa} \sim \mathcal{N}\left( \zero, \; \begin{bmatrix} \gamma^{-1} \K \otimes \HH_N^2 & \zero \\ \zero & \lambda^{-1} \I_M \end{bmatrix} \right)
 \end{equation}
 
 Just as with KGR, this new model, which we refer to as Kernel Graph Regression with Network Cohesion (KG-RNC), is algebraically equivalent to the RNC model under the transformation 
@@ -478,10 +478,10 @@ $$
 \bar{\U} = \V \otimes \U_N, \aand     \bar{\G}_{nt} = g\left(\lambda^{(N)}_n\right) \sqrt{\lambda^{(K)}_t} \quad \rightarrow \quad \D_{\bar{\G}} = \LAM_K^{1/2} \otimes g\left(\LAM_N\right) 
 $$
 
-Given the prior for $\thetaa$ in \cref{eq:theta_prior2}, and the likelihood which is identical to that of the RNC model given in \cref{eq:Y_given_theta_rnc}, the posterior distribution is given by 
+Given the prior for $\hat{\thetaa}$ in \cref{eq:theta_prior2}, and the likelihood which is identical to that of the RNC model given in \cref{eq:Y_given_theta_rnc}, the posterior distribution is given by 
 
 \begin{equation}
-    \thetaa \, | \, \Y \sim \mathcal{N}\left(\hat{\PP}^{-1} \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}, \, \hat{\PP}^{-1}\right)
+    \hat{\thetaa} \, | \, \Y \sim \mathcal{N}\left(\hat{\PP}^{-1} \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}, \, \hat{\PP}^{-1}\right)
 \end{equation}
 
 where 
@@ -500,7 +500,7 @@ Once again, we can solve the linear system for the mean using the CGM, with a sy
     \left( \hat{\PSI}^\top \begin{bmatrix}
         \D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2} & \D_\Ss  \X \\
         \X^\top \D_\Ss & \X^\top \D_\Ss \X + \lambda \I_M   
-       \end{bmatrix}  \hat{\PSI} \right) \left( \hat{\PSI}^{-1} \thetaa \right)   = \hat{\PSI}^\top \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}
+       \end{bmatrix}  \hat{\PSI} \right) \left( \hat{\PSI}^{-1} \hat{\thetaa}\right)   = \hat{\PSI}^\top \begin{bmatrix} \vecc{\Y} \\ \X^\top \vecc{\Y} \end{bmatrix}
 \end{equation}
 
 where 
