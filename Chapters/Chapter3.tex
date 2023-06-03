@@ -375,21 +375,25 @@ Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in
 \label{sec:problem_statement_2d}
 
 
-The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is an observed signal $\Y \in \R^{N \times T}$ where only a partial set $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. All other missing elements of $\Y$ are set to zero. Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is itself assumed to be smooth with respect to the graph topology.
-
-We define the statistical model for the generation of an observation matrix $\Y$ as follows. 
-
-\begin{equation}
-    \Y = \Ss \circ \big(\F + \E \big)
-\end{equation}
-
-where $\Ss \in [0, 1]^{N \times T}$ is referred to as the sensing matrix, and has entries given by
+The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is an observed signal $\Y \in \R^{N \times T}$ where only a partial set $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. All other missing elements of $\Y$ are set to zero. To track which elements were missing from $\Y$, we also define $\Ss \in \{0, 1\}^{N \times T}$, which is referred to as the binary sensing matrix. It has entries given by
 
 \begin{equation}
     \Ss_{nt} = \begin{cases}
         1 & \text{if} \;\; (n, t) \in \mathcal{S} \\
         0 & \text{otherwise}
     \end{cases}
+\end{equation}
+
+As such, the data available for input into the GSR problem is as follows. 
+
+\begin{equation*}
+    \text{input data} = \Big\{\; \Y \in \R^{N \times T}, \;\; \Ss \in \{0, 1\}^{N \times T} , \;\; \A \in \R^{NT \times NT} \; \Big\}
+\end{equation*}
+
+Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is assumed to be smooth with respect to the graph topology. Specifically, we assume that the observed matrix $\Y$ is generated according to the following statistical model. 
+
+\begin{equation}
+    \Y = \Ss \circ \big(\F + \E \big)
 \end{equation}
 
 The matrix $\E$ represents the model error and is assumed to have an independent normal distribution with unit variance. Therefore, the probability distribution of $\Y$ given the latent signal $\F$ is
@@ -399,7 +403,9 @@ The matrix $\E$ represents the model error and is assumed to have an independent
     \vecc{\Y} \, | \, \F \sim \mathcal{N}\Big(\vecc{\Ss \circ \F}, \; \diag{\vecc{\Ss}}\Big)
 \end{equation}
 
-Note that the covariance matrix $\diag{\vecc{\Ss}}$ is semi-positive definite by construction. This naturally reflects the constraint that some elements of $\Y$ are zero with probability 1. In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). For now, in the absence of any further information, we assume that the prior mean for $\F$ is zero across all elements.
+Note that the covariance matrix $\diag{\vecc{\Ss}}$ is semi-positive definite by construction. This naturally reflects the constraint that some elements of $\Y$ are zero with probability 1. 
+
+In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). For now, in the absence of any further information, we assume that the prior mean for $\F$ is zero across all elements.
 
 \begin{equation}
     \label{eq:F_prior}
@@ -565,7 +571,7 @@ In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is 
         \vspace{0.05cm}
         \Require{Observation matrix $\Y \in \R^{N \times T}$}
         \vspace{0.05cm}
-        \Require{Sensing matrix $\Ss \in [0, 1]^{N \times T}$}
+        \Require{Sensing matrix $\Ss \in \{0, 1\}^{N \times T}$}
         \vspace{0.05cm}
         \Require{Space-like graph Laplacian $\LL_N \in \R^{N \times N}$}
         \vspace{0.05cm}
@@ -682,7 +688,7 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
         \vspace{0.15cm}
         \Require{Observation matrix $\Y \in \R^{N \times T}$}
         \vspace{0.05cm}
-        \Require{Sensing matrix $\Ss \in [0, 1]^{N \times T}$}
+        \Require{Sensing matrix $\Ss \in \{0, 1\}^{N \times T}$}
         \vspace{0.05cm}
         \Require{Space-like graph Laplacian $\LL_N \in \R^{N \times N}$}
         \vspace{0.05cm}
@@ -992,7 +998,7 @@ Whilst the convergence rates of both the SIM and CGM have the same directional r
 
 \subsection{Experimental validation}
 
-In order to verify aspects of this theoretically predicted behaviour, we ran several experiments using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance, and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in [0, 1]^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. In the following experiments, we completed this procedure for various values of $m$, $\beta$ and $\gamma$, and compared the empirical number of iterations required for convergence against the theoretical predictions determined in \cref{sec:convergence}. 
+In order to verify aspects of this theoretically predicted behaviour, we ran several experiments using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance, and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in \{0, 1\}^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. In the following experiments, we completed this procedure for various values of $m$, $\beta$ and $\gamma$, and compared the empirical number of iterations required for convergence against the theoretical predictions determined in \cref{sec:convergence}. 
  
 \subsubsection{Experiment 1: testing the strong and weak filter limits}
 

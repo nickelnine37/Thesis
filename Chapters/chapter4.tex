@@ -41,7 +41,7 @@ Consider a sequence of $T$ real-valued graph signals measured over a static $N$-
 
 
 \begin{equation*}
-    \text{input data} = \Big\{ \; \X \in \R^{T \times M}, \;\; \Y \in \R^{N \times T}, \;\; \Ss \in [0, 1]^{N \times T} , \;\; \A \in \R^{NT \times NT} \; \Big\}
+    \text{input data} = \Big\{ \; \X \in \R^{T \times M}, \;\; \Y \in \R^{N \times T}, \;\; \Ss \in \{0, 1\}^{N \times T} , \;\; \A \in \R^{NT \times NT} \; \Big\}
 \end{equation*}
 
 
@@ -82,7 +82,7 @@ Therefore, the statistical model can be written in matrix form as
     \Y = \Ss \circ \big( \mspace{1mu} \W \PHI + \E \mspace{1mu} \big)
 \end{equation}
 
-where $\Ss \in [0, 1]^{N \times T}$ is the binary sensing matrix as defined in \cref{sec:problem_statement_2d}, which is also each $\s_t$ stacked horizontally, and $\E \in \R^{N \times T}$ is a matrix of i.i.d. Gaussian noise with zero mean and unit variance. This implies that the probability distribution for $\vecc{\Y} \, | \, \W$ is given by 
+where $\Ss \in \{0, 1\}^{N \times T}$ is the binary sensing matrix as defined in \cref{sec:problem_statement_2d}, which is also each $\s_t$ stacked horizontally, and $\E \in \R^{N \times T}$ is a matrix of i.i.d. Gaussian noise with zero mean and unit variance. This implies that the probability distribution for $\vecc{\Y} \, | \, \W$ is given by 
 
 \begin{equation}
     \vecc{\Y} \, | \, \W \sim \mathcal{N}\big( \vecc{\Ss \circ (\W \PHI)}, \; \I_{NT} \, \big)
@@ -296,10 +296,10 @@ As with the SIM, this action can be performed with $O(N^2T + NT^2)$ multiplicati
 
 \subsection{Model description}
 
-In this model, we consider a sequence of $T$ real-valued signals, which are regularly sampled over a static $N$-node graph, and may contain arbitrary missing values. As with KGR and GSR, this is represented using an $(N \times T)$ matrix $\Y$, with missing values set to zero and further clarified with the binary sensing matrix $\Ss \in [0, 1]^{N \times T}$ which holds zeros at entries where the corresponding element of $Y$ is missing data, and ones elsewhere. In this model each node, $n$, at each time instant, $t$, under consideration, has an associated length-$M$ vector of explanatory variables $\x_{nt} \in \R^{M}$. The objective is to make use of both the node-level explanatory variables and the network topology to estimate the missing values in the graph signal. A visual depiction of the data available in this kind of scenario is given in \cref{fig:RNC_diagram}. 
+In this model, we consider a sequence of $T$ real-valued signals, which are regularly sampled over a static $N$-node graph, and may contain arbitrary missing values. As with KGR and GSR, this is represented using an $(N \times T)$ matrix $\Y$, with missing values set to zero and further clarified with the binary sensing matrix $\Ss \in \{0, 1\}^{N \times T}$ which holds zeros at entries where the corresponding element of $Y$ is missing data, and ones elsewhere. In this model each node, $n$, at each time instant, $t$, under consideration, has an associated length-$M$ vector of explanatory variables $\x_{nt} \in \R^{M}$. The objective is to make use of both the node-level explanatory variables and the network topology to estimate the missing values in the graph signal. A visual depiction of the data available in this kind of scenario is given in \cref{fig:RNC_diagram}. 
 
 \begin{equation*}
-    \text{input data} = \Big\{ \;\Xt \in \R^{N \times T \times M}, \;\; \Y \in \R^{N \times T}, \;\; \Ss \in [0, 1]^{N \times T}, \;\; \A \in \R^{NT \times NT} \; \Big\}
+    \text{input data} = \Big\{ \;\Xt \in \R^{N \times T \times M}, \;\; \Y \in \R^{N \times T}, \;\; \Ss \in \{0, 1\}^{N \times T}, \;\; \A \in \R^{NT \times NT} \; \Big\}
 \end{equation*}
 
 Here, we have introduced the notation $\Xt$, which is an order-3 tensor, to 
@@ -452,7 +452,7 @@ In certain cases, both global and local explanatory variables may coexist. For e
 The input data in such a scenario can be summarised as follows
 
 \begin{align*}
-    \text{input data} &= \left\{\Xt \in \R^{N \times T \times M}, \; \X' \in \R^{T \times M'} \; \Y \in \R^{N \times T}, \; \Ss \in [0, 1]^{N \times T}, \; \A \in \R^{NT \times NT} \right\}
+    \text{input data} &= \left\{\Xt \in \R^{N \times T \times M}, \; \X' \in \R^{T \times M'} \; \Y \in \R^{N \times T}, \; \Ss \in \{0, 1\}^{N \times T}, \; \A \in \R^{NT \times NT} \right\}
 \end{align*}
 
 Once again, $\Y$ is a sequence of partially observed graph signals and $\Ss$ is the corresponding binary sensing matrix  defining which values are missing. $\Xt$ represents the tensor of local explanatory variables, where each node at each time has an associated length-$M$ feature vector. In the example, this would represent the firm-level variables such as employee turnover and debt ratio. $\X'$ is the matrix of global explanatory variables, where the $t$-th row represents the global length-$M'$ feature vector at each time $t$. In this section we also continue to use the notation $\X$ (without the prime) to denote the matrix which is constructed by horizontally stacking the $M$ vectorized slices $\Xt_{::m}$, resulting in an object of shape $(NT \times M)$, as defined in \cref{eq:X_RNC}. 
