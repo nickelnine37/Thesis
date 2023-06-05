@@ -368,3 +368,80 @@ In each of these expressions we have a fraction for which both the numerator and
 \begin{proof}
     Hi 
 \end{proof}
+
+
+\begin{theorem}
+    \label{the:gradient_and_hesian}
+
+    Consider the following function, $\xi(\f)$, which maps a vector $\f \in R^N$ to a scalar. 
+
+    \begin{equation}
+        \xi(\f) = -\s^\top \big(\y \circ \log \muu(\f) + \left(\one  - \y\right) \circ \log \left(\one - \muu(\f) \right)\big) + \frac{\gamma}{2} \f^\top \HH^{-2} \f
+    \end{equation}
+
+    The derivative of this function with respect to $\f$ is given by 
+
+    \begin{equation}
+        \nabla \xi(\f) = \frac{\partial \xi(\f)}{\partial \f} = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
+    \end{equation}
+
+    and the Hessian is given by 
+
+    \begin{equation}
+        \nabla^2 \xi(\f) = \frac{\partial^2\xi(\f)}{\partial \f \partial \f^\top} =  \D_{\muu}(\f) + \gamma \HH^{-2}
+    \end{equation}
+
+    where 
+
+    \begin{equation*}
+        \D_{\muu}(\f) = \textup{diag}\big(\s \circ \muu(\f) \circ (\one - \muu(\f))\big)
+    \end{equation*}
+
+\end{theorem}
+
+\begin{proof}
+
+    First, recall that the formula for $\muu(\f)$ is given by 
+
+    \begin{equation}
+        \muu(\f) = \frac{\one}{\one + \exp(-\f)}
+    \end{equation}
+
+    This further implies that
+
+    \begin{align}
+        \one - \muu &= \frac{\exp(-\f)}{\one + \exp(-\f)} \\ 
+        \log \muu &= - \log\big(\one + \exp(-\f) \big) \\
+        \log (\one - \muu) &= - \f- \log\big(\one + \exp(-\f) \big) 
+    \end{align}
+
+    Note that all operations in these expressions, including division, logarithms, and exponentiation should be understood as element-wise. Using these equations, we can rewrite expression for $\xi(\f)$. 
+
+    \begin{align*}
+        \xi(\f) &= - \log \muu^\top (\s \circ \y) - \log(\one - \muu)^\top (\s \circ (\one - \y)) + \frac{\gamma}{2} \f^\top \HH^{-2} \f \\[0.1cm]
+        &= \log\big(\one + \exp(-\f)\big)^\top (\s \circ \y)  +  \big( \f + \log\big(\one + \exp(-\f) \big)\big)^\top (\s \circ (\one - \y))  + \frac{\gamma}{2} \f^\top \HH^{-2} \f \\[0.1cm]
+        &= \f^\top (\s \circ (\one - \y)) + \log\big(\one + \exp(-\f) \big)^\top \s + \frac{\gamma}{2} \f^\top \HH^{-2} \f 
+    \end{align*}
+    
+    Now, take the derivate of this expression with respect to $\f$, using the chain rule for the middle term. 
+
+    \begin{align*}
+        \frac{\partial \xi(\f)}{\partial \f} &= \s \circ (\one - \y) - \s \circ \frac{\exp(-\f)}{\one + \exp(-\f)}  + \gamma \HH^{-2} \f \\[0.1cm]
+        &= \s \circ (\one - \y) + \s \circ (\muu - \one)  + \gamma \HH^{-2} \f \\[0.1cm]
+        &= \s \circ (\muu(\f) - \y) + \gamma \HH^{-2} \f \\[0.1cm]
+        &= \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
+    \end{align*}
+
+    Which is the given expression for the gradient. The Hessian can be found by taking the derivative of this expression with respect to $\f^\top$. 
+
+    \begin{align*}
+        \frac{\partial^2\xi(\f)}{\partial \f \partial \f^\top}  &= \frac{\partial }{\partial \f^\top} \Big[\s \circ \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f \Big] \\[0.1cm]
+        &= \frac{\partial }{\partial \f^\top} \left[\frac{\s}{\one + \exp(-\f)} + \gamma \HH^{-2} \f \right] \\[0.1cm]
+        &= \diag{\exp(-\f) \circ \frac{\s}{\big(\one + \exp(-\f)\big)^2}} + \gamma \HH^{-2} \\[0.1cm]
+        &= \diag{\s \circ \frac{\one}{\one + \exp(-\f)} \circ \frac{\exp(-\f)}{\one + \exp(-\f)}} + \gamma \HH^{-2} \\[0.1cm]
+        &= \text{diag}\Big(\s \circ \muu(\f) \circ \big(\one - \muu(\f)\big)\Big) + \gamma \HH^{-2}\\[0.1cm]
+        &= \D_{\muu}(\f) + \gamma \HH^{-2}
+    \end{align*}
+    
+
+\end{proof}
