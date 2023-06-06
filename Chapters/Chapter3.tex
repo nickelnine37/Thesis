@@ -826,6 +826,8 @@ Whilst it is not possible in general to obtain an analytic expression for $\rho$
 
 \subsection{Upper bound on convergence: the weak filter limit}
 
+\label{sec:wfl_derivation}
+
 Consider the limiting case of a weak filter, where all spectral components are allowed to pass through unaffected. In this case, a graph filter $\HH$ [see \cref{eq:graph_filter}], which appears in the prior distribution for $\F$ [see \cref{eq:F_prior}], becomes the identity matrix $\I_{NT}$. This means no topological information is included in the prior for $\F$ at all. Given the definitions of the graph filters in \cref{tab:iso_filters,tab:anis_filters_2d}, we can conceptualise this as the limit where the parameter characterising the graph filter $\beta \rightarrow 0$ (or, more generally, the limit as $\betaa \rightarrow [0, 0]$ for an anisotropic graph filter). Since all spectral components are maintained, every element of the spectral scaling matrix $\G$ will be equal to one. Given \cref{eq:Jnt}, this further implies the every entry in the matrix $\J$ becomes $1 / (1 + \gamma)$. 
 
 $$
@@ -932,7 +934,7 @@ Since the matrix in brackets is just the vector $\vecc{\Ss'}^\top$ repeated in e
     \lim_{\beta \rightarrow \infty} \; \rho(\U \D_\J \U^\top \D_{\Ss'}) \, = \, \frac{1}{1 + \gamma} \frac{|\mathcal{S}'|}{NT} \, = \, \frac{m}{1 + \gamma}
 \end{equation}
 
-Now consider the condition number $\kappa$ of the CGM coefficient matrix. I the strong filter limit, this is given by  
+Now consider the condition number $\kappa$ of the CGM coefficient matrix. In the strong filter limit, this is given by  
 
 \begin{align}
     \lim_{\beta \rightarrow \infty} \quad \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right)  &= \kappa  \left(  \, \mathbf{\Delta} \U^\top \D_{\Ss} \U \mathbf{\Delta}  + \gamma \I \; \right) \notag \\[0.3cm]
@@ -971,6 +973,8 @@ In particular, at small $\gamma$, the CGM still runs with complexity proportiona
 
 
 \subsection{Practical implications and method selection}
+
+\label{sec:GSR_convergence_implications}
 
 In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we examine these expressions more closely and distil out the key features that are relevant for implementing these methods in practice.
 

@@ -1,8 +1,8 @@
-\chapter{Working with Binary-Valued Graph Signals} % Main chapter title
+\chapter{Reconstruction and Regression with Binary-Valued Graph Signals} % Main chapter title
 
 \label{chap:binary} 
 
-\lhead{Chapter 7. \emph{Working with Binary-Valued Graph Signals}} 
+\lhead{Chapter 7. \emph{Reconstruction and Regression with Binary-Valued Graph Signals}} 
 
 So far in this thesis, we have focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued. Such signals can be employed to describe node classification tasks conducted over networks. For instance, consider the task of predicting whether users in a social network will click on a specific online advertisement. It is reasonable to assume that closely connected individuals within the network are more likely to have a similar probability of clicking than distantly connected individuals. Consequently, integrating this relational information into a predictive task may enhance accuracy. In this example, the classification task is binary as visualised in \cref{fig:binary_class_graph}. However, there may also be situations in which each node must be classified into one of many groups. In this case, we have a multiclass classification, as visualised in \cref{fig:mutliclass_graph}. \cite{Li2012}
 
@@ -65,7 +65,7 @@ As in previous chapters, we would like to encode the belief that the underlying 
 
 \begin{equation}
     \label{eq:logistic_link}
-    \Mt(\Ft) = \frac{1}{1 + \exp(-\Ft)} \quad \Longleftrightarrow \quad \muu(\f) = \frac{1}{1 + \exp(-\f)}
+    \Mt(\Ft) = \frac{\one}{\one + \exp(-\Ft)} \quad \Longleftrightarrow \quad \muu(\f) = \frac{\one}{\one + \exp(-\f)}
 \end{equation}
 
 As in previous chapters, we make the assumption that $\f = \vecrm{\Ft}$ is smooth with respect to the topology of the graph by assigning it the following prior. 
@@ -78,27 +78,37 @@ where $\HH = \U \D_\Gt \U^\top$ is a graph filter constructed by applying a filt
 
 \begin{figure}[t] 
     \begin{center}
-        \includegraphics[width=\linewidth]{Figures/logistic_gsr.pdf}
+        \includegraphics[width=0.9
+        \linewidth]{Figures/logistic_gsr.pdf}
     \end{center}
-   \caption[Visualisation of a smooth graph signal and corresponding Bernoulli mean]{An example visualisation of a random smooth graph signal $\Ft$, and the corresponding mean signal $\Mt$ found by applying the logistic link function given in \cref{eq:logistic_link}. On the right, we show the most likely observed graph signal $\Yt$ for this mean, which is the binary signal given by $\Mt > 0.5$. The underlying graph in this case is a $100 \times 100$ grid of lattice points. } 
+    \caption[Visualisation of binary classification on a 2D lattice]{An example visualisation of binary classification on a $100 \times 100$ grid of pixels ($N_1 = 100, N_2 = 100$). Left: a random smooth graph signal $\Ft$. Middle: the value of the tensor $\Mt$ found by applying the logistic link function of \cref{eq:logistic_link}. Right: the resultant most likely classification given by $\Mt_{\nn} > 0.5$ each pixel, $\nn$.} 
     \label{fig:logistic_gsr}
 \end{figure} 
-
-Through the application of Bayes' rule, we can derive an equation for the posterior distribution of $\Ft$ given $\Yt$. The Maximum A Posteriori (MAP) estimator for $\Ft$ corresponds to the value that minimizes the negative log-likelihood of this distribution. Thus, we introduce the objective function $\xi(\f) $, which is equal to $ -\log p(\f \, | \, \y)$ up to an additive constant.
  
-\begin{equation*}
+Through the application of Bayes' rule, we can derive an equation for the posterior distribution of $\Ft$ given $\Yt$. The Maximum A Posteriori (MAP) estimator for $\Ft$ corresponds to the value that minimizes the negative log-likelihood of this distribution. Thus, we introduce the objective function $\xi(\f) $, which is equal to $ -\log p(\f \, | \, \y)$ up to an additive constant not dependent on $\f$.
+ 
+\begin{equation}
     \xi(\f) = -\s^\top \big(\y \circ \log \muu(\f) + \left(\one  - \y\right) \circ \log \left(\one - \muu(\f) \right)\big) + \frac{\gamma}{2} \f^\top \HH^{-2} \f
-\end{equation*}
+\end{equation}
+
+\subsection{Solving with the IRLS algorithm}
 
 Unlike the normal models of the previous sections, no closed-form solution exists to minimise this expression. A standard approach to solving optimisation problems of this form is to use the Iteratively Reweighted Least Squares (IRLS) algorithm. IRLS algorithms have been independently discovered several times and have been studied for over 50 years. Their main use today is found in $L^p$ norm optimisation problems such as sparse recovery (e.g. \cite{Gorodnitsky1997,Daubechies2010}) and maximum likelihood estimation within a generalized linear models \citep{Nelder1972}. 
 
 The IRLS algorithm begins with an initial estimate $\f_0$, which is then iteratively refined to reach the global minimum. Each step is given by the following update formula. 
 
 \begin{equation}
-    \f_{k+1} = \f_{k} - \PP^{-1} \g(\f)
+    \label{eq:irls_update}
+    \f_{k+1} = \f_{k} - \PP^{-1}(\f_k) \, \g(\f_k)
 \end{equation}
 
-where $ \g(\f) = \nabla \xi(\f) \in \R^N$ is the gradient of the optimisation objective $\xi(\f)$ with respect to the vector $\f$, and $\PP = \nabla^2 \xi(\f) \in \R^{N \times N}$ is the Hessian, which is the matrix of second derivatives. In our case, the gradient is given by 
+where $ \g(\f) \in \R^N$ is the gradient of the optimisation objective $\xi(\f)$ with respect to the vector $\f$, and $\PP(\f) \in \R^{N \times N}$ is the Hessian, which is the matrix of second derivatives such that
+
+\begin{equation*}
+    \PP_{nm} = \frac{\partial^2 \xi(\f)}{\partial \f_n \partial \f_m}
+\end{equation*}
+
+In our case, the gradient is given by 
 
 \begin{equation}
     \g(\f) = \frac{\partial \xi(\f)}{\partial \f} = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
@@ -107,6 +117,7 @@ where $ \g(\f) = \nabla \xi(\f) \in \R^N$ is the gradient of the optimisation ob
 and the Hessian is given by 
 
 \begin{equation}
+    \label{eq:logistic_gsr_P}
     \PP(\f) = \frac{\partial \g(\f)}{\partial \f} =  \D_{\muu}(\f) + \gamma \HH^{-2}
 \end{equation}
 
@@ -116,22 +127,230 @@ where $\D_{\muu}(\f)$ is a diagonal matrix with the following definition.
     \D_{\muu}(\f) = \text{diag}\big(\s \circ \muu(\f) \circ (\one - \muu(\f))\big)
 \end{equation*}
 
-A derivation of the expressions for both gradient and the Hessian can be found in \cref{the:gradient_and_hesian}. Note that they are both a function of $\f$. 
+A derivation of the expressions for both gradient and the Hessian can be found in \cref{the:gradient_and_hesian}. Note that they are both a function of $\f$. Consider the IRLS update formula given in \cref{eq:irls_update}. Substituting in the values for $\PP$ and $\g$, and using the shorthands
+
+\begin{equation*}
+    \PP(\f_k) = \PP_k, \quad \g(\f_k) = \g_k, \quad \muu(\f_k) = \muu_k, \aand \D_{\muu}(\f_k) = \D_{\muu}^k
+\end{equation*}
+
+gives
+
+\begin{align*}
+    \f_{k+1} &= \f_k - \PP^{-1}_k \, \g_k\\
+    &= \f_{k} - \PP^{-1}_k \left(\D_\St \big(\muu_k - \y\big) + \gamma \HH^{-2} \f_k\right) \\
+    &= \f_k + \PP^{-1}_k \D_\St \big(\y - \muu_k\big) - \PP^{-1}_k (\gamma \HH^{-2} \f_k) \\
+    &= \PP^{-1}_k \D_\St \big(\y - \muu_k \big) + \PP^{-1}_k \left(\PP_k \f_k - \gamma \HH^{-2} \f_k\right) \\
+    &= \PP^{-1}_k \D_\St \big(\y - \muu_k \big) + \PP^{-1}_k \D_{\muu}^k\f_k  \\
+    &= \PP^{-1}_k \left(\D_\St \big(\y - \muu_k \big) + \D_{\muu}^k\f_k \right) \\
+    &= \PP^{-1}_k \tee_k
+\end{align*}
+
+where
+
+\begin{equation}
+    \tee_k = \D_\St \big(\y - \muu_k\big) + \D_{\muu}^k \f_k
+\end{equation}
+
+Hence, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. 
+
+\subsection{Completing iterations with the CGM}
+
+When it comes to solving the linear system $\PP^{-1}_k \tee_k$, we encounter similar challenges to those discussed in previous chapters. Specifically, the implicit dimensionality of $\PP_k$ can be substantial for tensor-valued graph signals, and the inverse-squared filter matrix $\HH^{-2}$ appearing in the definition of $\PP_k$ [see \cref{eq:logistic_gsr_P}] may suffer from ill-conditioning. Once again, these issues can be overcome by employing the SIM or CGM techniques introduced earlier in \cref{sec:SIM,sec:CGM}.
 
 
-\section{Logistic Kernel Graph Regression} 
+In this chapter, our focus will be on the CGM for two primary reasons. Firstly, as the dimensionality of tensor-valued binary graph signals increases, it is likely that only a small fraction of nodes will have valid observed data in most practical applications. As demonstrated in \cref{sec:GSR_convergence_implications}, the CGM exhibits superior scaling properties when the input graph signal $\Yt$ is sparsely observed. Secondly, when it comes to sampling from the posterior distribution, certain aspects of the CGM can be reused, as discussed in \cref{sec:GSR_PO}. In this chapter, we also analyse sampling-related questions in \cref{sec:lsamp} and utilise the CGM method. Hence, for the sake of simplicity, it is preferable to use the CGM in both cases instead of mixing methods.
+
+Recall that the CGM seeks to solve a linear system by introducing the symmetric preconditioner $\PSI$, for the purpose of reducing the condition number of the coefficient matrix. In the case of logistic GSR, we can obtain an alternative expression for the update formula with a reduced condition number as follows. 
+
+\begin{equation*}
+    \f_k = \PP^{-1}_k \tee_k \quad \Longrightarrow \quad \f_k = \PSI \Q_k^{-1} \PSI^\top \tee_k
+\end{equation*}
+
+where, as in previous sections, 
+
+\begin{equation*}
+    \PSI = \U \D_\Gt
+\end{equation*}
+
+By instead solving the linear system $\Q_k^{-1} (\PSI^\top \tee_k)$ using the conjugate gradient method, and then left-multiplying the result by $\PSI$, we can obtain $\f_{k+1}$ with fewer iterative steps than solving $\PP^{-1} \tee_k$ directly. In this case, $\Q_k$ is given by the following expression. 
+
+\begin{equation}
+    \label{eq:Q_LGSR}
+    \Q_k = \D_\Gt \U^\top \D_{\muu}^k \U \D_\Gt + \gamma \I_N
+\end{equation}
+
+While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa(\Q)$ is guaranteed to have a maximum value of $(0.25 + \gamma) / \gamma$, as shown formally in \cref{the:L_GSR_Q_conditioning}. 
+
+\begin{theorem}
+    \label{the:L_GSR_Q_conditioning}
+    
+    The condition number of $\Q_k$ is bounded by a maximum value of 
+    
+    \begin{equation}
+        \kappa(\Q_k) \leq \frac{0.25 + \gamma}{\gamma}
+    \end{equation}
+
+\end{theorem}
+
+\begin{proof}
+    As established in \cref{sec:wfl_derivation}, the worst-case convergence rate is achieved in the limit of a weak filter, where $\D_\Gt = \I_N$. In this case, the condition number of $\Q_k$ is given by 
+
+    \begin{align*}
+        \kappa(\Q_k) &= \kappa\left( \U^\top \D_{\muu}^k \U + \gamma \I_N\right) \\[0.1cm]
+        &=  \kappa\left( \U^\top \left(\D_{\muu}^k + \gamma \I_N\right) \U  \right) \\[0.1cm]
+        &= \kappa\left( \D_{\muu}^k + \gamma \I_N\right)
+    \end{align*}
+
+    Since $\D_{\muu}^k = \text{diag}\big(\s \circ \muu_k \circ (\one - \muu_k)\big)$, the maximum possible value along the diagonal of $\D_{\muu}^k$ will be 0.25, occurring when the corresponding element of $\muu_k$ is $1/2$. Furthermore, since $\s$ is a binary vector, the smallest possible value along the diagonal is 0. Therefore, the ratio between the largest and smallest eigenvalues of $ \D_{\muu}^k + \gamma \I_N$ must be less than or equal to $(0.25 + \gamma) / \gamma$. 
+\end{proof}
+
+
+
+\begin{algorithm}[ht]
+    \begin{algorithmic}
+    \vspace{0.15cm}
+    \Require{Observed binary tensor $\Yt \in \{0, 1\}^{N_1 \times ... \times N_d}$}
+    \vspace{0.05cm}
+    \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
+    \vspace{0.05cm}
+    \Require{Cartesian product graph Laplacian $\LL \in \R^{N \times N}$}
+    \vspace{0.05cm}
+    \Require{Regularisation parameter $\gamma \in \R^+$}
+    \vspace{0.05cm}
+    \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
+    \vspace{0.25cm}
+    \State{Decompose $\LL$ into $\U \LAM \U^\top$ }
+    \vspace{0.15cm}
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}$ as $\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)$ }
+    \vspace{0.15cm}
+    \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
+    \vspace{0.15cm}
+    \State{$\D_\St \leftarrow \diag{\vecrm{\St}}$}
+    \vspace{0.15cm}
+    \State{$\PSI \leftarrow \U \D_\Gt$}
+    \vspace{0.15cm}
+    \State{Initialise $\f \in \R^N$ randomly}
+    \vspace{0.15cm}
+    \While{$|\Delta \f| > \text{tol}$}
+    \vspace{0.15cm}
+    \State{$\muu \leftarrow \one / \big(\one + \exp(-\f)\big)$}
+    \vspace{0.15cm}
+    \State{$\D_{\muu} \leftarrow  \diag{\vecrm{\s \circ \muu \circ (1 - \muu)}}$}
+    \vspace{0.15cm}
+    \State{$\tee \leftarrow \D_\St \big(\y - \muu\big) + \D_{\muu} \f $}
+    \vspace{0.15cm}
+    \State{$\Q \leftarrow  \D_\Gt \U^\top \D_{\muu} \U \D_\Gt + \gamma \I_N$}
+    \vspace{0.15cm}
+    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \vspace{0.15cm}
+    \EndWhile
+    \vspace{0.15cm}
+    \Ensure{$\f$}
+    \end{algorithmic}
+    \caption{Logistic Graph Signal Reconstruction}
+    \label{al:LGSR}
+\end{algorithm}
+
+For completeness, we now give the full algorithm for logistic graph signal reconstruction in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:fast_kron_dd}, the runtime complexity of the CGM step is bounded by 
+
+\begin{equation*}
+    O\left(\frac{0.25 + \gamma}{\gamma} N \sum_{i=1}^d N_i \right)
+\end{equation*}
+
+The run time complexity of the overall algorithm of course depends on the convergence rate of the IRLS iterations. This is known to be super-linear, and approximately quadratic when a sufficiently accurate starting value is used \citep{Burden2010}. Whilst an in-depth theoretical exploration of the IRLS algorithm for this particular application is beyond the scope of this chapter, in practice, the IRLS algorithm converges very quickly, usually taking on the order of 10 steps to achieve negligible error.
+
+
+\section{Logistic Graph Signal Regression} 
 
  
+\label{sec:logistic_regression}
+
+\subsection{L-KGR}
+
 \label{sec:lkgr}
 
-
-\section{Logistic Regression with Network Cohesion}
+\section{L-RNC}
 
 \label{sec:lrnc}
+
+\subsection{L-KG-RNC}
+
+\label{sec:lkgrnc}
 
 \section{Multiclass Methods}
 
 \label{sec:multiclass}
+
+Up to this point in the chapter, our focus has been on binary-valued graph signals, which can be used to represent two-class classification tasks over a multiway network. However, in many practical applications, the task may involve classifying each node into one of multiple distinct groups. Therefore, the objective of this section is to extend and generalise the methods we have developed thus far to encompass multiclass classification problems.
+
+Let us first consider the task of multiclass graph signal reconstruction. Here, the goal is to classify each node, $\nn$, in a $d$-dimensional Cartesian product graph into one of $C>2$ distinct groups. To do this, we have access to the graph Laplacian $\LL \in \R^{N \times N}$, and the true class label at a subset of nodes, $\mathcal{S}$. This partially observed graph signal can be represented as an order-($1 + d$) tensor, where the first dimension contains a ``one-hot" encoding of the class label. As such, the input data can be summarised as follows. 
+
+\begin{equation*}
+    \text{input data} = \Big\{\; \Yt \in \{0, 1\}^{C \times N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
+\end{equation*}
+
+As in previous sections, the tensor $\St$, of shape $(N_1 \times ... \times N_d$), indicates which nodes in the product graph have been successfully observed by holding a one in the corresponding entry, and zeros elsewhere. Note that the observed graph signal, $\Yt$, has an additional dummy dimension of length $C$ to represent the class label. Where no observation was made, the corresponding values of $\Yt_{:, \nn}$ can all be safely set to zero. 
+
+We describe the probability that node $\nn$ has class $c$ with another tensor, $\Mt$, which, like $\Yt$, has shape $(C \times N_1 \times ... \times N_d)$. In particular, 
+
+\begin{equation*}
+    p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{c, \nn}
+\end{equation*}
+
+Given this, the probability of observing a signal $\Yt$ for a given mean $\Mt$ is
+
+\begin{equation}
+    p(\Yt \, | \, \Mt) = \prod_{c, \nn \in \mathcal{S}} \Mt_{c, \nn}^{\Yt_{c, \nn}}
+\end{equation}
+
+As such, the log-likelihood of observing a signal $\Yt$ is given by 
+
+\begin{equation}
+   \log p(\Yt \, | \, \Mt) = (\one_C \otimes \s)^\top \big(\y \circ \log \muu \big)
+\end{equation}
+
+where, as before, $\s = \vecrm{\St}, \; \y = \vecrm{\Yt}$ and $\muu = \vecrm{\Mt}$. Furthermore, to enforce the restriction that all probabilities must sum to one, we can generate $\Mt$ by applying a softmax function to a tensor $\Ft$. 
+
+\begin{equation}
+    \label{eq:softmax}
+    \Mt_{c, \nn} = \frac{\exp(\Ft_{c, \nn})}{ \raisebox{-0.1cm} { $\sum_{c'=1}^C \exp(\Ft_{c', \nn})$ }}  \quad \Longleftrightarrow \quad \muu(\f) = \frac{\exp(\f)}{\one_C \otimes \big((\one_C \otimes \I_N) \exp(\f)\big)}
+\end{equation}
+
+Here, $\Ft$ is a real-valued tensor signal which, like $\Mt$ and $\Yt$, has shape $(C \times N_1 \times ... \times N_d)$. A graphical representation of the relation between $\Ft$, $\Mt$ and the most likely classification is shown in \cref{fig:logistic_gsr_multiclass}. The goal, then, of multiclass logistic graph signal reconstruction is to find the most likely value for the tensor $\Ft$, which allows us to make a prediction for the probability of each class by applying \cref{eq:softmax}.  
+
+\begin{figure}[t]  
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/multiclass.pdf}
+    \end{center}
+   \caption[Visualisation of multiclass classification on a 2D lattice]{An example visualisation of multiclass classification on a $20 \times 20$ grid of pixels ($C=3, N_1 = 20, N_2 = 20$). Left: a random smooth tensor signal $\Ft$ split across three channels. Middle: the value of the tensor $\Mt$ found by applying the softmax function of \cref{eq:softmax} in the class dimension. Right: the resultant most likely classification given by the maximum probability class label for each pixel. } 
+    \label{fig:logistic_gsr_multiclass}
+\end{figure} 
+
+
+Assuming no particular relational structure between the $C$ classes, we can encode the assumption that class probabilities should vary smoothly over the graph by assigning the following prior to $\Ft$. 
+
+\begin{equation}
+    \f \sim \Norm{\zero}{\gamma^{-1} \I_C \otimes \HH^2}
+\end{equation}
+
+By applying Bayes' rule, we can therefore derive an expression $\xi(\f)$, representing the posterior log-likelihood of an underlying signal $\f$ given an observed signal $\y$. 
+
+\begin{equation*}
+    \xi(\f) = - (\one_C \otimes \s)^\top \big(\y \circ \log \muu(\f) \big) + \frac{\gamma}{2} \f^\top \left(\I_C \otimes \HH^{-2}\right) \f
+\end{equation*}
+
+Once again, we can solve for the minimising value of $\f$ using the IRLS algorithm. In this case, the gradient and Hessian are respectively given by 
+
+\begin{equation}
+    \g(\f) = \I_C \otimes \D_\St \big(\muu(\f) - \y\big) + \gamma \I_C \otimes \HH^{-2} \f
+\end{equation}
+
+and the Hessian is given by 
+
+\begin{equation}
+    \PP(\f) = \frac{\partial \g(\f)}{\partial \f} =  \D_{\muu}(\f) + \gamma \HH^{-2}
+\end{equation}
+
 
 
 \section{Approximate Sampling via the Laplace Approximation}

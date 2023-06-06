@@ -382,13 +382,13 @@ In each of these expressions we have a fraction for which both the numerator and
     The derivative of this function with respect to $\f$ is given by 
 
     \begin{equation}
-        \nabla \xi(\f) = \frac{\partial \xi(\f)}{\partial \f} = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
+        \g(\f) = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
     \end{equation}
 
     and the Hessian is given by 
 
     \begin{equation}
-        \nabla^2 \xi(\f) = \frac{\partial^2\xi(\f)}{\partial \f \partial \f^\top} =  \D_{\muu}(\f) + \gamma \HH^{-2}
+        \PP  =  \D_{\muu}(\f) + \gamma \HH^{-2}
     \end{equation}
 
     where 
@@ -432,11 +432,11 @@ In each of these expressions we have a fraction for which both the numerator and
         &= \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
     \end{align*}
 
-    Which is the given expression for the gradient. The Hessian can be found by taking the derivative of this expression with respect to $\f^\top$. 
+    This is the given expression for the gradient, $\g(\f)$. The Hessian can be found by taking the derivative of the gradient with respect to $\f$. 
 
     \begin{align*}
-        \frac{\partial^2\xi(\f)}{\partial \f \partial \f^\top}  &= \frac{\partial }{\partial \f^\top} \Big[\s \circ \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f \Big] \\[0.1cm]
-        &= \frac{\partial }{\partial \f^\top} \left[\frac{\s}{\one + \exp(-\f)} + \gamma \HH^{-2} \f \right] \\[0.1cm]
+        \frac{\partial \g}{\partial \f}  &= \frac{\partial }{\partial \f} \Big[\s \circ \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f \Big] \\[0.1cm]
+        &= \frac{\partial }{\partial \f} \left[\frac{\s}{\one + \exp(-\f)} + \gamma \HH^{-2} \f \right] \\[0.1cm]
         &= \diag{\exp(-\f) \circ \frac{\s}{\big(\one + \exp(-\f)\big)^2}} + \gamma \HH^{-2} \\[0.1cm]
         &= \diag{\s \circ \frac{\one}{\one + \exp(-\f)} \circ \frac{\exp(-\f)}{\one + \exp(-\f)}} + \gamma \HH^{-2} \\[0.1cm]
         &= \text{diag}\Big(\s \circ \muu(\f) \circ \big(\one - \muu(\f)\big)\Big) + \gamma \HH^{-2}\\[0.1cm]
