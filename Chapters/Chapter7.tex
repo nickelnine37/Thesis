@@ -245,7 +245,7 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \vspace{0.15cm}
     \EndWhile
     \vspace{0.15cm}
-    \Ensure{$\f$}
+    \Ensure{$\one / \big(\one + \exp(-\f)\big)$}
     \end{algorithmic}
     \caption{Logistic Graph Signal Reconstruction}
     \label{al:LGSR}
@@ -283,46 +283,46 @@ The run time complexity of the overall algorithm of course depends on the conver
 
 Up to this point in the chapter, our focus has been on binary-valued graph signals, which can be used to represent two-class classification tasks over a multiway network. However, in many practical applications, the task may involve classifying each node into one of multiple distinct groups. Therefore, the objective of this section is to extend and generalise the methods we have developed thus far to encompass multiclass classification problems.
 
-Let us first consider the task of multiclass graph signal reconstruction. Here, the goal is to classify each node, $\nn$, in a $d$-dimensional Cartesian product graph into one of $C>2$ distinct groups. To do this, we have access to the graph Laplacian $\LL \in \R^{N \times N}$, and the true class label at a subset of nodes, $\mathcal{S}$. This partially observed graph signal can be represented as an order-($1 + d$) tensor, where the first dimension contains a ``one-hot" encoding of the class label. As such, the input data can be summarised as follows. 
+Let us first consider the task of multiclass graph signal reconstruction. Here, the goal is to classify each node, $\nn$, in a $d$-dimensional Cartesian product graph into one of $C>2$ distinct groups. To do this, we have access to the graph Laplacian $\LL \in \R^{N \times N}$, and the true class label at a subset of nodes, $\mathcal{S}$. This partially observed graph signal can be represented as an order-($d + 1$) tensor, where the last dimension contains a ``one-hot" encoding of the class label. As such, the input data can be summarised as follows. 
 
 \begin{equation*}
-    \text{input data} = \Big\{\; \Yt \in \{0, 1\}^{C \times N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
+    \text{input data} = \Big\{\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
 \end{equation*}
 
-As in previous sections, the tensor $\St$, of shape $(N_1 \times ... \times N_d$), indicates which nodes in the product graph have been successfully observed by holding a one in the corresponding entry, and zeros elsewhere. Note that the observed graph signal, $\Yt$, has an additional dummy dimension of length $C$ to represent the class label. Where no observation was made, the corresponding values of $\Yt_{:, \nn}$ can all be safely set to zero. 
+As in previous sections, the tensor $\St$, of shape $(N_1 \times ... \times N_d$), indicates which nodes in the product graph have been successfully observed by holding a one in the corresponding entry, and zeros elsewhere. Note that the observed graph signal, $\Yt$, has an additional dummy dimension of length $C$ to represent the class label. Where no observation was made, the corresponding values of $\Yt_{\nn, :}$ can all be safely set to zero. 
 
-We describe the probability that node $\nn$ has class $c$ with another tensor, $\Mt$, which, like $\Yt$, has shape $(C \times N_1 \times ... \times N_d)$. In particular, 
+We describe the probability that node $\nn$ has class $c$ with another tensor, $\Mt$, which, like $\Yt$, has shape $(N_1 \times ... \times N_d \times C)$. In particular, 
 
 \begin{equation*}
-    p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{c, \nn}
+    p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{\nn, c}
 \end{equation*}
 
 Given this, the probability of observing a signal $\Yt$ for a given mean $\Mt$ is
 
 \begin{equation}
-    p(\Yt \, | \, \Mt) = \prod_{c, \nn \in \mathcal{S}} \Mt_{c, \nn}^{\Yt_{c, \nn}}
+    p(\Yt \, | \, \Mt) = \prod_{c, \nn \in \mathcal{S}} \Mt_{\nn, c}^{\Yt_{\nn, c}}
 \end{equation}
 
 As such, the log-likelihood of observing a signal $\Yt$ is given by 
 
 \begin{equation}
-   \log p(\Yt \, | \, \Mt) = (\one_C \otimes \s)^\top \big(\y \circ \log \muu \big)
+   \log p(\Yt \, | \, \Mt) = (\s \otimes \one_C)^\top \big(\y \circ \log \muu \big)
 \end{equation}
 
 where, as before, $\s = \vecrm{\St}, \; \y = \vecrm{\Yt}$ and $\muu = \vecrm{\Mt}$. Furthermore, to enforce the restriction that all probabilities must sum to one, we can generate $\Mt$ by applying a softmax function to a tensor $\Ft$. 
 
 \begin{equation}
     \label{eq:softmax}
-    \Mt_{c, \nn} = \frac{\exp(\Ft_{c, \nn})}{ \raisebox{-0.1cm} { $\sum_{c'=1}^C \exp(\Ft_{c', \nn})$ }}  \quad \Longleftrightarrow \quad \muu(\f) = \frac{\exp(\f)}{\one_C \otimes \big((\one_C \otimes \I_N) \exp(\f)\big)}
+    \Mt_{\nn, c} = \frac{\exp(\Ft_{\nn, c})}{ \raisebox{-0.1cm} { $\sum_{c'=1}^C \exp(\Ft_{\nn, c'})$ }}  \quad \Longleftrightarrow \quad \muu(\f) = \frac{\exp(\f)}{ \big((\I_N \otimes \one_C) \exp(\f)\big) \otimes \one_C}
 \end{equation}
 
-Here, $\Ft$ is a real-valued tensor signal which, like $\Mt$ and $\Yt$, has shape $(C \times N_1 \times ... \times N_d)$. A graphical representation of the relation between $\Ft$, $\Mt$ and the most likely classification is shown in \cref{fig:logistic_gsr_multiclass}. The goal, then, of multiclass logistic graph signal reconstruction is to find the most likely value for the tensor $\Ft$, which allows us to make a prediction for the probability of each class by applying \cref{eq:softmax}.  
+Here, $\Ft$ is a real-valued tensor signal which, like $\Mt$ and $\Yt$, has shape $(N_1 \times ... \times N_d \times C)$. A graphical representation of the relation between $\Ft$, $\Mt$ and the most likely classification is shown in \cref{fig:logistic_gsr_multiclass}. The goal, then, of multiclass logistic graph signal reconstruction is to find the most likely value for the tensor $\Ft$, which allows us to make a prediction for the probability of each class by applying \cref{eq:softmax}.  
 
 \begin{figure}[t]  
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/multiclass.pdf}
     \end{center}
-   \caption[Visualisation of multiclass classification on a 2D lattice]{An example visualisation of multiclass classification on a $20 \times 20$ grid of pixels ($C=3, N_1 = 20, N_2 = 20$). Left: a random smooth tensor signal $\Ft$ split across three channels. Middle: the value of the tensor $\Mt$ found by applying the softmax function of \cref{eq:softmax} in the class dimension. Right: the resultant most likely classification given by the maximum probability class label for each pixel. } 
+   \caption[Visualisation of multiclass classification on a 2D lattice]{An example visualisation of multiclass classification on a $20 \times 20$ grid of pixels ($N_1 = 20, N_2 = 20, C=3$). Left: a random smooth tensor signal $\Ft$ split across three channels. Middle: the value of the tensor $\Mt$ found by applying the softmax function of \cref{eq:softmax} in the class dimension. Right: the resultant most likely classification given by the maximum probability class label for each pixel. } 
     \label{fig:logistic_gsr_multiclass}
 \end{figure} 
 
@@ -330,28 +330,201 @@ Here, $\Ft$ is a real-valued tensor signal which, like $\Mt$ and $\Yt$, has shap
 Assuming no particular relational structure between the $C$ classes, we can encode the assumption that class probabilities should vary smoothly over the graph by assigning the following prior to $\Ft$. 
 
 \begin{equation}
-    \f \sim \Norm{\zero}{\gamma^{-1} \I_C \otimes \HH^2}
+    \f \sim \Norm{\zero}{\gamma^{-1} \HH^2 \otimes \I_C}
 \end{equation}
 
 By applying Bayes' rule, we can therefore derive an expression $\xi(\f)$, representing the posterior log-likelihood of an underlying signal $\f$ given an observed signal $\y$. 
 
 \begin{equation*}
-    \xi(\f) = - (\one_C \otimes \s)^\top \big(\y \circ \log \muu(\f) \big) + \frac{\gamma}{2} \f^\top \left(\I_C \otimes \HH^{-2}\right) \f
+    \xi(\f) = - (\s \otimes \one_C)^\top \big(\y \circ \log \muu(\f) \big) + \frac{\gamma}{2} \f^\top \left(\HH^{-2} \otimes \I_C\right) \f
 \end{equation*}
 
 Once again, we can solve for the minimising value of $\f$ using the IRLS algorithm. In this case, the gradient and Hessian are respectively given by 
 
 \begin{equation}
-    \g(\f) = \I_C \otimes \D_\St \big(\muu(\f) - \y\big) + \gamma \I_C \otimes \HH^{-2} \f
+    \g(\f) = \big(\D_\St \otimes \I_C\big) \big(\muu(\f) - \y\big) + \gamma \left(\HH^{-2} \otimes \I_C\right) \f
 \end{equation}
 
-and the Hessian is given by 
+and
 
 \begin{equation}
-    \PP(\f) = \frac{\partial \g(\f)}{\partial \f} =  \D_{\muu}(\f) + \gamma \HH^{-2}
+    \PP(\f) = \RR_{\muu}(\f) + \gamma \HH^{-2} \otimes \I_C
 \end{equation}
 
+where, unlike the binary case where the Hessian was the sum of a diagonal matrix $\D_{\muu}(\f)$ and $\gamma \HH^{-2}$, the matrix $\RR_{\muu}(\f)$ is no longer diagonal. First, let us define the matrix $\M$ to be the tensor $\Mt$ reshaped in row major order to have dimensions $(N \times C)$. Then, the $\RR_{\muu}(\f)$ is given by 
 
+\begin{equation}
+    \RR_{\muu}(\f) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\f)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \M_n (\f) \M_n^\top(\f) \right)
+\end{equation}
+
+where $\M_n$ is the $n$-th row of $\M$ and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
+
+\begin{equation*}
+    \RR_{\muu}(\f) = \begin{bmatrix}
+        \B_1 & & & \\
+        & \B_2 & & \\
+        & & \ddots & \\
+        & & & \B_N
+    \end{bmatrix}, \quad \text{where} \quad \B_n = \s_n \Big(\diag{\M_n} - \M_n \M_n^\top\Big)
+\end{equation*}
+
+where $\OO_C$ is a $(C \times C)$ matrix of zeros. Despite no longer being diagonal, we can still leverage the block structure of this matrix to multiply $\RR_{\muu}(\f)$ onto an arbitrary vector, $\ve$, efficiently. This can be achieve as follows. 
+
+
+\begin{equation}
+    \label{eq:R_mu_eff}
+    \RR_{\muu}(\f) \ve = (\s \otimes \one_C) \circ  \muu(\f) \circ \ve - \Big(\big((\D_\St \otimes \one_C) (\muu(\f) \circ \ve) \big) \otimes \one_C \Big) \circ \muu(\f)
+\end{equation}
+
+While a naive implementation of the product $\RR_{\muu}(\f) \ve$ would have memory time and memory complexity $O\left(C^2N^2\right)$, by following the formula given in \cref{eq:R_mu_eff}, it can instead be achieved with $O(NC)$ for both, as it would for a diagonal operator of size $(NC \times NC)$. 
+
+Now consider the IRLS update formula. As before, we will use the following shorthands. 
+
+\begin{equation*}
+    \PP(\f_k) = \PP_k, \quad \g(\f_k) = \g_k, \quad \muu(\f_k) = \muu_k, \aand \RR_{\muu}(\f_k) = \RR_{\muu}^k
+\end{equation*}
+
+Applying the update formula gives
+
+\begin{align*}
+    \f_{k+1} &= \f_k - \PP^{-1}_k \, \g_k\\
+    &= \f_{k} - \PP^{-1}_k \Big(\big(\D_\St \otimes \I_C\big) \big(\muu_k - \y\big) + \gamma \left(\HH^{-2} \otimes \I_C\right) \f_k\Big) \\
+    &= \f_k + \PP^{-1}_k \big(\D_\St \otimes \I_C\big) \big(\y - \muu_k\big) - \PP^{-1}_k \Big(\gamma \left(\HH^{-2} \otimes \I_C\right) \f_k\Big) \\
+    &= \PP^{-1}_k \big(\D_\St \otimes \I_C\big) \big(\y - \muu_k \big) + \PP^{-1}_k \Big(\PP_k \f_k - \gamma \left(\HH^{-2} \otimes \I_C\right) \f_k\Big) \\
+    &= \PP^{-1}_k \big(\D_\St \otimes \I_C\big) \big(\y - \muu_k \big) + \PP^{-1}_k \RR_{\muu}^k\f_k  \\
+    &= \PP^{-1}_k \left(\big(\D_\St \otimes \I_C\big)\big(\y - \muu_k \big) + \RR_{\muu}^k\f_k \right) \\
+    &= \PP^{-1}_k \tee_k
+\end{align*}
+
+where 
+
+\begin{equation*}
+    \tee_k = \big(\D_\St \otimes \I_C\big)\big(\y - \muu_k \big) + \RR_{\muu}^k\f_k
+\end{equation*}
+
+As before, we can solve the linear system $\PP^{-1}_k \tee_k$ by introducing a symmetric preconditioner $\PSI$. The only modification is that it must be of dimension of $(NC \times NC)$, rather than $(N \times N)$. This can be achieved as follows. 
+
+\begin{equation*}
+    \PSI = \U \D_\Gt \otimes \I_C 
+\end{equation*}
+
+Using this, we can transform the linear system into 
+
+\begin{equation*}
+    \f_k = \PP^{-1}_k \tee_k \quad \Longrightarrow \quad \f_k = \PSI \Q_k^{-1} \PSI^\top \tee_k
+\end{equation*}
+
+where 
+
+\begin{equation}
+    \label{eq:Q_LGSR_mc}
+    \Q_k = \big(\U \D_\Gt \otimes \I_C\big)^\top  \RR_{\muu}^k \big(\U \D_\Gt \otimes \I_C\big) + \gamma \I_{NC}
+\end{equation}
+
+While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa(\Q)$ is guaranteed to have a maximum value of $(0.5 + \gamma) / \gamma$, as shown formally in \cref{the:L_GSR_mc_Q_conditioning}. 
+
+\begin{theorem}
+    \label{the:L_GSR_mc_Q_conditioning}
+    
+    The condition number of $\Q_k$ is bounded by a maximum value of 
+    
+    \begin{equation}
+        \kappa(\Q_k) \leq \frac{0.5 + \gamma}{\gamma}
+    \end{equation}
+
+\end{theorem}
+
+\begin{proof}
+    As established in \cref{sec:wfl_derivation}, the worst-case convergence rate is achieved in the limit of a weak filter, where $\D_\Gt = \I_N$. In this case, the condition number of $\Q_k$ is given by 
+
+    \begin{align*}
+        \kappa(\Q_k) &= \kappa\left( (\I_C \otimes \U)^\top \RR_{\muu}^k (\I_C \otimes \U) + \gamma \I_{NC}\right) \\[0.1cm]
+        &=  \kappa\left( (\I_C \otimes \U)^\top \left(\RR_{\muu}^k + \gamma \I_N\right) (\I_C \otimes \U)  \right) \\[0.1cm]
+        &= \kappa\left( \RR_{\muu}^k + \gamma \I_N\right)
+    \end{align*}
+
+    Since $\RR_{\muu}^k$ is block-diagonal, its eigenvalues are equal to the union of the eigenvalues of each individual block. Consider the characteristic equation for the eigenvalues of block $\B_n$, given by 
+
+    \begin{equation*}
+        \B_n = \s_n \Big(\diag{\M_n} - \M_n \M_n^\top\Big)
+    \end{equation*}
+    
+    For the case where $\s_n \neq 0$, the characteristic equation is
+
+    \begin{equation*}
+        f(\lambda) = 1 - \sum_{c=1}^C \frac{(\M_n)_c^2}{(\M_n)_c - \lambda}
+    \end{equation*}
+
+    Consider the value of $f(0)$. 
+    
+    \begin{align*}
+        f(0) &= 1 - \sum_{c=1}^C \frac{(\M_n)_c^2}{(\M_n)_c} \\
+        &= 1 - \sum_{c=1}^C (\M_n)_c \\
+        &= 0
+    \end{align*}
+
+    where the final line follows from the fact that probabilities must sum to one. Therefore, every block will have at least one zero eigenvalue. Now consider the limit of $f(\lambda)$ as $\lambda \rightarrow \infty$. Clearly this is one. Furthermore, $f(\lambda)$ has $C$ asymptotes, occurring at $\lambda = (\M_n)_c$. Let us assume without loss of generality that $(\M_n)_c$ are arranged in ascending order. Taken together, this implies that the roots of $f(\lambda)$, denoted in ascending order as $[\lambda_1, \lambda_2, ..., \lambda_C]$ are restricted as follows:
+
+    \begin{equation*}
+        \lambda_1 = 0, \quad \lambda_2 < \frac{ (\M_n)_1 +(\M_n)_2}{2}, \quad \quad ...  \quad \lambda_C < \frac{(\M_n)_{C-1} + (\M_C)_2}{2}
+    \end{equation*}
+
+    Since the largest eigenvalue must be less than the average of the two largest values of $(\M_n)_c$, we can see that the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5. As established, the smallest possible eigenvalue is zero. Therefore $\kappa\left( \RR_{\muu}^k + \gamma \I_N\right) \leq (0.5 + \gamma) / \gamma$. 
+
+\end{proof}
+
+For completeness, we now give the full algorithm for logistic graph signal reconstruction in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:fast_kron_dd}, the runtime complexity of the CGM step is bounded by 
+
+\begin{equation*}
+    O\left(\frac{0.5 + \gamma}{\gamma} NC \Big(C + \sum_{i=1}^d N_i \Big)\right)
+\end{equation*}
+
+\begin{algorithm}[ht]
+    \begin{algorithmic}
+    \vspace{0.15cm}
+    \Require{Observed binary tensor $\Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}$}
+    \vspace{0.05cm}
+    \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
+    \vspace{0.05cm}
+    \Require{Cartesian product graph Laplacian $\LL \in \R^{N \times N}$}
+    \vspace{0.05cm}
+    \Require{Regularisation parameter $\gamma \in \R^+$}
+    \vspace{0.05cm}
+    \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
+    \vspace{0.25cm}
+    \State{Decompose $\LL$ into $\U \LAM \U^\top$ }
+    \vspace{0.15cm}
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}$ as $\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)$ }
+    \vspace{0.15cm}
+    \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
+    \vspace{0.15cm}
+    \State{$\D_\St \leftarrow \diag{\vecrm{\St}}$}
+    \vspace{0.15cm}
+    \State{$\PSI \leftarrow \U \D_\Gt \otimes \I_C$}
+    \vspace{0.15cm}
+    \State{Initialise $\f \in \R^{NC}$ randomly}
+    \vspace{0.15cm}
+    \While{$|\Delta \f| > \text{tol}$}
+    \vspace{0.15cm}
+    \State{$\muu \leftarrow \exp(\f) / \big((\I_N \otimes \one_C) \exp(\f)\big) \otimes \one_C$}
+    \vspace{0.15cm}
+    \State{$\M \leftarrow \text{reshape}\big(\muu, (N, C)\big)$}
+    \vspace{0.15cm}
+    \State{$\RR_{\muu} \leftarrow  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \M_n \M_n^\top \right)$}
+    \vspace{0.15cm}
+    \State{$\tee \leftarrow \big(\D_\St \otimes \I_C\big)\big(\y - \muu \big) + \RR_{\muu}\f$}
+    \vspace{0.15cm}
+    \State{$\Q \leftarrow  \big(\U \D_\Gt \otimes \I_C\big)^\top  \RR_{\muu} \big(\U \D_\Gt \otimes \I_C\big) + \gamma \I_{NC}$}
+    \vspace{0.15cm}
+    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \vspace{0.15cm}
+    \EndWhile
+    \vspace{0.15cm}
+    \Ensure{$\f$}
+    \end{algorithmic}
+    \caption{Multiclass Logistic Graph Signal Reconstruction}
+    \label{al:LGSR_mc}
+\end{algorithm}
 
 \section{Approximate Sampling via the Laplace Approximation}
 
