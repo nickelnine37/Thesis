@@ -1,10 +1,10 @@
 
 
 \chapter{Regression and Reconstruction with Tensor-Valued
-Muliway Graph Signals}
+Multiway Graph Signals}
 
 \lhead{Chapter 5. \emph{Regression and Reconstruction with
-Muliway Graph Signals}}
+Multiway Graph Signals}}
 
 \label{chap:nd_gsp}
 
@@ -160,7 +160,7 @@ Alternatively, signals can be represented as a vector of length $N = \prod N_i$.
 In the following, we use bold lower-case symbols (e.g. $\y$) to indicate graph signals existing in their vector form, and bold upper-case calligraphic symbols (e.g. $\Yt$) to indicate graph signals in their multi-dimensional array form. That is, 
 
 \begin{align*}
-    \y = \vecrm{\Yt} \quad \implies \quad \Yt  = \tenrm{\y}
+    \y = \vecrm{\Yt} \quad \Longleftrightarrow \quad \Yt  = \tenrm{\y}
 \end{align*}
 
 \Cref{fig:ten_to_vec} shows gives a visual summary of the process of converting between these two representations for an order-3 tensor. 
@@ -405,13 +405,13 @@ In order to execute computations of this nature in a way that is maximally effic
 
 }
 
-\section{Tensor Graph Signal reconstruction}
+\section{Multiway Graph Signal reconstruction}
 
 \label{sec:tensor_gsr}
 
 The model we use to describe graph signal reconstruction in the multi-dimensional setting is as follows. Consider a tensor signal $\Yt$ of shape $\big(N_1, \, N_2, \, ... \, N_d \big)$ with elements interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph. Only a partial set $\mathcal{S} = \{\nn_1, \, \nn_2, \, ... \}$ of the vector elements of $\Yt$ are available at observation time, with unobserved values set to zero. The goal is to estimate the signal value at these unobserved entries. 
 
-The binary sensing tensor $\St$, of the same shape as $\Yt$, indicates which elements of $\Yt$ were observed in the following way 
+To aid with the model description, we also introduce a binary sensing tensor $\St$, of the same shape as $\Yt$, which is used to indicate which elements of $\Yt$ were observed. This is defined as follows.  
 
 \begin{equation}
     \St_{\nn} = \begin{cases}
@@ -420,7 +420,13 @@ The binary sensing tensor $\St$, of the same shape as $\Yt$, indicates which ele
     \end{cases}
 \end{equation}
 
-In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\Yt$ is a noisy partial observation of an underlying tensor $\Ft$ which is smooth with respect to the topology of the Cartesian product graph. This is represented in the following statistical model. 
+The input data for signal reconstruction on a $d$-dimensional Cartesian product graph can therefore be summarised as follows. 
+
+\begin{equation*}
+    \text{input data} = \Big\{\; \Yt \in \R^{N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
+\end{equation*}
+
+In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\Yt$ is a noisy partial observation of an underlying tensor, $\Ft$, which is smooth with respect to the topology of the Cartesian product graph. This is represented by the following statistical model. 
 
 \begin{equation}
     \Yt = \St \circ \big(\Ft + \Et \big)
@@ -429,7 +435,7 @@ In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}),
 where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\Et$ is a random tensor where each element has an independent normal distribution with with unit variance. That is,
 
 \begin{equation}
-    \vecrm{\Et} \, \sim \, \mathcal{N}(\zero, \, \I)
+    \vecrm{\Et} \, \sim \, \Norm{\zero}{\I_N}
 \end{equation}
 
 Given this distribution over the model noise, the conditional distribution of $\Yt |  \Ft$ is given by 
@@ -444,13 +450,19 @@ Or, more concisely,
     \y \, | \, \f \, \sim \, \mathcal{N}\big(\s \circ \f, \; \D_{\St} \big)
 \end{equation}
 
-where $\D_{\St} = \diag{\vecrm{\St}}$. In order to encode the belief that the underlying tensor $\Ft$ is smooth with respect to the topology of the graph, we can make use of the following prior distribution. 
+where $\f = \vecrm{\Ft}$, $\y = \vecrm{\Yt}$ , $\s = \vecrm{\St}$ and $\D_{\St} = \diag{\s}$. In order to encode the belief that the underlying tensor $\Ft$ is smooth with respect to the topology of the graph, we can make use of the following prior distribution. 
 
 \begin{equation}
     \f \, \sim \, \mathcal{N}\left( \zero, \, \gamma^{-1} \HH^2 \right) 
 \end{equation}
 
-where $\HH$ is constructed from a graph filter function in the manner specified in \cref{eq:H_def_dd}. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
+where $\HH$ is constructed from a graph filter function in the manner specified in \cref{eq:H_def_dd}, i.e.
+
+\begin{equation*}
+    \HH = \U \D_\Gt \U^\top
+\end{equation*}
+
+where $\D_\Gt = \diag{\vecrm{\Gt}}$, and $\Gt$ is the spectral scaling matrix obtained by applying a graph filter to the graph Laplacian eigenvalues. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
 
 
 \begin{equation}
@@ -479,10 +491,10 @@ Once again, we are faced with a similar set of problems to those outlined in \cr
 Generalising the SIM, which we describe in \cref{sec:SIM}, to the tensor setting is straightforward. In particular, \cref{eq:lin_system_dd} can be solved by splitting the coefficient matrix $\left(\D_\St + \gamma \HH^{-2}\right)$ into $\M - \N$, where $\M$ and $\N$ take on the following values
  
 \begin{equation}
-    \M = \gamma \HH^{-2} + \I, \aand \N = \D_{\St'}
+    \M = \gamma \HH^{-2} + \I_N, \aand \N = \D_{\St'}
 \end{equation}
 
-where $\D_{\St'} = \diag{\mathbf{1} - \vecrm{\St}}$. In this case, the inverse of $\M$ has the form 
+where $\D_{\St'} = \diag{\mathbf{1} - \s}$. In this case, the inverse of $\M$ has the form 
 
 
 \begin{align}
@@ -536,26 +548,10 @@ using the fast GFT/IGFT algorithms described in \hyperlink{al:GFT_dd}{\textbf{4}
         \vspace{0.5cm}
         \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
         \vspace{0.15cm}
-        \State{Initialise empty $\Gt, \Jt, \St'$}
-        \vspace{0.5cm}
-        \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
-        \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
-        \hspace*{0.7cm} $\ddots$
-        \For{$n_d$ \textbf{from} 1 \textbf{to} $N_d$}
-        \vspace{0.25cm}
-        \State{$\nn \leftarrow [n_1, n_2, ..., n_d]$}
+        \State{Compute $\Gt$ by applying \cref{eq:Gn_dd2}}
         \vspace{0.15cm}
-        \State{$\Gt_{\nn} \leftarrow g\big(\lambdaa(\nn); \, \betaa\big)$ }
-        \vspace{0.15cm}
-        \State{$\Jt_{\nn} \leftarrow \Gt_{\nn}^2 \, / \, (\Gt_{\nn}^2 + \gamma)$ }
-        \vspace{0.15cm}
-        \State{$\St_{\nn}' \leftarrow 1 - \St_\nn$}
-        \vspace{0.25cm}
-        \EndFor
-        \EndFor \\
-        \hspace*{0.1cm} \reflectbox{$\ddots$}
-        \EndFor
-        \vspace{0.5cm}
+        \State{Compute $\Jt$ as $\Jt_\nn = \Gt_{\nn}^2 / \big(\Gt_{\nn}^2 + \gamma\big)$}
+        \vspace{0.5cm} 
         \State{$\Delta\Ft \leftarrow \text{IGFT}  \Big( \Jt \circ \text{GFT}\big( \Yt \big)\Big) $}
         \vspace{0.15cm}
         \State{$ \Ft  \leftarrow \Delta\Ft$}
@@ -608,7 +604,7 @@ This means \cref{eq:lin_system_precon_dd} can be expressed as
 Note that, once again, this preconditioned coefficient matrix can be multiplied onto any appropriate tensor $\Zt$ efficiently by making use of the chained Kronecker multiplication procedure given in algorithm \hyperlink{KronMatMul}{\textbf{4}}. As with the SIM, this can be performed with $O(N \sum N_i)$ multiplications. In particular, 
 
 \begin{align*}
-    \Zt' &= \tenrm{\big( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I \big) \vecrm{\Zt}} \\[0.2cm]
+    \Zt' &= \tenrm{\big( \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_N \big) \vecrm{\Zt}} \\[0.2cm]
     &= \Gt \circ \text{GFT} \Big( \St \circ \text{IGFT} \big(\Gt \circ \Zt\big) \Big)  + \gamma \Zt
 \end{align*}
 
@@ -630,22 +626,8 @@ Note that, once again, this preconditioned coefficient matrix can be multiplied 
         \vspace{0.5cm}
         \State{For $i$ from 1 to $d$, decompose $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$}
         \vspace{0.15cm}
-        \State{Initialise empty $\Gt$}
-        \vspace{0.5cm}
-        \For{$n_1$ \textbf{from} 1 \textbf{to} $N_1$}
-        \For{$n_2$ \textbf{from} 1 \textbf{to} $N_2$} \\
-        \hspace*{0.7cm} $\ddots$
-        \For{$n_d$ \textbf{from} 1 \textbf{to} $N_d$}
-        \vspace{0.25cm}
-        \State{$\nn \leftarrow [n_1, n_2, ..., n_d]$}
-        \vspace{0.15cm}
-        \State{$\Gt_{\nn} \leftarrow g\big(\lambdaa(\nn); \, \betaa\big)$ }
-        \vspace{0.25cm}
-        \EndFor
-        \EndFor \\
-        \hspace*{0.1cm} \reflectbox{$\ddots$}
-        \EndFor
-        \vspace{0.5cm}
+        \State{Compute $\Gt$ by applying \cref{eq:Gn_dd2}}
+        \vspace{0.5cm} 
         \State{Initialise $\Zt$}
         \vspace{0.15cm}
         \State{$\Rt \leftarrow \Gt \circ \text{GFT} \left( \Yt \right)$}
@@ -682,17 +664,187 @@ $$
 \sqrt{\frac{1 - m + \gamma}{\gamma}} \; \leq \; n_{\text{CGM}} \; \leq \; \sqrt{\frac{1+\gamma}{\gamma}}
 $$
 
-\section{Kernel Graph Tensor Regression}
+\section{Multiway Kernel Graph Regression}
 
 \label{sec:kgr_dd}
 
-Hello
+In this section, we take the Kernel Graph Regression (KGR) algorithm, developed in \cref{sec:kgr_mdp}, and generalise it to the multiway/tensor case. Consider a series of $T$ product graph signals, each denoted as $\Yt_t$, with dimensions $(N_1 \times ... \times N_d)$. In this scenario, each signal is associated with an explanatory vector, $\x_t \in \R^M$. Therefore, the available data consist of labeled pairs $\big\{\x_t, \Yt_t\big\}_{t=1}^T$. This data can be consolidated into a a matrix, $\X$, of dimensions $(T \times M)$, and a tensor, $\Yt$, with shape $(T \times N_1 \times ... \times N_d)$.
 
-\section{Tensor Regression with Network Cohesion}
+The observed tensor $\Yt$ may also contain an arbitrary amount of missing data, which is described by the binary sensing tensor $\St$. In accordance with previous sections, $\St$ shares its shape with $\Yt$ and holds ones at elements where successful observations were made and zeros elsewhere. As a result, the input data for multiway KGR can be summarised as follows.
+
+\begin{equation*}
+    \text{input data} = \Big\{ \; \X \in \R^{T \times M}, \;\; \Yt \in \R^{T \times N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{T \times N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
+\end{equation*}
+
+The goal of KGR is to estimate all the missing values within $\Yt$, accounting for both the topology of the graph and the explanatory variables. As with the two-dimensional KGR model elaborated in \cref{sec:kgr_mdp}, no distinction is necessary between ``training" and ``testing" data in this context. To make a completely new prediction for some explanatory vector $\x_t$, we merely assign zero to the corresponding values in $\Yt$ and $\St$.
+
+The fundamental logic underpinning the tensor-valued version of KGR remains consistent with the two-dimensional scenario. We continue to assume that $\Yt$ is a noisy, partial observation of an underlying latent signal $\Ft$, which is captured in the following statistical model.
+
+\begin{equation}
+    \label{eq:likelihood_kgr_nd}
+    \y \, | \, \f \sim \Norm{\s \circ \f}{\I_{NT}}
+\end{equation}
+
+In this section, we omit a detailed derivation of the prior distribution over $\f$ from first principles, as the process closely resembles the steps provided in \cref{sec:kgr_mdp}. For the purposes of this section, we justify it by stating that the signal $\Ft$ should display smooth variations across both the space of explanatory variables and the topology of the Cartesian product graph. This can be encoded in the following prior distribution for $\f$.
+
+\begin{equation}
+    \label{eq:prior_kgr_nd}
+    \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2}
+\end{equation}
+
+In this expression, $\K$ denotes a $(T \times T)$ kernel matrix, which is created by applying a valid Mercer kernel, $\kappa$, to pairs of explanatory variables such that $\K_{ij} = \kappa(\x_i, \x_j)$. Multiple options for $\kappa$ are available, including popular choices such as the Gaussian kernel (see \cref{eq:gaussian_kernel}). By applying Bayes' rule to \cref{eq:likelihood_kgr_nd,eq:prior_kgr_nd}, the posterior distribution over the latent signal $\f$ can be established. This is given by 
+
+\begin{equation}
+    \label{eq:posterior_kgr_nd}
+    \f \, | \, \y \sim \Norm{\bar{\PP}^{-1} \y}{\bar{\PP}^{-1}}
+\end{equation}
+
+where, in this case, the posterior precision matrix $\bar{\PP}$ is an $NT \times NT$ matrix given by
+
+
+\begin{equation}
+    \bar{\PP} = \D_\St + \gamma \K^{-1} \otimes \HH^{-2}
+\end{equation}
+
+\subsection{Computation of the posterior mean}
+
+In order to find the posterior mean, we must solve the linear system $\bar{\PP}^{-1} \y$. Again, this can be achieved by utilising the tensor versions of the SIM or CGM. In close analogy with the two dimensional case, the process is the same as that of multiway GSR, under the following change of variables. 
+
+\begin{equation}
+    \U \rightarrow \bar{\U}, \aand \Gt \rightarrow \bar{\Gt}
+\end{equation}
+
+To define $\bar{\U}$ and $\bar{\Gt}$, first we must define the eigendecomposition of the kernel matrix $\K$. 
+
+\begin{equation}
+    \K = \V \LAM_K \V^\top
+\end{equation}
+
+where $\V$ is the matrix with columns representing the normalised eigenvectors of $\K$, and $\LAM_K$ is the diagonal matrix holding its eigenvalues in ascending order, such that  
+
+\begin{equation}
+\LAM_K = \diag{\left[\lambda^{(K)}_1, \; \lambda^{(K)}_2, \; \dots, \;\lambda^{(K)}_T \right]}
+\end{equation}
+
+Then, $\bar{\U}$ and $\bar{\Gt}$ are defined as follows.
+
+\begin{equation}
+    \bar{\U} \in \R^{NT \times NT} = \V \otimes \U
+\end{equation}
+
+and 
+
+\begin{equation}
+    \bar{\Gt}_{t, \nn} = g(\lambdaa(\nn), \betaa) \sqrt{\lambda_t^{(K)}} \quad \Longleftrightarrow \quad \D_{\bar{\Gt}} = \LAM_K^{1/2} \otimes \D_\Gt 
+\end{equation}
+
+From here, either the SIM or CGM, as given in \cref{al:SIM_dd,al:CGM_dd}, can be applied. The only changes necessary are the swap in $\bar{\U}$ for $\U$ and $\bar{\Gt}$ for $\Gt$. As such, this means that whenever $\text{GFT}(\cdot)$ is used, it instead signifies the following operation.  
+
+\begin{alignat}{2}
+    \label{eq:gftp_nd}
+        \text{GFT}(\Yt) & = \tenrm{\bar{\U}^\top \y} && = \tenrm{\V^\top \otimes \left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right)^\top \vecrm{\Yt} } \\
+    \label{eq:igftp_nd}
+        \text{IGFT}(\Yt) & = \tenrm{\bar{\U} \y} && = \tenrm{\V \otimes \left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right) \vecrm{\Yt} }
+\end{alignat}
+
+Note that these no longer technically represent the GFT and IGFT, but a modified Kronecker operation that now includes an additional dimension described by $\V$. 
+
+
+\section{Multiway Regression with Network Cohesion}
 
 \label{sec:rnc_dd}
 
-Ahhhh
+In this section, we extend the Regression with Network Cohesion (RNC) and Kernel Graph Regression with Network Cohesion (KGRNC) algorithms, initially discussed in \cref{sec:rnc_mdp}, to the multiway GSP framework. Our starting point will be multiway RNC. In this context, we are concerned with a graph signal residing on the nodes of a known $d$-dimensional Cartesian product graph, where an arbitrary subset of the elements could be corrupted or absent. Furthermore, each of the $N = N_1 \times ... \times N_d$ nodes is accompanied by a length-$M$ vector of explanatory variables. Consequently, the available data can be summarised as follows.
+
+\begin{equation*}
+    \text{input data} = \Big\{ \;\Xt \in \R^{N_1 \times ... \times N_d \times M}, \;\; \Yt \in \R^{N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d}, \;\; \LL \in \R^{N \times N} \; \Big\}
+\end{equation*}
+
+As before, the binary sensing tensor $\St$ describes which elements of $\Yt$ were available at observation time. We also define the matrix $\X$ which is a reshaping of the tensor of explanatory variables $\Xt$ such that
+
+\begin{equation}
+    \label{eq:X_RNC_dd}
+    \X \in \R^{N \times M} = \begin{bmatrix} \vecc{\Xt_{:, 1}} & \vecc{\Xt_{:, 2}} & \dots & \vecc{\Xt_{:, M}} \end{bmatrix}    
+\end{equation}
+
+In this model, we assume that the signal $\Yt$ is a noisy partial observation of the sum of a smooth tensor signal $\Ct$ and a linear combination of the explanatory variables at each node. This is summarised in the following model. 
+
+\begin{equation}
+    \label{eq:rnc_stat_model_wc_dd}
+    \y = \s \circ \big( \cc + \X \w  + \e \big)
+\end{equation}
+
+Here, $\cc \in \R^N = \vecrm{\Ct}$ is the flexible intercept term, which is assumed to vary smoothly across the $d$-dimensional product graph. $\w \in \R^{M}$ is the learned coefficient vector which specifies the contribution of the explanatory variables to the prediction at each node. $\e \in \R^N$ is a random vector of iid Gaussian noise representing the model error. As in the two dimensional case, we can stack $\cc$ and $\w$ into a single parameter vector $\thetaa$ as 
+
+\begin{equation}
+    \thetaa \in \R^{N + M} = \begin{bmatrix}
+        \cc \\ \w
+    \end{bmatrix}
+\end{equation}
+
+Then, the probability distribution over $\y$ given $\thetaa$ can be expressed as follows. 
+
+\begin{equation}
+    \y \, | \, \thetaa \sim \Norm{\s \circ \left(\begin{bmatrix}\I_N & \X \end{bmatrix} \thetaa \right)}{\D_\St}
+\end{equation}
+
+To create a prior over $\thetaa$, we can combine the assumption that $\Ct$ should vary smoothly over the graph with an L2 prior over the coefficient vector $\w$. This is expressed as 
+
+\begin{equation}
+    \thetaa \sim \Norm{\zero}{\begin{bmatrix}\gamma^{-1} \HH^2 & \zero \\
+    \zero & \lambda \I_M \end{bmatrix}}
+\end{equation}
+
+The resultant posterior distribution over $\thetaa$ is therefore given by 
+
+\begin{equation}
+    \thetaa \, | \, \Yt \sim \Norm{\widetilde{\PP}^{-1} \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}}{\widetilde{\PP}^{-1}}
+\end{equation}
+
+where 
+
+\begin{equation}
+    \widetilde{\PP} \in \R^{(N + M) \times (N + M)} = 
+    \begin{bmatrix}
+     \D_\St + \gamma \HH^{-2} & \D_\St  \X \\
+     \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
+    \end{bmatrix}
+\end{equation}
+
+As in \cref{sec:rnc_mdp}, we can solve the linear system $\widetilde{\PP}^{-1}\begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}$ using the CGM. In particular, we first define the symmetric preconditioner $\widetilde{\PSI}$ as follows. 
+
+\begin{equation}
+    \widetilde{\PSI} \in \R^{(N + M) \times (N + M)} = \begin{bmatrix}
+        \U \D_\Gt & \zero \\
+        \zero & \U_M \D_M 
+    \end{bmatrix}
+\end{equation}
+
+where $\U_M$ and $\D_M$ are generated form the eigendecomposition of $\X^\top \D_\St \X$ as follows. 
+
+\begin{equation}
+    \X^\top \D_\St \X = \U_M \LAM_M \U_M^\top, \aand \D_M = \left(\LAM_M + \lambda \I_M\right)^{-1/2}
+\end{equation}
+
+This allows us to generate a preconditioned coefficient matrix as follows.  
+
+\begin{equation*}
+    \widetilde{\PSI}^\top \widetilde{\PP}  \widetilde{\PSI} = 
+       \begin{bmatrix}
+        \D_\Gt \U^\top \D_\St \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \D_\St \X \U_M \D_M \\[0.1cm] 
+        \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \I_M
+        \end{bmatrix}
+\end{equation*}
+
+Then we instead solve the modified linear system as follows.
+
+\begin{equation*}
+    \thetaa^\star = \widetilde{\PP}^{-1}\begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}\, \quad \Longrightarrow \quad  \thetaa^\star = \widetilde{\PSI} \left(\widetilde{\PSI}^\top \widetilde{\PP}  \widetilde{\PSI} \right)^{-1}\widetilde{\PSI}^\top \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}
+\end{equation*}
+
+
+
+
 
 \section{Application}
 

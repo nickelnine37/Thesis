@@ -351,13 +351,13 @@ and
     \PP(\f) = \RR_{\muu}(\f) + \gamma \HH^{-2} \otimes \I_C
 \end{equation}
 
-where, unlike the binary case where the Hessian was the sum of a diagonal matrix $\D_{\muu}(\f)$ and $\gamma \HH^{-2}$, the matrix $\RR_{\muu}(\f)$ is no longer diagonal. First, let us define the matrix $\M$ to be the tensor $\Mt$ reshaped in row major order to have dimensions $(N \times C)$. Then, the $\RR_{\muu}(\f)$ is given by 
+where, unlike the binary case where the Hessian was the sum of a diagonal matrix $\D_{\muu}(\f)$ and $\gamma \HH^{-2}$, the matrix $\RR_{\muu}(\f)$ is no longer diagonal. Then, the $\RR_{\muu}(\f)$ is given by 
 
 \begin{equation}
-    \RR_{\muu}(\f) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\f)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \M_n (\f) \M_n^\top(\f) \right)
+    \RR_{\muu}(\f) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\f)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n (\f) \m_n^\top(\f) \right)
 \end{equation}
 
-where $\M_n$ is the $n$-th row of $\M$ and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
+where $\m_n \in \R^C$ is the probability vector at node $n$ (i.e. the $n$-th lexicographically ordered fiber within the tensor $\Mt$), and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
 
 \begin{equation*}
     \RR_{\muu}(\f) = \begin{bmatrix}
@@ -365,10 +365,10 @@ where $\M_n$ is the $n$-th row of $\M$ and $\mathbf{\Delta}_{n}$ is a matrix of 
         & \B_2 & & \\
         & & \ddots & \\
         & & & \B_N
-    \end{bmatrix}, \quad \text{where} \quad \B_n = \s_n \Big(\diag{\M_n} - \M_n \M_n^\top\Big)
+    \end{bmatrix}, \quad \text{where} \quad \B_n = \s_n \Big(\diag{\m_n} - \m_n \m_n^\top\Big)
 \end{equation*}
 
-where $\OO_C$ is a $(C \times C)$ matrix of zeros. Despite no longer being diagonal, we can still leverage the block structure of this matrix to multiply $\RR_{\muu}(\f)$ onto an arbitrary vector, $\ve$, efficiently. This can be achieve as follows. 
+Despite no longer being diagonal, we can still leverage the block structure of this matrix to multiply $\RR_{\muu}(\f)$ onto an arbitrary vector, $\ve$, efficiently. This can be achieve as follows. 
 
 
 \begin{equation}
@@ -443,33 +443,72 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
         &= \kappa\left( \RR_{\muu}^k + \gamma \I_N\right)
     \end{align*}
 
-    Since $\RR_{\muu}^k$ is block-diagonal, its eigenvalues are equal to the union of the eigenvalues of each individual block. Consider the characteristic equation for the eigenvalues of block $\B_n$, given by 
+    Since $\RR_{\muu}^k$ is block-diagonal, its eigenvalues are equal to the union of the eigenvalues of each individual block. Furthermore, each block within  $\RR_{\muu}^k$ is of the form
 
     \begin{equation*}
-        \B_n = \s_n \Big(\diag{\M_n} - \M_n \M_n^\top\Big)
+        \B = s \Big(\diag{\m} - \m \m^\top\Big)
     \end{equation*}
     
-    For the case where $\s_n \neq 0$, the characteristic equation is
+    where $\m \in \R^C$ is a probability vector, and $s$ is either zero or one. For the case where $s \neq 0$, we can see that $\B$ must have at least one zero eigenvalue, with eigenvector $\one$.     
 
-    \begin{equation*}
-        f(\lambda) = 1 - \sum_{c=1}^C \frac{(\M_n)_c^2}{(\M_n)_c - \lambda}
-    \end{equation*}
-
-    Consider the value of $f(0)$. 
-    
     \begin{align*}
-        f(0) &= 1 - \sum_{c=1}^C \frac{(\M_n)_c^2}{(\M_n)_c} \\
-        &= 1 - \sum_{c=1}^C (\M_n)_c \\
-        &= 0
+        \B \one &= \Big(\diag{\m} - \m \m^\top\Big) \one \\
+        &= \diag{\m} \one - (\m^\top \one) \m \\
+        &= \m - \m = \zero
     \end{align*}
 
-    where the final line follows from the fact that probabilities must sum to one. Therefore, every block will have at least one zero eigenvalue. Now consider the limit of $f(\lambda)$ as $\lambda \rightarrow \infty$. Clearly this is one. Furthermore, $f(\lambda)$ has $C$ asymptotes, occurring at $\lambda = (\M_n)_c$. Let us assume without loss of generality that $(\M_n)_c$ are arranged in ascending order. Taken together, this implies that the roots of $f(\lambda)$, denoted in ascending order as $[\lambda_1, \lambda_2, ..., \lambda_C]$ are restricted as follows:
+    Note, we have used the fact that $\m^\top \one = 1$, since $\m$ is a vector of probabilities. Furthermore, we can show that all eigenvalues of $\B$ must be within the interval $[0, 1/2]$, no matter the value of $\m$.  To achieve this, we can make use of the Gerschgorin circle theorem \citep{Gerschgorin1931}. This states that all eigenvalues of a square matrix must fall within at least one of the closed disks $D(a_{ii}, R_i) \subseteq \mathbb{C}$ in the complex plane. Here, $a_{ii}$ are the centres of the disks given by the diagonal elements of the matrix, and $R_i$ are the radii of the disks, given by 
 
     \begin{equation*}
-        \lambda_1 = 0, \quad \lambda_2 < \frac{ (\M_n)_1 +(\M_n)_2}{2}, \quad \quad ...  \quad \lambda_C < \frac{(\M_n)_{C-1} + (\M_C)_2}{2}
+        R_i = \sum_{j \neq i} |a_{ij}|
+    \end{equation*}
+    
+    i.e. the sum of the absolute value of the off-diagonal elements in row $i$. Consider the structure of $\B$. 
+
+    \begin{equation*}
+        \B = \begin{bmatrix}
+            m_1 - m_1^2 & -m_1 m_2 & \dots & - m_1 m_C \\
+            - m_2 m_1 & m_2 - m_2^2 & \dots & -m_2 m_C \\
+            \vdots & \vdots & \ddots & \vdots \\
+            -m_C m_1 & -m_C m_2 & \dots &m_C- m_C^2
+        \end{bmatrix}
+    \end{equation*}
+    
+    The disk associated with row $c$ will be given by
+
+    $$
+    D\left(m_c - m_c^2, \; \sum_{c' \neq c} |-m_c m_{c'}|\right) = D\big(m_c\,(1 - m_c), \; m_c\,(1 - m_c)\big)
+    $$
+    
+    In our particular scenario, the matrix $\B$ is symmetric-real, guaranteeing that its eigenvalues are real. This implies that, instead of complex regions, each of these disks represents a real interval. As such, every eigenvalue is constrained to fall within the interval $m_c\,(1 - m_c) \pm m_c\,(1 - m_c) = [0, \, 2 m_c\,(1 - m_c)]$. The maximum width of this interval occurs when $m_c = 0.5$, resulting in an interval of $[0, 0.5]$. Consequently, the largest possible eigenvalue of matrix $\B$ is 0.5.
+
+    Finally, since $\RR_{\muu}^k$ is composed of blocks $\B_n$, this means the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5, and the smallest is zero. Therefore
+
+    \begin{equation*}
+        \kappa\left( \RR_{\muu}^k + \gamma \I_N\right) = \frac{0.5 + \gamma}{\gamma}
     \end{equation*}
 
-    Since the largest eigenvalue must be less than the average of the two largest values of $(\M_n)_c$, we can see that the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5. As established, the smallest possible eigenvalue is zero. Therefore $\kappa\left( \RR_{\muu}^k + \gamma \I_N\right) \leq (0.5 + \gamma) / \gamma$. 
+    % the characteristic equation is
+
+    % \begin{equation*}
+    %     f(\lambda) = 1 - \sum_{c=1}^C \frac{(\m_n)_c^2}{(\m_n)_c - \lambda}
+    % \end{equation*}
+
+    % Consider the value of $f(0)$. 
+    
+    % \begin{align*}
+    %     f(0) &= 1 - \sum_{c=1}^C \frac{(\m_n)_c^2}{(\m_n)_c} \\
+    %     &= 1 - \sum_{c=1}^C (\m_n)_c \\
+    %     &= 0
+    % \end{align*}
+
+    % where the final line follows from the fact that probabilities must sum to one. Therefore, every block will have at least one zero eigenvalue. Now consider the limit of $f(\lambda)$ as $\lambda \rightarrow \infty$. Clearly this is one. Furthermore, $f(\lambda)$ has $C$ asymptotes, occurring at $\lambda = (\m_n)_c$. Let us assume without loss of generality that $(\m_n)_c$ are arranged in ascending order. Taken together, this implies that the roots of $f(\lambda)$, denoted in ascending order as $[\lambda_1, \lambda_2, ..., \lambda_C]$ are restricted as follows:
+
+    % \begin{equation*}
+    %     \lambda_1 = 0, \quad \lambda_2 < \frac{ (\m_n)_1 +(\m_n)_2}{2}, \quad \quad ...  \quad \lambda_C < \frac{(\m_n)_{C-1} + (\M_C)_2}{2}
+    % \end{equation*}
+
+    % Since the largest eigenvalue must be less than the average of the two largest values of $(\m_n)_c$, we can see that the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5. As established, the smallest possible eigenvalue is zero. Therefore $\kappa\left( \RR_{\muu}^k + \gamma \I_N\right) \leq (0.5 + \gamma) / \gamma$. 
 
 \end{proof}
 
@@ -510,13 +549,13 @@ For completeness, we now give the full algorithm for logistic graph signal recon
     \vspace{0.15cm}
     \State{$\M \leftarrow \text{reshape}\big(\muu, (N, C)\big)$}
     \vspace{0.15cm}
-    \State{$\RR_{\muu} \leftarrow  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \M_n \M_n^\top \right)$}
+    \State{$\RR_{\muu} \leftarrow  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n \m_n^\top \right)\quad$ ($\m_n$ is the $n$-th row of $\M$)}
     \vspace{0.15cm}
     \State{$\tee \leftarrow \big(\D_\St \otimes \I_C\big)\big(\y - \muu \big) + \RR_{\muu}\f$}
     \vspace{0.15cm}
     \State{$\Q \leftarrow  \big(\U \D_\Gt \otimes \I_C\big)^\top  \RR_{\muu} \big(\U \D_\Gt \otimes \I_C\big) + \gamma \I_{NC}$}
     \vspace{0.15cm}
-    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ (solve with the CGM)}
     \vspace{0.15cm}
     \EndWhile
     \vspace{0.15cm}
