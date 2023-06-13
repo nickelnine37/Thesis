@@ -221,7 +221,7 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \vspace{0.25cm}
     \State{Decompose $\LL$ into $\U \LAM \U^\top$ }
     \vspace{0.15cm}
-    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}$ as $\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)$ }
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)$ }
     \vspace{0.15cm}
     \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
     \vspace{0.15cm}
@@ -235,7 +235,7 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \vspace{0.15cm}
     \State{$\muu \leftarrow \one / \big(\one + \exp(-\f)\big)$}
     \vspace{0.15cm}
-    \State{$\D_{\muu} \leftarrow  \diag{\vecrm{\s \circ \muu \circ (1 - \muu)}}$}
+    \State{$\D_{\muu} \leftarrow  \Diag{\vecrm{\s \circ \muu \circ (1 - \muu)}}$}
     \vspace{0.15cm}
     \State{$\tee \leftarrow \D_\St \big(\y - \muu\big) + \D_{\muu} \f $}
     \vspace{0.15cm}
@@ -477,10 +477,10 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     The disk associated with row $c$ will be given by
 
     $$
-    D\left(m_c - m_c^2, \; \sum_{c' \neq c} |-m_c m_{c'}|\right) = D\big(m_c\,(1 - m_c), \; m_c\,(1 - m_c)\big)
+    D\left(m_c - m_c^2, \; \sum_{c' \neq c} |-m_c m_{c'}|\right) = D\Big(m_c\,(1 - m_c), \; m_c\,(1 - m_c)\Big)
     $$
     
-    In our particular scenario, the matrix $\B$ is symmetric-real, guaranteeing that its eigenvalues are real. This implies that, instead of complex regions, each of these disks represents a real interval. As such, every eigenvalue is constrained to fall within the interval $m_c\,(1 - m_c) \pm m_c\,(1 - m_c) = [0, \, 2 m_c\,(1 - m_c)]$. The maximum width of this interval occurs when $m_c = 0.5$, resulting in an interval of $[0, 0.5]$. Consequently, the largest possible eigenvalue of matrix $\B$ is 0.5.
+    In our particular scenario, the matrix $\B$ is symmetric-real, guaranteeing that its eigenvalues are real. This implies that, instead of complex regions, each of these disks represents a real interval. As such, every eigenvalue is constrained to fall within the interval $m_c\,(1 - m_c) \pm m_c\,(1 - m_c) = \big[0, \, 2 m_c\,(1 - m_c)\big]$. The maximum width of this interval occurs when $m_c = 0.5$, resulting in an interval of $[0, 0.5]$. Consequently, the largest possible eigenvalue of matrix $\B$ is 0.5.
 
     Finally, since $\RR_{\muu}^k$ is composed of blocks $\B_n$, this means the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5, and the smallest is zero. Therefore
 

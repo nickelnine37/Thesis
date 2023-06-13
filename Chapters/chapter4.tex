@@ -444,6 +444,8 @@ Note that the upper left block can be multiplied onto a length $NT$ vector with 
 
 \section{Network regression with both global and local explanatory variables}
 
+\label{sec:kgrnc}
+
 In \cref{sec:kgr_mdp}, we introduced Kernel Graph Regression (KGR) with arbitrary missing values as a non-parametric regression technique, applicable for modelling scenarios where a series of graph signals need to be predicted based on exogenous or `global' explanatory variables. This concept is visually represented in \cref{fig:KGR_diagram}. On the other hand, Regression with Network Cohesion (RNC), discussed in \cref{sec:rnc_mdp}, is suitable for situations where `local' explanatory variables are associated with individual nodes over time, as depicted in \cref{fig:RNC_diagram}.
 
 In certain cases, both global and local explanatory variables may coexist. For example, consider a network of businesses where firms are connected based on industry similarity or supply chain integration. In this scenario, the objective may be to predict quarterly revenue growth using variables affecting all firms, such as inflation and interest rates, while also considering firm-level local variables like employee turnover or debt ratio.
@@ -522,3 +524,84 @@ The new preconditioned coefficient matrix in this case is given by
 \end{equation*}
 
 which can be efficiently multiplied onto a length $NT + M$ vector by leveraging the properties of the Kronecker product. Note that, in this case, the complexity of this multiplication is no longer $O(N^2T + NT \log T)$, but is now $O(N^2T + NT^2)$, since we cannot make use of the Fast Cosine Transform to multiply the matrix $\V \otimes \U$ onto a vector. 
+
+
+\section{Network regression for pollutant monitoring}
+
+In this section, we analyse the performance of the regression models developed in this chapter by applying them to an environmental modeling task. Our focus is on predicting the concentration of PM$_{2.5}$, a common airborne pollutant which consists of particulate matter with a diameter of 2.5 micrometers or less. We apply our models over a network of monitoring stations located in California, USA, using a dataset obtained from the U.S. Environmental Protection Agency's Air Data program. This program is responsible for generating daily readings of several airborne pollutants, including Ozone, Sulfur Dioxide (SO$_2$), Carbon Monoxide (CO), Nitrous Dioxide (NO$_2$), PM$_{2.5}$ and PM$_{10}$ at hundreds of locations across the country \citep{EPA2023}.  
+
+In total, we consider $N=571$ monitoring stations across a period of $T=3957$ days from the 1$^\text{st}$ of January 2012 to the 30$^\text{th}$ of September 2022. Our method for graph construction was as follows. First, we took the latitude and longitude coordinates of each monitoring station and created a two-dimensional Voronoi diagram bounded by the California border \citep{Fortune1986}. This tessellated the state into 571 distinct regions; one per station. Next, we connected each pair of stations $i$ and $j$ if their respective Voronoi regions shared a boundary, and weight that connection by  $1 / (1 + kd_{ij})$, where $k$ is a scaling factor and $d_{ij}$ is their geodesic separation. This creates a sparse graph, which is visually represented in \cref{fig:cali_voronoi}. The total product graph used was then the Cartesian product between the size-$T$ path graph (i.e. $T$ nodes connected together in a chian representing time), and the cross-sectional network represented in \cref{fig:cali_voronoi}. 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{Figures/cali_plot2.pdf}
+    \caption[The network of monitoring stations created via Voronoi tessellation]{The network of monitoring stations, created via Voronoi tessellation. The geographic coordinates of the stations are used to create closed the regions, which are connected by a weighted edge to neighbouring regions. }
+    \label{fig:cali_voronoi}
+\end{figure}
+
+In our experiments, we predicted $\log(1+c)$, where $c$ was the concentration of PM$_{2.5}$ in parts per million across the network using all three regression algorithms outlined in this chapter. In the case of Kernel Graph Regression, we used a set of global explanatory variables which were not associated with conditions at the individual monitoring stations, and for Regression with Network Cohesion, we used local explanatory variables that were associated with conditions at the individual monitoring stations. For KGR, we considered the number of active wildfires (which is known to be a strong contributor to PM$_{2.5}$ concentration \citep{Jaffe2020}) and meterological conditions across the state including temperature, pressure and humidity. In particular, for the wildfires, we calculated the number of acres actively burning on each day, within nine different regions using data from the CAL FIRE service from the Department of Forestry and Fire Protection \citep{CALFIRE2023}. For the meterological variables, we took readings also published by the Air Data program from locations across the state and took the first five principal components. 
+
+For RNC, we used the other pollutants measured over the network, i.e. Ozone, SO$_2$, CO, NO$_2$, and PM$_{10}$. Since, in general, a considerable proportion of this data was missing, we first used Graph Signal Reconstruction. as described in \cref{chap:gsr_2d}, to interpolate the missing values. In addition, we used information local to each monitoring station such as land use and elevation. We also tested the KG-RNC framework outlined in \cref{sec:kgrnc} by combining both the local and global explanatory variables. Further information about the explanatory variables used is given in \cref{tab:features1,tab:features2}. 
+
+
+
+\begin{table}[ht]
+    \renewcommand{\arraystretch}{1.8}
+    \centering
+    \begin{tabular}{|l|p{11cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Global explanatory variables}} \\
+    \hline
+    \textbf{Variable} & \textbf{Description} \\
+    \hline
+
+    Time & A simple linear variable. \\
+
+    Season & Two additional variables tracking season were created by taking the sin and cosine of $2 \pi t / 365$, where $t$ is the day of the year. \\
+
+    Active wildfires & The original dataset comprised a list of wildfire events in California, containing information including the geographical coordinates, the start date, the end date and the total number of acres burned. Using the coordinates, we assigned each fire into one of nine regions. Then, by dividing the total acres burned by the incident duration, we calculated the average number of acres burning each day for each fire. By summing this for every region, we had an estimate of the total number of acres burning on each day for each region. \\
+
+    Temperature & Using data from the Air Data program, we obtained readings for temperature at 90 locations across California. The readings were selected such that no missing data was present. Then, the first five principal components were taken. \\
+
+    Pressure & As above, but for pressure. Readings from 48 locations were transformed into five PCA components. \\
+
+    Humidity & As above, for humidity. Readings from 51 locations were transformed into five PCA components  \\
+    \hline
+    \end{tabular}
+    \caption[Global explanatory variables used in the environmental modelling application]{The global explanatory variables used in this experiment. Each feature is not associated with any node in particular, but covaries with the graph signal over time. This resulted in a feature matrix $\X$ of shape $3957 \times 27$. All columns were normalised to have a mean of zero and standard deviation of one. }
+    \label{tab:features1}
+\end{table}
+
+\begin{table}[ht]
+    \renewcommand{\arraystretch}{1.8}
+    \centering
+    \begin{tabular}{|l|p{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Local explanatory variables}} \\
+    \hline
+    \textbf{Variable} & \textbf{Description} \\
+    \hline
+    Ozone & Ozone readings from the Air Data program were taken at all 571 monitoring stations. Where data was missing, graph signal reconstruction was used to interpolate the missing values. 72\% of the original data was missing. \\
+    Sulfur Dioxide & As above. 95\% of the original data was missing.  \\
+    Carbon Monoxide & As above. 89\% of the original data was missing.  \\
+    Nitrous Dioxide & As above. 83\% of the original data was missing.  \\
+    PM$_{10}$  & As above. 85\% of the original data was missing.  \\
+    Elevation & The elevation of the station in meters. This variable remained constant over time \\
+    Land use & Each monitoring station was had a land use flag, which was one of `Commercial', `Residential', `Agricultural', `Forest', `Industrial', `Desert', or `Military Reservation'. This was turned into a length-7 vector for each station using one-hot encoding which remained constant over time. \\
+    Location setting & Each station also had a location flag, which was one of `Urban And Center City', `Suburban' or `Rural. In the same fashion as above, we created a one-hot encoding for each station, which remained constant over time. \\
+    \hline
+    \end{tabular}
+    \caption[Local explanatory variables used in environmental modelling application]{The local explanatory variables used in this experiment. Each variable is associated with a monitoring station, and also varies over time. For elevation, land use and location setting which are fixed for each station, the values are simply repeated over time. This creates an explanatory tensor $\Xt$ of shape $571 \times 3957 \times 16$. }
+    \label{tab:features2}
+\end{table}
+    
+As a baseline approach, we also tested univariate and multivariate ridge regression using the local and global explanatory variables respectively. However, since multivariate ridge regression has no standard approach for the situation where values are missing from the multivariate targets, we first filled in these values according to the mean reading at each station. Where no readings were available at all at a particular station, we used the mean reading across time. 
+
+In order to 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.85\linewidth]{Figures/regression_results.pdf}
+    \caption[Graph signal regression with exogenous variables]{A visual representation of a time-series graph signal regression problem with exogenous variables. Here, there are $T$ graph signals measured over a static graph, each with independent missing data (indicated in white). Each signal $\y_t$ is accompanied by a unique vector of global explanatory variables $\x_t$. }
+    \label{fig:regression_results}
+\end{figure}

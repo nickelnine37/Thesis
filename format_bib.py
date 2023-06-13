@@ -11,7 +11,12 @@ with open('Bibliography.bib', 'r+') as f:
     bib_database = bibtexparser.load(f)
 
 
+skipitems = ['EPA2023']
+
 for item in bib_database.entries:
+
+    if item['ID'] in skipitems:
+        continue
 
     item['ID'] = item['author'].split(',')[0].strip() + item['year'] 
 
