@@ -4,22 +4,36 @@
 
 \lhead{Chapter 7. \emph{Reconstruction and Regression with Binary-Valued Graph Signals}} 
 
-So far in this thesis, we have focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued. Such signals can be employed to describe node classification tasks conducted over networks. For instance, consider the task of predicting whether users in a social network will click on a specific online advertisement. It is reasonable to assume that closely connected individuals within the network are more likely to have a similar probability of clicking than distantly connected individuals. Consequently, integrating this relational information into a predictive task may enhance accuracy. In this example, the classification task is binary as visualised in \cref{fig:binary_class_graph}. However, there may also be situations in which each node must be classified into one of many groups. In this case, we have a multiclass classification, as visualised in \cref{fig:mutliclass_graph}. \cite{Li2012}
+Up to this point in this thesis, our attention has been focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued, which can be employed to describe node classification tasks conducted over networks. For example, consider the task of predicting whether each user in a social network will engage with a specific online advertisement. Assuming the advertisement is shown to a subset of the population, we can represent the outcome (click/no click) as a partially observed binary graph signal across the network. It is reasonable to assume that closely connected users will exhibit a more similar propensity to click than distantly connected users; or in other words, we might expect that the click probability varies smoothly with respect to the topology of the graph. Hence, incorporating this relational information into a predictive task could potentially improve its accuracy.
+
+This example represents a binary classification task over the network, since there are only two possible outcomes. However, there may also be situations in which each node must be classified into one of $C > 2$ groups. Again, it may be reasonable to assume that the relative class probabilities vary smoothly over the graph. \Cref{fig:binary_class_graph,fig:mutliclass_graph} give visual representations of binary and multiclass classification tasks over a network, respectively.
+
+Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. Contrastingly, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received considerably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, here, the focus is on maximising the utility of unlabelled data using heuristic algorithms like label propagation (see, for example \cite{Zhang2017}), rather than building statistical models from graph spectral considerations. 
+
+In this chapter, we develop models for both binary and multiclass classification tasks over a multiway network. Whilst 
+
+
+This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for the reconstruction of binary graph signals on a general Cartesian product graph. 
+
+
+\cite{Li2012}
+
+
 
 
 \begin{figure}[t] 
     \begin{center}
-        \includegraphics[width=0.8\linewidth]{Figures/2class_graph.pdf}
+        \includegraphics[width=0.7\linewidth]{Figures/2class_graph.pdf}
     \end{center}
-   \caption[Visualisation of a binary classification task over a network]{An example visualisation of a binary classification task over a network.} 
+   \caption[Visualisation of a binary classification task over a network]{An example visualisation of a binary classification task over a network, with red and blue representing the true binary labels of each node.} 
     \label{fig:binary_class_graph}
 \end{figure} 
 
 \begin{figure}[t] 
     \begin{center}
-        \includegraphics[width=0.8\linewidth]{Figures/multiclass_graph.pdf}
+        \includegraphics[width=0.7\linewidth]{Figures/multiclass_graph.pdf}
     \end{center}
-   \caption[Visualisation of a multiclass classification task over a network]{An example visualisation of a multiclass classification task over a network.} 
+   \caption[Visualisation of a multiclass classification task over a network]{An example visualisation of a multiclass classification task over a network. Here, the five distinct colours represent the true class label of each node. } 
     \label{fig:mutliclass_graph}
 \end{figure} 
 
@@ -74,7 +88,7 @@ As in previous chapters, we make the assumption that $\f = \vecrm{\Ft}$ is smoot
     \f  \, \sim \, \mathcal{N}\left( \zero, \, \gamma^{-1} \HH^2 \right) 
 \end{equation}
 
-where $\HH = \U \D_\Gt \U^\top$ is a graph filter constructed by applying a filter function $g(\cdot)$ to the graph Laplacian. By applying this assumption to $\Ft$, it is also applied by proxy to the mean tensor $\Mt$. \Cref{fig:logistic_gsr} gives some visual intuition for this by showing a colour-map of a smooth signal $\Ft$ existing over a 2D lattice graph, along with the corresponding mean $\Mt$. 
+where $\HH = \U \D_\Gt \U^\top$ is a graph filter constructed by applying a filter function $g(\cdot)$ to the graph Laplacian. By applying this assumption to $\Ft$, it is also applied by proxy to the mean tensor $\Mt$. In particular, $\muu$ is distributed on the $N$-dimensional simplex according to a multivariate logit-normal distribution \citep{Atchinson1980}. \Cref{fig:logistic_gsr} gives some visual intuition for this by showing a colour-map of a smooth signal $\Ft$ existing over a 2D lattice graph, along with the corresponding mean $\Mt$. 
 
 \begin{figure}[t] 
     \begin{center}
@@ -259,25 +273,7 @@ For completeness, we now give the full algorithm for logistic graph signal recon
 
 The run time complexity of the overall algorithm of course depends on the convergence rate of the IRLS iterations. This is known to be super-linear, and approximately quadratic when a sufficiently accurate starting value is used \citep{Burden2010}. Whilst an in-depth theoretical exploration of the IRLS algorithm for this particular application is beyond the scope of this chapter, in practice, the IRLS algorithm converges very quickly, usually taking on the order of 10 steps to achieve negligible error.
 
-
-\section{Logistic Graph Signal Regression} 
-
- 
-\label{sec:logistic_regression}
-
-\subsection{L-KGR}
-
-\label{sec:lkgr}
-
-\section{L-RNC}
-
-\label{sec:lrnc}
-
-\subsection{L-KG-RNC}
-
-\label{sec:lkgrnc}
-
-\section{Multiclass Methods}
+\section{Multiclass Logistic Graph Signal Reconstruction}
 
 \label{sec:multiclass}
 
@@ -351,7 +347,7 @@ and
     \PP(\f) = \RR_{\muu}(\f) + \gamma \HH^{-2} \otimes \I_C
 \end{equation}
 
-where, unlike the binary case where the Hessian was the sum of a diagonal matrix $\D_{\muu}(\f)$ and $\gamma \HH^{-2}$, the matrix $\RR_{\muu}(\f)$ is no longer diagonal. Then, the $\RR_{\muu}(\f)$ is given by 
+Unlike the binary model where the Hessian was the sum of a diagonal matrix $\D_{\muu}(\f)$ and $\gamma \HH^{-2}$, the matrix $\RR_{\muu}(\f)$ is no longer diagonal. In this case, $\RR_{\muu}(\f)$ is given by 
 
 \begin{equation}
     \RR_{\muu}(\f) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\f)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n (\f) \m_n^\top(\f) \right)
@@ -405,7 +401,7 @@ where
 As before, we can solve the linear system $\PP^{-1}_k \tee_k$ by introducing a symmetric preconditioner $\PSI$. The only modification is that it must be of dimension of $(NC \times NC)$, rather than $(N \times N)$. This can be achieved as follows. 
 
 \begin{equation*}
-    \PSI = \U \D_\Gt \otimes \I_C 
+    \PSI = \left(\U \D_\Gt\right) \otimes \I_C 
 \end{equation*}
 
 Using this, we can transform the linear system into 
@@ -438,8 +434,8 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     As established in \cref{sec:wfl_derivation}, the worst-case convergence rate is achieved in the limit of a weak filter, where $\D_\Gt = \I_N$. In this case, the condition number of $\Q_k$ is given by 
 
     \begin{align*}
-        \kappa(\Q_k) &= \kappa\left( (\I_C \otimes \U)^\top \RR_{\muu}^k (\I_C \otimes \U) + \gamma \I_{NC}\right) \\[0.1cm]
-        &=  \kappa\left( (\I_C \otimes \U)^\top \left(\RR_{\muu}^k + \gamma \I_N\right) (\I_C \otimes \U)  \right) \\[0.1cm]
+        \kappa(\Q_k) &= \kappa\left( \left(\U \otimes \I_C\right)^\top \RR_{\muu}^k \left(\U \otimes \I_C\right) + \gamma \I_{NC}\right) \\[0.1cm]
+        &=  \kappa\left( \left(\U \otimes \I_C\right)^\top \left(\RR_{\muu}^k + \gamma \I_N\right) \left(\U \otimes \I_C\right)  \right) \\[0.1cm]
         &= \kappa\left( \RR_{\muu}^k + \gamma \I_N\right)
     \end{align*}
 
@@ -487,28 +483,6 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \begin{equation*}
         \kappa\left( \RR_{\muu}^k + \gamma \I_N\right) = \frac{0.5 + \gamma}{\gamma}
     \end{equation*}
-
-    % the characteristic equation is
-
-    % \begin{equation*}
-    %     f(\lambda) = 1 - \sum_{c=1}^C \frac{(\m_n)_c^2}{(\m_n)_c - \lambda}
-    % \end{equation*}
-
-    % Consider the value of $f(0)$. 
-    
-    % \begin{align*}
-    %     f(0) &= 1 - \sum_{c=1}^C \frac{(\m_n)_c^2}{(\m_n)_c} \\
-    %     &= 1 - \sum_{c=1}^C (\m_n)_c \\
-    %     &= 0
-    % \end{align*}
-
-    % where the final line follows from the fact that probabilities must sum to one. Therefore, every block will have at least one zero eigenvalue. Now consider the limit of $f(\lambda)$ as $\lambda \rightarrow \infty$. Clearly this is one. Furthermore, $f(\lambda)$ has $C$ asymptotes, occurring at $\lambda = (\m_n)_c$. Let us assume without loss of generality that $(\m_n)_c$ are arranged in ascending order. Taken together, this implies that the roots of $f(\lambda)$, denoted in ascending order as $[\lambda_1, \lambda_2, ..., \lambda_C]$ are restricted as follows:
-
-    % \begin{equation*}
-    %     \lambda_1 = 0, \quad \lambda_2 < \frac{ (\m_n)_1 +(\m_n)_2}{2}, \quad \quad ...  \quad \lambda_C < \frac{(\m_n)_{C-1} + (\M_C)_2}{2}
-    % \end{equation*}
-
-    % Since the largest eigenvalue must be less than the average of the two largest values of $(\m_n)_c$, we can see that the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5. As established, the smallest possible eigenvalue is zero. Therefore $\kappa\left( \RR_{\muu}^k + \gamma \I_N\right) \leq (0.5 + \gamma) / \gamma$. 
 
 \end{proof}
 
@@ -565,7 +539,23 @@ For completeness, we now give the full algorithm for logistic graph signal recon
     \label{al:LGSR_mc}
 \end{algorithm}
 
-\section{Approximate Sampling via the Laplace Approximation}
+\section{Logistic Graph Signal Regression} 
 
-\label{sec:lsamp}
+\label{sec:logistic_regression}
+
+\subsection{L-KGR}
+
+\label{sec:lkgr}
+
+\section{L-RNC}
+
+\label{sec:lrnc}
+
+\subsection{L-KG-RNC}
+
+\label{sec:lkgrnc}
+
+% \section{Approximate Sampling via the Laplace Approximation}
+
+% \label{sec:lsamp}
 
