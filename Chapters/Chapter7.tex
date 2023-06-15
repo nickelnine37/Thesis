@@ -4,21 +4,9 @@
 
 \lhead{Chapter 7. \emph{Reconstruction and Regression with Binary-Valued Graph Signals}} 
 
-Up to this point in this thesis, our attention has been focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued, which can be employed to describe node classification tasks conducted over networks. For example, consider the task of predicting whether each user in a social network will engage with a specific online advertisement. Assuming the advertisement is shown to a subset of the population, we can represent the outcome (click/no click) as a partially observed binary graph signal across the network. It is reasonable to assume that closely connected users will exhibit a more similar propensity to click than distantly connected users; or in other words, we might expect that the click probability varies smoothly with respect to the topology of the graph. Hence, incorporating this relational information into a predictive task could potentially improve its accuracy.
+Up to this point in this thesis, our attention has been focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued, which can be employed to describe node classification tasks conducted over networks. For example, consider the task of predicting whether each user in a social network will engage with a specific online advertisement. Assuming it is shown to a subset of the user population, we can represent the outcome (click/no click) as a partially observed binary graph signal across the network. It is reasonable to assume that closely connected users will exhibit a more similar propensity to click than distantly connected users; or in other words, we might expect that the click probability varies smoothly with respect to the topology of the graph. Hence, incorporating this relational information into a predictive task could potentially improve its accuracy.
 
 This example represents a binary classification task over the network, since there are only two possible outcomes. However, there may also be situations in which each node must be classified into one of $C > 2$ groups. Again, it may be reasonable to assume that the relative class probabilities vary smoothly over the graph. \Cref{fig:binary_class_graph,fig:mutliclass_graph} give visual representations of binary and multiclass classification tasks over a network, respectively.
-
-Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. Contrastingly, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received considerably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, here, the focus is on maximising the utility of unlabelled data using heuristic algorithms like label propagation (see, for example \cite{Zhang2017}), rather than building statistical models from graph spectral considerations. 
-
-In this chapter, we develop models for both binary and multiclass classification tasks over a multiway network. Whilst 
-
-
-This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for the reconstruction of binary graph signals on a general Cartesian product graph. 
-
-
-\cite{Li2012}
-
-
 
 
 \begin{figure}[t] 
@@ -37,23 +25,24 @@ This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a mo
     \label{fig:mutliclass_graph}
 \end{figure} 
 
+Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally well-suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. By contrast, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received notably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, there, the graph is usually constructed by considering a distance metric in a feature space, and the focus is on maximising the utility of unlabelled data using algorithms such as label propagation (see, for example \cite{Zhang2017}). The GSP community, by contrast, focuses on statistical processes that occur over intrinsically graph-structured objects using spectral methods. While some work on binary reconstruction and regression from this perspective has occurred (see, for example \cite{Tran2020}), many of the important GSP algorithms are yet to be generalised to binary data. In this chapter, we build on the models already developed in this thesis to define several reconstruction and regression algorithms for binary graph signals. In contrast to some of the prior work discussed, these models are focused on GSP applications and are applicable to general $d$-dimensional multiway graph signals. This means they are particularly suited to multivariate applications such as hyperspectral image processing, graph time series etc.  
+
+This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for the reconstruction of binary graph signals on a Cartesian product graph. Here, we describe how the multiway GSR model developed in \cref{chap:nd_gsp} can be modified to produce a statistical model for the generation of binary signals in $d$ dimensions. By making use of the CGM in conjunction with the Iteratively Reweighted Least Squares (IRLS) algorithm, we demonstrate how to efficiently solve for the underlying probability tensor. Next, in \cref{sec:multiclass}, we adapt this algorithm to accommodate multiclass classification problems. This necessitates the introduction of a new class of Kronecker operator, which appears in the preconditioned coefficient matrix. Using Gerschgorin's circle theorem we are able to bound the eigenvalues of this operator and provide an upper bound for the condition number. In \cref{sec:logistic_regression}, we generalise both binary and multiclass signal reconstruction to encompass the regression models introduced in \cref{chap:kgr_rnc_2d} and extended to the multiway setting in \cref{chap:nd_gsp}. Finally, in \cref{sec:logistic_rnc_application}, we explore the behaviour of the logistic RNC model on an image segmentation task. 
 
 
-\section{Logistic Graph Signal Reconstruction}
+\section{Logistic Graph Signal Reconstruction (L-GSR)}
 
 \label{sec:lgsr}
 
-
-
-Consider a binary signal reconstruction problem over a Cartesian product graph of order $d$. The observed graph signal, $\Yt$, is an order-$d$ tensor of shape $(N_1, N_2, .., N_d)$, with binary-valued elements. This is accompanied by another binary tensor, $\St$, of the same shape. As in previous chapters, $\St$ contains the information about which elements of $\Yt$ were observed by holding ones at elements where successful observations were made and zeros elsewhere. The goal is to predict the value of the graph signal at elements where no observation was made. 
+In this section we define a model for the reconstruction of binary signals existing on the nodes of a $d$-dimensional Cartesian product graph, which we term Logistic Graph Signal Reconstruction (L-GSR). As before, the graph is characterised by $d$ graph Laplacians $\left\{\LL^{(i)}\right\}_{i=1}^d$, with the total Laplacian given by their Kronecker sum (see \cref{sec:dd_gsp}). The partially observed graph signal, $\Yt$, is an order-$d$ tensor of shape $(N_1, N_2, .., N_d)$, with binary-valued elements representing the two classes. This is accompanied by another binary tensor, $\St$, of the same shape which, as in previous chapters, contains the information about which elements of $\Yt$ were observed by holding ones where successful observations were made and zeros elsewhere. Where no observation was made (i.e. $\St_{\nn} = 0$), the corresponding element $\Yt_{\nn}$ is set to zero by default. The goal is to predict the value of the graph signal at elements where no observation was made using solely the topology of the graph. As such, the input data for this problem can be summarised as follows. 
 
 \begin{equation*}
-    \text{input data} = \Big\{\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \A \in \R^{N \times N} \; \Big\}
+    \text{input data} = \left\{\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \right\}
 \end{equation*}
 
-In the following, we assume each observed element, $\nn$, of the tensor, $\Yt$, follows a Bernoulli distribution with a mean $\Mt_\nn$. All other elements of $\Yt$ not in the set of observed elements $\mathcal{S}$ are zero with probability one. 
+In the following, we assume each observed element of the tensor $\Yt$ follows a Bernoulli distribution, according to some underlying latent probability tensor $\Mt$, which specifies the expected value of the outcome at each node. All other elements of $\Yt$, which were not in the set of observed elements $\mathcal{S}$, are set to zero with probability one. This can be summarised by the following statistical model. 
 
-\begin{equation}
+\begin{equation}    
     \Yt_\nn \sim  \begin{cases}
         \text{Bern}\left(\Mt_\nn \right) & \text{if} \;\; \nn \in \mathcal{S} \\
         \text{Bern}\left(0\right) & \text{otherwise}
@@ -61,71 +50,85 @@ In the following, we assume each observed element, $\nn$, of the tensor, $\Yt$, 
 \end{equation}
 
 
-$\Mt$ is the mean tensor, which has the same shape as $\Yt$ and elements falling within the interval $[0, 1]$. For a given mean, $\Mt$, the probability of observing a binary signal $\Yt$ is therefore given by 
+We refer to $\Mt \in [0, 1]^{N_1, ..., N_d}$ as the mean tensor. It has the same shape as $\Yt$ and elements contained within the interval $[0, 1]$ describing the probability that the corresponding entry of $\Yt$ is one. For a given mean tensor, $\Mt$, the probability of observing a binary signal $\Yt$ is given by the following expression. 
 
 \begin{equation}
     p(\Yt \, | \, \Mt) = \prod_{\nn \in \mathcal{S}} \Mt_\nn^{\Yt_\nn}\left(1 - \Mt_\nn\right)^{1 - \Yt_\nn}
 \end{equation}
 
-As such, the log-likelihood of observing a signal $\Yt$ is given by 
+As such, the log-likelihood of observing a signal $\Yt$, which is simply the natural log of this expression, is given by 
 
-\begin{equation}
-   \log p(\Yt \, | \, \Mt) = \s^\top \big(\y \circ \log \muu + \left(\one  - \y\right) \circ \log \left(\one - \muu \right)\big)
-\end{equation}
+\begin{align}
+   \log p(\Yt \, | \, \Mt) &= \sum_{\nn} \St_{\nn} \Big( \Yt_{\nn} \log \Mt_{\nn} + (1 - \Yt_{\nn}) \log \left(1 - \Mt_{\nn}\right) \Big) \notag \\
+   &= \s^\top \big(\y \circ \log \muu + \left(\one  - \y\right) \circ \log \left(\one - \muu \right)\big) 
+\end{align}
 
 where $\s = \vecrm{\St}, \; \y = \vecrm{\Yt}$ and $\muu = \vecrm{\Mt}$. Here, the logarithm function is understood as being applied element-wise.
 
-As in previous chapters, we would like to encode the belief that the underlying signal, in this case $\Mt$, is smooth with respect to the topology of the graph. However, since its elements fall within the interval $[0, 1]$, we need a function that enforces this restriction. As with standard logistic regression (see, for example \cite{Murphy2012}), this can be achieved by appling a logistic link (sigmoid) function. In the following, we assume that the mean tensor, $\Mt$, is generated by applying this function to a real-valued tensor graph signal $\Ft \in \R^{N_1 \times ... \times N_d}$. 
+The goal of our L-GSR model is to estimate the value of the latent probability tensor $\Mt$ given the partially observed binary graph signal $\Yt$. The key assumption that anchors the model to the graph, and avoids underspecification, is that the probability tensor varies smoothly with respect to the topology of the Cartesian product graph. In previous chapters, when working with real-valued signals, this was achieved by setting a Gaussian prior over the latent signal $\Ft$. However, since the elements of $\Mt$ fall within the interval $[0, 1]$, we need a distribution that naturally supports this range. To achieve this, we follow the approach of standard logistic regression (see, for example, \cite{Murphy2012}), by describing the probability in terms of a logistic link function. In particular, we assume that the mean tensor, $\Mt$, is generated by applying the logistic function to a real-valued tensor graph signal $\Ft \in \R^{N_1 \times ... \times N_d}$ as follows. 
 
 \begin{equation}
     \label{eq:logistic_link}
     \Mt(\Ft) = \frac{\one}{\one + \exp(-\Ft)} \quad \Longleftrightarrow \quad \muu(\f) = \frac{\one}{\one + \exp(-\f)}
 \end{equation}
 
-As in previous chapters, we make the assumption that $\f = \vecrm{\Ft}$ is smooth with respect to the topology of the graph by assigning it the following prior. 
+Here, the exponential and division should be interpreted as element-wise. Next, we make the assumption that $\f = \vecrm{\Ft}$ is smooth with respect to the topology of the graph by assigning it the following Gaussian prior. 
 
 \begin{equation}
+    \label{eq:f_prior_logit}
     \f  \, \sim \, \mathcal{N}\left( \zero, \, \gamma^{-1} \HH^2 \right) 
 \end{equation}
 
-where $\HH = \U \D_\Gt \U^\top$ is a graph filter constructed by applying a filter function $g(\cdot)$ to the graph Laplacian. By applying this assumption to $\Ft$, it is also applied by proxy to the mean tensor $\Mt$. In particular, $\muu$ is distributed on the $N$-dimensional simplex according to a multivariate logit-normal distribution \citep{Atchinson1980}. \Cref{fig:logistic_gsr} gives some visual intuition for this by showing a colour-map of a smooth signal $\Ft$ existing over a 2D lattice graph, along with the corresponding mean $\Mt$. 
+As in previous chapters, the covariance matrix $\HH^2$ is the square of a graph filter operator, derived by applying a filter function $g(\cdot)$ to the product graph Laplacian. In particular, 
+
+\begin{equation*}
+    \HH = \U \D_\Gt \U^\top
+\end{equation*}
+
+where $\U$ is the Kronecker product of each of the eigenvector matrices of the individual factor graph Laplacians, and $\D_\G = \diag{\vecrm{\Gt}}$ is the diagonalised spectral scaling tensor, created by applying an isotropic or anisotropic graph filter to the corresponding eigenvalues (see \cref{sec:dd_gsp,sec:GSP_dd} for details). 
+
+By applying this prior we encode the belief that $\Ft$ is smooth with respect to the topology of the graph, which is then applied by proxy to the mean tensor $\Mt$. In particular, $\muu$ is distributed on $[0, 1]^N$ according to a multivariate logit-normal distribution. Note that this is distinct from the multivariate logistic-normal distribution, which is produced by applying a softmax function to a random Gaussian vector to produce vectors on a simplex \citep{Atchinson1980}. \Cref{fig:logistic_gsr} gives some visual intuition for this by showing a colour-map of several smooth signals on a 2D lattice graph, along with the corresponding mean tensor $\Mt$. As visible, the qualitative smoothness properties of $\Ft$ broadly translate under the transformation of the logistic link function. That is, increasingly smooth real-valued signals correspond to increasingly smooth signals on the unit interval. 
 
 \begin{figure}[t] 
     \begin{center}
         \includegraphics[width=0.9
         \linewidth]{Figures/logistic_gsr.pdf}
     \end{center}
-    \caption[Visualisation of binary classification on a 2D lattice]{An example visualisation of binary classification on a $100 \times 100$ grid of pixels ($N_1 = 100, N_2 = 100$). Left: a random smooth graph signal $\Ft$. Middle: the value of the tensor $\Mt$ found by applying the logistic link function of \cref{eq:logistic_link}. Right: the resultant most likely classification given by $\Mt_{\nn} > 0.5$ each pixel, $\nn$.} 
+    \caption[Visualisation of binary classification on a 2D lattice]{An example visualisation of transforming a smooth signal via the logistic link function, on a $100 \times 100$ grid of pixels ($N_1 = 100, N_2 = 100$). Left: a random smooth graph signal $\Ft$ drawn from the distribution of \cref{eq:f_prior_logit} with a diffusion filter. Middle: the value of the tensor $\Mt$ found by applying the logistic link function of \cref{eq:logistic_link}. Right: the resultant most likely classification given by $\Mt_{\nn} > 0.5$ each pixel, $\nn$. Each row shows an increasingly smooth signal by increasing the value of $\beta$ characterising the graph filter. } 
     \label{fig:logistic_gsr}
 \end{figure} 
- 
-Through the application of Bayes' rule, we can derive an equation for the posterior distribution of $\Ft$ given $\Yt$. The Maximum A Posteriori (MAP) estimator for $\Ft$ corresponds to the value that minimizes the negative log-likelihood of this distribution. Thus, we introduce the objective function $\xi(\f) $, which is equal to $ -\log p(\f \, | \, \y)$ up to an additive constant not dependent on $\f$.
+
+As previously stated, the goal of the L-GSR model is to find the most likely value of $\Mt$ given $\Yt$. Since we have a prior distribution over $\Ft$, we can derive an equation for its posterior distribution given $\Yt$ through the application of Bayes' rule. The Maximum A Posteriori (MAP) estimator for $\Ft$ corresponds to the value that minimises the negative log-likelihood of $\Ft \, | \, \Yt$. Given the MAP estimator for $\Ft$, we can compute the most likely mean tensor $\Mt$ by applying \cref{eq:logistic_link}. To this end, we define the objective function $\xi(\f)$, which is equal to $-\log p(\f \, | \, \y)$ up to an additive constant.
  
 \begin{equation}
+    \label{eq:nll_logistic}
     \xi(\f) = -\s^\top \big(\y \circ \log \muu(\f) + \left(\one  - \y\right) \circ \log \left(\one - \muu(\f) \right)\big) + \frac{\gamma}{2} \f^\top \HH^{-2} \f
 \end{equation}
 
-\subsection{Solving with the IRLS algorithm}
+The goal of the next section is to find an algorithm for minimising this expression with respect to $\f$, i.e. to find the MAP estimator for $\Ft$, and subsequently compute the most likely value of the mean tensor $\Mt$. 
 
-Unlike the normal models of the previous sections, no closed-form solution exists to minimise this expression. A standard approach to solving optimisation problems of this form is to use the Iteratively Reweighted Least Squares (IRLS) algorithm. IRLS algorithms have been independently discovered several times and have been studied for over 50 years. Their main use today is found in $L^p$ norm optimisation problems such as sparse recovery (e.g. \cite{Gorodnitsky1997,Daubechies2010}) and maximum likelihood estimation within a generalized linear models \citep{Nelder1972}. 
 
-The IRLS algorithm begins with an initial estimate $\f_0$, which is then iteratively refined to reach the global minimum. Each step is given by the following update formula. 
+\subsection{Solving for the MAP estimator with the IRLS algorithm}
+
+Unlike the normal models of the previous sections, no closed-form solution exists to minimise \cref{eq:nll_logistic}, meaning we must resort to iterative local minimisation techniques. A standard approach to solving optimisation problems of this form is to use the Iteratively Reweighted Least Squares (IRLS) algorithm. IRLS algorithms have been independently discovered several times and have been studied for over 50 years. Their main use today is found in $L^p$ norm optimisation problems such as sparse recovery (e.g. \cite{Gorodnitsky1997,Daubechies2010}) and maximum likelihood estimation within a generalized linear models \citep{Nelder1972} such as logistic regression. 
+
+The IRLS algorithm begins with an initial estimate $\f_0$, which is then iteratively refined to reach the global minimum. It begins following update formula. 
 
 \begin{equation}
     \label{eq:irls_update}
     \f_{k+1} = \f_{k} - \PP^{-1}(\f_k) \, \g(\f_k)
 \end{equation}
 
-where $ \g(\f) \in \R^N$ is the gradient of the optimisation objective $\xi(\f)$ with respect to the vector $\f$, and $\PP(\f) \in \R^{N \times N}$ is the Hessian, which is the matrix of second derivatives such that
+where $ \g(\f) \in \R^N$ is the gradient of the optimisation objective $\xi(\f)$ with respect to the vector $\f$, and $\PP(\f) \in \R^{N \times N}$ is the Hessian, which is the matrix of second derivatives. 
 
 \begin{equation*}
-    \PP_{nm} = \frac{\partial^2 \xi(\f)}{\partial \f_n \partial \f_m}
+    \g_n = \frac{\partial \xi(\f)}{\partial \f_n}, \aand \PP_{nm} = \frac{\partial^2 \xi(\f)}{\partial \f_n \partial \f_m}
 \end{equation*}
 
-In our case, the gradient is given by 
+What differentiates the IRLS algorithm from Fisher scoring and Newton's method is that, as we will shortly demonstrate each iteration can be completed in the form of a weighted least squares solution \citep{Fan2020}. In our case, the gradient is given by 
 
 \begin{equation}
-    \g(\f) = \frac{\partial \xi(\f)}{\partial \f} = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
+    \g(\f) = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
 \end{equation}
 
 and the Hessian is given by 
@@ -137,11 +140,13 @@ and the Hessian is given by
 
 where $\D_{\muu}(\f)$ is a diagonal matrix with the following definition. 
 
-\begin{equation*}
+\begin{equation}
     \D_{\muu}(\f) = \text{diag}\big(\s \circ \muu(\f) \circ (\one - \muu(\f))\big)
-\end{equation*}
+\end{equation}
 
-A derivation of the expressions for both gradient and the Hessian can be found in \cref{the:gradient_and_hesian}. Note that they are both a function of $\f$. Consider the IRLS update formula given in \cref{eq:irls_update}. Substituting in the values for $\PP$ and $\g$, and using the shorthands
+A derivation of the expressions for both gradient and the Hessian can be found in \cref{the:gradient_and_hesian}. Note that they are both a function of $\f$. 
+
+Consider the update formula given in \cref{eq:irls_update}. Substituting in the values for $\PP$ and $\g$, and using the shorthands
 
 \begin{equation*}
     \PP(\f_k) = \PP_k, \quad \g(\f_k) = \g_k, \quad \muu(\f_k) = \muu_k, \aand \D_{\muu}(\f_k) = \D_{\muu}^k
@@ -165,7 +170,7 @@ where
     \tee_k = \D_\St \big(\y - \muu_k\big) + \D_{\muu}^k \f_k
 \end{equation}
 
-Hence, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. 
+As visible, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. 
 
 \subsection{Completing iterations with the CGM}
 
@@ -244,7 +249,7 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \State{$\PSI \leftarrow \U \D_\Gt$}
     \vspace{0.15cm}
     \State{Initialise $\f \in \R^N$ randomly}
-    \vspace{0.15cm}
+    \vspace{0.25cm}
     \While{$|\Delta \f| > \text{tol}$}
     \vspace{0.15cm}
     \State{$\muu \leftarrow \one / \big(\one + \exp(-\f)\big)$}
@@ -258,8 +263,10 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
     \vspace{0.15cm}
     \EndWhile
+    \vspace{0.25cm}
+    \State{$\muu \leftarrow \one / \big(\one + \exp(-\f)\big)$ }
     \vspace{0.15cm}
-    \Ensure{$\one / \big(\one + \exp(-\f)\big)$}
+    \Ensure{$\text{reshape} \big( \muu, \, (N_1, ... N_d) \big)$}
     \end{algorithmic}
     \caption{Logistic Graph Signal Reconstruction}
     \label{al:LGSR}
@@ -293,7 +300,7 @@ We describe the probability that node $\nn$ has class $c$ with another tensor, $
     p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{\nn, c}
 \end{equation*}
 
-Given this, the probability of observing a signal $\Yt$ for a given mean $\Mt$ is
+Every length-$C$ fibre $\Mt_{\nn, :}$ is a probability vector, and therefore exists on a $C$-dimensional simplex with $C-1$ degrees of freedom. For a given $\Mt$, the probability of observing a signal $\Yt$ is therefore given by
 
 \begin{equation}
     p(\Yt \, | \, \Mt) = \prod_{c, \nn \in \mathcal{S}} \Mt_{\nn, c}^{\Yt_{\nn, c}}
@@ -301,11 +308,13 @@ Given this, the probability of observing a signal $\Yt$ for a given mean $\Mt$ i
 
 As such, the log-likelihood of observing a signal $\Yt$ is given by 
 
-\begin{equation}
-   \log p(\Yt \, | \, \Mt) = (\s \otimes \one_C)^\top \big(\y \circ \log \muu \big)
-\end{equation}
+\begin{align}
+    \log p(\Yt \, | \, \Mt) &= \sum_{\nn, c} \St_{\nn} \, \Yt_{\nn, c} \log \Mt_{\nn, c} \notag \\
+    &= (\s \otimes \one_C)^\top \big(\y \circ \log \muu \big)
+ \end{align}
+ 
 
-where, as before, $\s = \vecrm{\St}, \; \y = \vecrm{\Yt}$ and $\muu = \vecrm{\Mt}$. Furthermore, to enforce the restriction that all probabilities must sum to one, we can generate $\Mt$ by applying a softmax function to a tensor $\Ft$. 
+where, as before, $\s = \vecrm{\St}, \; \y = \vecrm{\Yt}$ and $\muu = \vecrm{\Mt}$. Furthermore, to enforce the restriction that all probabilities must sum to one, we can generate $\Mt$ by applying a softmax function to each length-$C$ fibre of a tensor $\Ft$. 
 
 \begin{equation}
     \label{eq:softmax}
@@ -331,9 +340,9 @@ Assuming no particular relational structure between the $C$ classes, we can enco
 
 By applying Bayes' rule, we can therefore derive an expression $\xi(\f)$, representing the posterior log-likelihood of an underlying signal $\f$ given an observed signal $\y$. 
 
-\begin{equation*}
+\begin{equation}
     \xi(\f) = - (\s \otimes \one_C)^\top \big(\y \circ \log \muu(\f) \big) + \frac{\gamma}{2} \f^\top \left(\HH^{-2} \otimes \I_C\right) \f
-\end{equation*}
+\end{equation}
 
 Once again, we can solve for the minimising value of $\f$ using the IRLS algorithm. In this case, the gradient and Hessian are respectively given by 
 
@@ -516,7 +525,7 @@ For completeness, we now give the full algorithm for logistic graph signal recon
     \State{$\PSI \leftarrow \U \D_\Gt \otimes \I_C$}
     \vspace{0.15cm}
     \State{Initialise $\f \in \R^{NC}$ randomly}
-    \vspace{0.15cm}
+    \vspace{0.25cm}
     \While{$|\Delta \f| > \text{tol}$}
     \vspace{0.15cm}
     \State{$\muu \leftarrow \exp(\f) / \big((\I_N \otimes \one_C) \exp(\f)\big) \otimes \one_C$}
@@ -532,8 +541,10 @@ For completeness, we now give the full algorithm for logistic graph signal recon
     \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ (solve with the CGM)}
     \vspace{0.15cm}
     \EndWhile
+    \vspace{0.25cm}
+    \State{$\muu \leftarrow \exp(\f) / \big((\I_N \otimes \one_C) \exp(\f)\big) \otimes \one_C$}
     \vspace{0.15cm}
-    \Ensure{$\f$}
+    \Ensure{$\text{reshape}\big(\muu, (N_1, ..., N_d, C)\big)$}
     \end{algorithmic}
     \caption{Multiclass Logistic Graph Signal Reconstruction}
     \label{al:LGSR_mc}
@@ -543,17 +554,533 @@ For completeness, we now give the full algorithm for logistic graph signal recon
 
 \label{sec:logistic_regression}
 
-\subsection{L-KGR}
+So far in this chapter we have developed binary and multiclass multiway graph signal reconstruction algorithms, where no additional data exists to help predict the value of the graph signal at the unlabelled nodes. In this section, we consider several scenarios in which explanatory variables are available and consider models for utilising this information to estimate the underlying class label probabilities.
+
+\subsection{Logistic Kernel Graph Regression (L-KGR)}
 
 \label{sec:lkgr}
 
-\section{L-RNC}
+The first models we consider are binary and multiclass Logistic Kernel Graph Regression (L-KGR), applicable to general tensor-valued inputs. As in previous sections, the KGR model can be understood as a relatively simple extension of graph signal reconstruction. First let us consider the case of binary classification. Here, we have a sequence of $T$ partially observed binary tensor graph signals, each of shape $(N_1, ..., N_d)$. These are stacked into a single tensor $\Yt$ of shape $(T, N_1, ..., N_d)$ and accompanied by the binary sensing tensor, $\St$, indicating which values were observed and which were missing. In addition, at each time instant, we have a length-$M$ vector of explanatory variables $\x_t$, which can be stacked together into a matrix $\X$ with shape $(T, M)$. The goal is to utilise the explanatory variables, plus the topology of the underlying graph, to estimate the class probability at each node, at each time instant. The relevant input data can therefore be described as follows. 
+
+
+\begin{multline*}
+    \text{input data} = \Bigg\{\;\X \in \R^{T \times M}, \;\; \Yt \in \{0, 1\}^{T \times N_1 \times ... \times N_d}, \;\; \\ 
+    \St \in \{0, 1\}^{T \times N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
+\end{multline*}
+
+Following the same pattern as the KGR algorithms of previous sections (see \cref{sec:KGR_and_GSR} for details and further explanation), we can easily derive a model for the prediction of the class probability given the features $\X$ by making a small modification to the L-GSR algorithm of \cref{sec:lgsr}. Once again, we assume each element of $\Yt$ is distributed according to a Bernoulli distribution, with a mean given by the tensor $\Mt$. Furthermore, we assume $\Mt$ is smooth with respect to the topology of the graph, \textit{and} varies smoothly with with respect to the feature space. This is encoded via a tensor $\Ft$, which is again related to $\Mt$ via the logistic link function of \cref{eq:logistic_link}. We apply these assumptions by setting the following prior distribution for $\f = \vecrm{\Ft}$. 
+
+\begin{equation}
+    \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2}
+\end{equation}
+
+
+As before, $\K$ is the $T \times T$ kernel matrix created by applying a symmetric function, such as the Gaussian kernel, $\kappa(\cdot, \cdot)$ to pairs of feature vectors such that $\K_{ij} = \kappa(\x_i, \x_j)$. Next, we compute the eigendecompostion of $\K$ as $\K = \V \LAM_K \V^\top$. Finally, we define the transformed variables $\bar{\U}$ and $\bar{\Gt}$ as follows. 
+
+\begin{equation}
+    \bar{\U} \in \R^{NT \times NT} = \V \otimes \U, \aand \bar{\Gt}_{t, \nn} \in \R^{T \times N_1 \times ... \times N_d} = g(\lambdaa(\nn), \betaa) \sqrt{\lambda_t^{(K)}}
+\end{equation}
+
+where $\lambda_t^{(K)}$ is the $t$-th eigenvalue of $\K$. The L-KGR algorithm then follows by modifying \cref{al:LGSR} by substituting every instance of $\U$ for $\bar{\U}$ and every instance of $\Gt$ for $\bar{\Gt}$. 
+
+The same principles can be used to generate a multiclass logistic kernel graph regression algorithm. In this case, the input data is a sequence of $T $ partially observed multiway graph signals where each observed node has been classified into one of $C > 2$ classes. This can be represented by the binary tensor $\Yt$ with shape $(T \times N_1 \times ... \times N_d \times C)$, where an extra dimension has been added containing a one-hot encoding of the class label. Where no data was recorded, the full length-$C$ fibre at time $t$ and node $\nn$ can be set to zero. As such, the data is described as follows. 
+
+\begin{multline*}
+    \text{input data} = \Bigg\{\;\X \in \R^{T \times M}, \;\; \Yt \in \{0, 1\}^{T \times N_1 \times ... \times N_d \times C}, \;\; \\ 
+    \St \in \{0, 1\}^{T \times N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
+\end{multline*}
+
+Just as in \cref{sec:multiclass}, we describe the probability that node $(t, \nn)$ has class probability $c$ with the tensor $\Mt$, which has the same shape as $\Yt$. As before, $\Mt$ is described by a real-valued tensor, $\Ft$, according to the multivariate softmax function given in \cref{eq:softmax}, only here it is modified slightly such that 
+
+\begin{equation}
+    \label{eq:softmax2}
+    \Mt_{t, \nn, c} = \frac{\exp(\Ft_{t, \nn, c})}{ \raisebox{-0.1cm} { $\sum_{c'=1}^C \exp(\Ft_{t, \nn, c'})$ }}  \quad \Longleftrightarrow \quad \muu(\f) = \frac{\exp(\f)}{ \big((\I_{NT} \otimes \one_C) \exp(\f)\big) \otimes \one_C}
+\end{equation}
+
+We then place a prior over the signal $\f = \vecrm{\Ft} \in \R^{TNC}$ of
+
+\begin{equation}
+    \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2 \otimes \I_C}
+\end{equation}
+
+This encodes the belief that each of the $c$ class probabilities should vary smoothly (and independently) with respect to the topology of the graph and the feature space. once again, the full procedure for outputting the tensor $\Mt$ can be achieved by running \cref{al:LGSR_mc} after substituting the variables $\U \rightarrow \bar{\U}$ and $\G \rightarrow \bar{\G}$. 
+
+
+\subsection{Logistic Regression with Network Cohesion (L-RNC) }
 
 \label{sec:lrnc}
 
-\subsection{L-KG-RNC}
+In this section we present models for binary and multiclass Logistic Regression with Network Cohesion (L-RNC). In this scenario, we encounter a partially observed tensor graph signal $\Yt$, with shape $(N_1 \times ... \times N_d)$, where a subset of the nodes have been labelled with the true class. In addition, each node in the Cartesian product graph has an associated length-$M$ vector of explanatory variables, collected into the tensor $\Xt$ with shape $(N_1 \times ... \times N_d \times M)$. The goal is to predict the class probabilities at each node $\nn$. Once again, we also have a binary tensor $\St$ describing which nodes have been observed. As such, the data for the binary L-RNC algorithm can be summarised as follows. 
 
-\label{sec:lkgrnc}
+\begin{multline*}
+    \text{input data} = \Bigg\{\;\Xt \in \R^{N_1 \times ... \times N_d \times M}, \;\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d}, \;\; \\ 
+    \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
+\end{multline*}
+
+As with the GSR model, we suppose that each observed element of $\Yt$ is a Bernoulli random variable, with the probability of success given by the tensor $\Mt \in [0, 1]^{N_1 \times ... \times N_d}$. However, unlike the GSR model, we assume that $\Mt$ is generated according to the following expression. 
+
+\begin{equation}
+    \muu(\cc, \w) = \frac{\one}{\one + \exp\big(-(\cc + \X \w) \big)}
+\end{equation}
+
+Here, $\cc = \vecrm{\Ct}$ is a real-valued vector form of a tensor $\Ct$, which is assumed to vary smoothly with respect to the topology of the multiway graph, $\X$ is the tensor of explanatory variables reshaped into a matrix of dimensions $(N \times M)$ (see \cref{eq:X_RNC_dd}), and $\w \in \R^M$ is the length-$M$ vector coefficients specifying the contribution of each of the columns of $\X$. As in previous sections on RNC, we can stack $\cc$ and $\w$ into a single parameter vector $\thetaa$, such that 
+
+\begin{equation}
+    \muu(\thetaa) = \frac{\one}{\one + \exp\big(-\big[\I_N \;\; \X \big] \thetaa \big)}
+\end{equation}
+
+Furthermore, we can place a prior over $\thetaa$ that encodes the belief that $\Ct$ should be smooth with respect to the graph, as well as preventing overfitting of $\w$ with an L2 penalty. 
+
+\begin{equation}
+    \thetaa \sim \Norm{\zero}{\begin{bmatrix}\gamma^{-1} \HH^2 & \zero \\
+    \zero & \lambda^{-1} \I_M \end{bmatrix}}
+\end{equation}
+
+As such, the MAP estimator for $\thetaa$ is given by the minimiser of the following expression. 
+
+\begin{equation}
+    \label{eq:nll_logistic_rnc}
+    \widetilde{\xi}(\thetaa) = -\s^\top \big(\y \circ \log \muu(\thetaa) + \left(\one  - \y\right) \circ \log \left(\one - \muu(\thetaa) \right)\big) + \frac{1}{2} \thetaa^\top \begin{bmatrix}\gamma^{1} \HH^{-2} & \zero \\
+        \zero & \lambda^{1} \I_M \end{bmatrix}\thetaa
+\end{equation}
+
+Proceeding in the same way as L-GSR, we must compute both the gradient, $\widetilde{\g}(\thetaa)$, and the Hessian, $\widetilde{\PP}(\thetaa)$, of this expression with respect to $\thetaa$. These are given by 
+
+\begin{equation}
+    \widetilde{\g}(\thetaa) \in \R^{N + M} = \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \big(\muu(\thetaa) - \y\big) + \begin{bmatrix}
+        \gamma^{-1} \HH^2 & \zero \\
+    \zero & \lambda^{-1} \I_M
+    \end{bmatrix} \thetaa
+\end{equation}
+
+and 
+
+\begin{equation}
+    \widetilde{\PP}(\thetaa)  \in \R^{(N + M) \times (N + M)} = \begin{bmatrix}
+        \D_{\muu}(\thetaa) + \gamma \HH^{-2} & \D_{\muu}(\thetaa) \X \\ 
+        \X^\top \D_{\muu}(\thetaa)  & \X^\top \D_{\muu}(\thetaa) \X + \lambda \I_M
+    \end{bmatrix}
+\end{equation}
+
+where, as with L-GSR, 
+
+\begin{equation}
+    \D_{\muu}(\thetaa) \in \R^{N \times N} = \text{diag}\big(\s \circ \muu(\thetaa) \circ (\one - \muu(\thetaa))\big)
+\end{equation}
+
+Then, using the shorthands 
+
+\begin{equation*}
+    \widetilde{\PP}(\thetaa_k) = \widetilde{\PP}_k, \quad \widetilde{\g}(\thetaa_k) = \widetilde{\g}_k, \quad \muu(\thetaa_k) = \muu_k, \aand \D_{\muu}(\thetaa_k) = \D_{\muu}^k
+\end{equation*}
+
+IRLS update formula is then given by 
+
+\begin{align*}
+    \thetaa_{k + 1} &= \thetaa_k - \widetilde{\PP}^{-1}_k \, \widetilde{\g}_k \\
+    &= \thetaa_k - \widetilde{\PP}^{-1}_k \left( \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \big(\muu_k - \y\big) + \begin{bmatrix}
+        \gamma^{-1} \HH^2 & \zero \\
+    \zero & \lambda^{-1} \I_M
+    \end{bmatrix} \thetaa_k \right)\\
+    &= \thetaa_k + \widetilde{\PP}^{-1}_k  \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \big(\y - \muu_k\big) - \widetilde{\PP}^{-1}_k  \begin{bmatrix}
+        \gamma^{-1} \HH^2 & \zero \\
+    \zero & \lambda^{-1} \I_M
+    \end{bmatrix} \thetaa_k \\
+    &=  \widetilde{\PP}^{-1}_k  \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \big(\y - \muu_k\big) + \widetilde{\PP}^{-1}_k  \left(\widetilde{\PP}_k \thetaa_k - \begin{bmatrix}
+        \gamma^{-1} \HH^2 & \zero \\
+    \zero & \lambda^{-1} \I_M
+    \end{bmatrix} \thetaa_k \right)\\
+    &=  \widetilde{\PP}^{-1}_k  \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \big(\y - \muu_k\big) + \widetilde{\PP}^{-1}_k  \begin{bmatrix}
+        \D_{\muu}^k & \D_{\muu}^k \X \\ 
+        \X^\top \D_{\muu}^k  & \X^\top \D_{\muu}^k \X
+    \end{bmatrix} \thetaa_k \\
+    &=  \widetilde{\PP}^{-1}_k  \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \left(\y - \muu_k + \D_{\muu}^k \big[\I_N \;\; \X \big] \thetaa_k \right) \\
+    &= \widetilde{\PP}_k^{-1} \widetilde{\tee}_k 
+\end{align*}
+
+where 
+
+\begin{equation}
+    \widetilde{\tee}_k = \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \left(\y - \muu_k + \D_{\muu}^k \big[\I_N \;\; \X \big] \thetaa_k \right)
+\end{equation}
+
+Note that, in the derivation above, we have used the fact that $\D_\St \D_{\muu}^k = \D_{\muu}^k \D_\St = \D_{\muu}^k$. 
+
+As before, the linear system $\widetilde{\PP}_k^{-1} \widetilde{\tee}_k $ cannot easily be solved in this form due to ill-conditioning. To overcome this issue, we can again use the symmetrically preconditioned CGM. In particular, we can transform the system into 
+
+\begin{equation*}
+    \thetaa_k = \widetilde{\PP}^{-1}_k \widetilde{\tee}_k \quad \Longrightarrow \quad \thetaa_k = \widetilde{\PSI}_k \widetilde{\Q}_k^{-1} \widetilde{\PSI}_k^\top \widetilde{\tee}_k
+\end{equation*}
+
+In order to define $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$, first we must compute the eigendecomposition of $\X^\top \D_{\muu}^k \X$. 
+
+\begin{equation}
+    \X^\top \D_{\muu}^k \X = \U_M^k \LAM_M^k (\U_M^k)^\top 
+\end{equation}
+
+Next, we define the matrix $\D_M^k$ as follows. 
+
+\begin{equation}
+    \D_M^k = \left(\LAM_M^k + \lambda \I_M\right)^{-1/2}
+\end{equation}
+
+Then, the operators $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$ are defined as follows. 
+
+\begin{equation}
+    \widetilde{\PSI}_k = \begin{bmatrix}
+        \U \D_\Gt & \zero \\
+        \zero & \U_M^k \D_M^k
+    \end{bmatrix}
+\end{equation}
+
+and 
+
+\begin{equation}
+    \widetilde{\Q}_k = 
+       \begin{bmatrix}
+        \D_\Gt \U^\top \D_{\muu}^k \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \D_{\muu}^k \X \U_M^k \D_M^k \\[0.1cm] 
+        \D_M^k \left(\U_M^k\right)^\top \X^\top \D_{\muu}^k \U \D_\Gt & \I_M
+        \end{bmatrix}
+\end{equation}
+
+Note that, in contrast to L-GSR, the preconditioning matrix $\widetilde{\PSI}_k$ is changing on each iteration of the IRLS algorithm. For clarity, we now present the complete L-RNC algorithm in \cref{al:LRNC}. 
+
+
+\begin{algorithm}[ht]
+    \begin{algorithmic}
+    \vspace{0.15cm}
+    \Require{Explanatory variables $\Xt \in \R^{N_1 \times ... \times N_d \times M}$}
+    \vspace{0.05cm}
+    \Require{Observed binary tensor $\Yt \in \{0, 1\}^{N_1 \times ... \times N_d}$}
+    \vspace{0.05cm}
+    \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
+    \vspace{0.05cm}
+    \Require{Cartesian product graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$}
+    \vspace{0.05cm}
+    \Require{Regularisation parameter $\gamma \in \R^+$}
+    \vspace{0.05cm}
+    \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
+    \vspace{0.05cm}
+    \Require{Regularisation parameter $\lambda \in \R^+$}
+    \vspace{0.25cm}
+    \State{$\X \leftarrow \text{reshape}\big(\Xt, (N, M)\big)$ }
+    \vspace{0.15cm}
+    \State{$\y \leftarrow \vecrm{\Yt}$ }
+    \vspace{0.15cm}
+    \State{$\s \leftarrow \vecrm{\St}$ }
+    \vspace{0.15cm}
+    \State{Decompose each $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$ }
+    \vspace{0.15cm}
+    \State{$\U \leftarrow \bigotimes \U^{(i)}$ }
+    \vspace{0.15cm}
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big) \quad$ (see \cref{eq:Gn_dd2,eq:lam_of_n})}
+    \vspace{0.15cm}
+    \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
+    \vspace{0.15cm}
+    \State{$\D_\St \leftarrow \diag{\s}$}
+    \vspace{0.15cm}
+    \State{Initialise $\thetaa \in \R^{N+M}$ randomly}
+    \vspace{0.25cm}
+    \While{$|\Delta \thetaa| > \text{tol}$}
+    \vspace{0.15cm}
+    \State{$\muu \leftarrow \one / \one + \exp\big(-\big[\I_N \;\; \X \big] \thetaa \big)$}
+    \vspace{0.15cm}
+    \State{$\D_{\muu} \leftarrow  \Diag{\s \circ \muu \circ (1 - \muu)}$}
+    \vspace{0.15cm}
+    \State{Decompose $\X^\top \D_{\muu} \X$ into $\U_M \LAM_M \U_M^\top$ }
+    \vspace{0.15cm}
+    \State{$\D_M \leftarrow  \left(\LAM_M + \lambda \I_M\right)^{-1/2}$}
+    \vspace{0.15cm}
+    \State{$\PSI \leftarrow  \begin{bmatrix}
+        \U \D_\Gt & \zero \\
+        \zero & \U_M \D_M
+    \end{bmatrix}$}
+    \vspace{0.15cm}
+    \State{$\tee \leftarrow \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \left(\y - \muu + \D_{\muu} \big[\I_N \;\; \X \big] \thetaa \right)$}
+    \vspace{0.15cm}
+    \State{$\Q \leftarrow \begin{bmatrix}
+        \D_\Gt \U^\top \D_{\muu} \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \D_{\muu} \X \U_M \D_M \\[0.1cm] 
+        \D_M \U_M^\top \X^\top \D_{\muu} \U \D_\Gt & \I_M
+        \end{bmatrix}$}
+    \vspace{0.15cm}
+    \State{$\thetaa \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \vspace{0.15cm}
+    \EndWhile
+    \vspace{0.25cm}
+    \State{$\muu \leftarrow \one / \one + \exp\big(-\big[\I_N \;\; \X \big] \thetaa \big)$ }
+    \vspace{0.15cm}
+    \Ensure{$\text{reshape} \big( \muu, \, (N_1, ..., N_d) \big)$}
+    \end{algorithmic}
+    \caption{Logistic Regression with Network Cohesion}
+    \label{al:LRNC}
+\end{algorithm}
+
+\subsection{Multiclass Logistic Regression with Network Cohesion}
+
+In this section we take the multiclass L-GSR model developed in \cref{sec:multiclass} and adapt it for the purpose of RNC. The data available in this scenario is very similar to that of binary L-RNC, except the observed tensor input signal $\Yt$ now has an extra final dimension of length $C$ which contains a one hot encoding of the class label. As such, the data can be described as follows. 
+
+\begin{multline*}
+    \text{input data} = \Bigg\{\;\Xt \in \R^{N_1 \times ... \times N_d \times M}, \;\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}, \;\; \\ 
+    \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
+\end{multline*}
+
+Just as in \cref{sec:multiclass}, we describe the probability that node $\nn$ is of class $C$ with the tensor $\Mt$, which has the same shape as $\Yt$. Each fibre $\Mt_{\nn, :}$ is a probability vector existing on a $C$-dimensional simplex with $C - 1$ degrees of freedom. As before, the log-likelihood of observing a signal $\Yt$ is given by 
+
+\begin{align}
+   \log p(\Yt \, | \, \Mt) &= \sum_{\nn, c} \St_{\nn} \, \Yt_{\nn, c} \log \Mt_{\nn, c} \notag \\
+   &= (\s \otimes \one_C)^\top \big(\y \circ \log \muu \big)
+\end{align}
+
+Furthermore, we assume that $\Mt$ is generated by applying a softmax function to each length-$C$ fibre of another tensor $\Ft$ according to
+
+\begin{equation}
+    \Mt_{\nn, c} = \frac{\exp(\Ft_{\nn, c})}{ \raisebox{-0.1cm} { $\sum_{c'=1}^C \exp(\Ft_{\nn, c'})$ }}  \quad \Longleftrightarrow \quad \muu(\f) = \frac{\exp(\f)}{ \big((\I_N \otimes \one_C) \exp(\f)\big) \otimes \one_C}
+\end{equation}
+
+where 
+
+\begin{equation}
+    \Ft = \Ct + \tenrm{\left(\X \otimes \I_C \right) \w} \quad \Longleftrightarrow \quad \f = \cc + \left(\X \otimes \I_C \right) \w
+\end{equation}
+    
+Here, $\Ct$ is a tensor with shape $(N_1, ..., N_d, C)$ and $\w$ is a coefficient vector of length $MC$. The effect of this assumption is that each slice of the tensor $\Ft$, $\Ft_{:, c}$ is the sum of a tensor $\Ct_{:, c}$ and an independent linear combination of slices of the tensor $\Xt_{:, m}$. We can stack $\cc$ and $\w$ into a single vector $\thetaa$ as follows. 
+
+\begin{equation}
+    \thetaa \in \R^{NC + MC} = \begin{bmatrix}
+        \cc \\ \w
+    \end{bmatrix}
+\end{equation}
+
+Then, $\f$ can be rewritten as 
+
+\begin{equation}
+    \f = \begin{bmatrix}
+        \I_{NC} & \X \otimes \I_C 
+    \end{bmatrix} \thetaa
+\end{equation}
+
+As such, we can rewrite the formula for $\muu$ in terms of $\thetaa$. 
+
+\begin{equation}
+ \muu(\thetaa) = \frac{\exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)}{ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C}
+\end{equation}
+
+Next, we place the following prior over $\thetaa$. 
+
+\begin{equation}
+    \thetaa \sim \Norm{\zero}{\begin{bmatrix}\gamma^{-1} \HH^2 \otimes \I_C & \zero \\
+    \zero & \lambda^{-1} \I_{MC} \end{bmatrix}}
+\end{equation}
+
+
+This leads to the following negative log-likelihood. 
+
+\begin{equation}
+    \xi(\thetaa) = - (\s \otimes \one_C)^\top \big(\y \circ \log \muu(\thetaa) \big) + \frac{1}{2} \thetaa^\top \begin{bmatrix}\gamma \HH^{-2} \otimes \I_C & \zero \\
+        \zero & \lambda \I_{MC} \end{bmatrix} \thetaa
+\end{equation}
+
+The gradient is given by 
+
+\begin{equation}
+    \g(\thetaa) \in \R^{NC + MC} = \begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \big(\muu(\thetaa) - \y\big) + \begin{bmatrix}
+        \gamma \HH^{-2} \otimes \I_C & \zero \\
+    \zero & \lambda \I_{MC}
+    \end{bmatrix} \thetaa
+\end{equation}
+
+The Hessian $\widetilde{\PP}(\thetaa)$ with shape $(NC + MC) \times (NC + MC)$  is given by
+
+
+\begin{equation}
+    \widetilde{\PP}(\thetaa) = \begin{bmatrix}
+        \RR_{\muu}(\thetaa) + \gamma \HH^{-2} \otimes \I_C & \RR_{\muu}(\thetaa) (\X \otimes \I_C) \\ 
+        (\X^\top \otimes \I_C) \RR_{\muu}(\thetaa)  & (\X^\top \otimes \I_C) \RR_{\muu}(\thetaa) (\X \otimes \I_C) + \lambda \I_{MC}
+    \end{bmatrix}
+\end{equation}
+
+where 
+
+\begin{equation}
+    \RR_{\muu}(\thetaa) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\thetaa)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n (\thetaa) \m_n^\top(\thetaa) \right)
+\end{equation}
+
+The IRLS algorithm then proceeds as. 
+
+\begin{align*}
+    \thetaa_{k+1} &= \thetaa_k - \PP^{-1}_k \, \g_k\\
+    &= \thetaa_k - \PP^{-1}_k \left(\begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \big(\muu_k - \y\big) + \begin{bmatrix}
+        \gamma \HH^{-2} \otimes \I_C & \zero \\
+    \zero & \lambda \I_{MC}
+    \end{bmatrix} \thetaa_k \right) \\
+    &= \thetaa_k + \PP^{-1}_k \begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \big(\y - \muu_k\big) - \PP^{-1}_k  \begin{bmatrix}
+        \gamma \HH^{-2} \otimes \I_C & \zero \\
+    \zero & \lambda \I_{MC}
+    \end{bmatrix} \thetaa_k \\
+    &= \PP^{-1}_k \begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \big(\y - \muu_k\big) + \PP^{-1}_k \Big(\PP_k \thetaa_k - \begin{bmatrix}
+        \gamma \HH^{-2} \otimes \I_C & \zero \\
+    \zero & \lambda \I_{MC}
+    \end{bmatrix} \thetaa_k\Big) \\
+    &= \PP^{-1}_k \begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \big(\y - \muu_k\big) + \PP^{-1}_k \begin{bmatrix}
+        \RR_{\muu}^k & \RR_{\muu}^k (\X \otimes \I_C) \\ 
+        (\X^\top \otimes \I_C) \RR_{\muu}^k  & (\X^\top \otimes \I_C) \RR_{\muu}^k (\X \otimes \I_C) 
+    \end{bmatrix} \thetaa_k \\
+    &= \PP^{-1}_k  \begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \left( \y - \muu_k + \RR_{\muu}^k  \big[\I_N \;\; \X \otimes \I_C\big] \thetaa_k \right) \\
+    &= \PP^{-1}_k \tee_k
+\end{align*}
+
+where 
+
+\begin{equation}
+    \tee_k = \begin{bmatrix}
+        \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
+    \end{bmatrix} \left( \y - \muu_k + \RR_{\muu}^k  \big[\I_N \;\; \X \otimes \I_C\big] \thetaa_k \right)
+\end{equation}
+
+As before, the linear system $\widetilde{\PP}_k^{-1} \widetilde{\tee}_k $ cannot easily be solved in this form due to ill-conditioning. To overcome this issue, we can again use the symmetrically preconditioned CGM. In particular, we can transform the system into 
+
+\begin{equation*}
+    \thetaa_k = \widetilde{\PP}^{-1}_k \widetilde{\tee}_k \quad \Longrightarrow \quad \thetaa_k = \widetilde{\PSI}_k \widetilde{\Q}_k^{-1} \widetilde{\PSI}_k^\top \widetilde{\tee}_k
+\end{equation*}
+
+In order to define $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$, first we must compute the eigendecomposition of $\X^\top \RR_{\muu}^k \X$. 
+
+\begin{equation}
+    \X^\top \RR_{\muu}^k \X = \U_M^k \LAM_M^k (\U_M^k)^\top 
+\end{equation}
+
+Next, we define the matrix $\D_M^k$ as follows. 
+
+\begin{equation}
+    \D_M^k = \left(\LAM_M^k + \lambda \I_M\right)^{-1/2}
+\end{equation}
+
+Then, the operators $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$ are defined as follows. 
+
+\begin{equation}
+    \widetilde{\PSI}_k = \begin{bmatrix}
+        \U \D_\Gt & \zero \\
+        \zero & \U_M^k \D_M^k
+    \end{bmatrix}
+\end{equation}
+
+and 
+
+\begin{equation}
+    \widetilde{\Q}_k = 
+       \begin{bmatrix}
+        \D_\Gt \U^\top \RR_{\muu}^k \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \RR_{\muu}^k \X \U_M^k \D_M^k \\[0.1cm] 
+        \D_M^k \left(\U_M^k\right)^\top \X^\top \RR_{\muu}^k \U \D_\Gt & \I_M
+        \end{bmatrix}
+\end{equation}
+
+\begin{algorithm}[ht]
+    \begin{algorithmic}
+    \vspace{0.15cm}
+    \Require{Explanatory variables $\Xt \in \R^{N_1 \times ... \times N_d \times M}$}
+    \vspace{0.05cm}
+    \Require{Observed binary tensor $\Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}$}
+    \vspace{0.05cm}
+    \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
+    \vspace{0.05cm}
+    \Require{Cartesian product graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$}
+    \vspace{0.05cm}
+    \Require{Graph regularisation parameter $\gamma \in \R^+$}
+    \vspace{0.05cm}
+    \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
+    \vspace{0.05cm}
+    \Require{Feautre regularisation parameter $\lambda \in \R^+$}
+    \vspace{0.25cm}
+    \State{$\X \leftarrow \text{reshape}\big(\Xt, (N, M)\big)$ }
+    \vspace{0.15cm}
+    \State{$\y \leftarrow \vecrm{\Yt}$ }
+    \vspace{0.15cm}
+    \State{$\s \leftarrow \vecrm{\St}$ }
+    \vspace{0.15cm}
+    \State{Decompose each $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$ }
+    \vspace{0.15cm}
+    \State{$\U \leftarrow \bigotimes \U^{(i)}$ }
+    \vspace{0.15cm}
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big) \quad$ (see \cref{eq:Gn_dd2,eq:lam_of_n})}
+    \vspace{0.15cm}
+    \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
+    \vspace{0.15cm}
+    \State{$\D_\St \leftarrow \diag{\s}$}
+    \vspace{0.15cm}
+    \State{Initialise $\thetaa \in \R^{N+M}$ randomly}
+    \vspace{0.25cm}
+    \While{$|\Delta \thetaa| > \text{tol}$}
+    \vspace{0.15cm}
+    \State{$\muu \leftarrow \exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)/ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C $}
+    \vspace{0.15cm}
+    \State{$\M \leftarrow \text{reshape}\big(\muu, (N, C)\big)$}
+    \vspace{0.15cm}
+    \State{$\RR_{\muu} \leftarrow  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n \m_n^\top \right)\quad$ ($\m_n$ is the $n$-th row of $\M$)}
+    \vspace{0.15cm}
+    \State{Decompose $\X^\top  \RR_{\muu} \X$ into $\U_M \LAM_M \U_M^\top$ }
+    \vspace{0.15cm}
+    \State{$\D_M \leftarrow  \left(\LAM_M + \lambda \I_M\right)^{-1/2}$}
+    \vspace{0.15cm}
+    \State{$\PSI \leftarrow  \begin{bmatrix}
+        \U \D_\Gt & \zero \\
+        \zero & \U_M \D_M
+    \end{bmatrix}$}
+    \vspace{0.15cm}
+    \State{$\tee \leftarrow \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \left(\y - \muu +  \RR_{\muu} \big[\I_N \;\; \X \big] \thetaa \right)$}
+    \vspace{0.15cm}
+    \State{$\Q \leftarrow \begin{bmatrix}
+        \D_\Gt \U^\top \RR_{\muu} \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \RR_{\muu} \X \U_M \D_M \\[0.1cm] 
+        \D_M \U_M^\top \X^\top \RR_{\muu} \U \D_\Gt & \I_M
+        \end{bmatrix}$}
+    \vspace{0.15cm}
+    \State{$\thetaa \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \vspace{0.15cm}
+    \EndWhile
+    \vspace{0.25cm}
+    \State{$\muu \leftarrow \exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)/ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C $}    
+    \vspace{0.15cm}
+    \Ensure{$\text{reshape} \big( \muu, \, (N_1, ..., N_d) \big)$}
+    \end{algorithmic}
+    \caption{Multiclass Logistic Regression with Network Cohesion}
+    \label{al:LRNC_mc}
+\end{algorithm}
+
+
+\section{Image segmentation with L-RNC}
+
+\label{sec:logistic_rnc_application}
+
+\cite{Li2012}
 
 % \section{Approximate Sampling via the Laplace Approximation}
 

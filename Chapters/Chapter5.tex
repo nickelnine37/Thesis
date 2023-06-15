@@ -217,7 +217,7 @@ Given these two operations, two arrays of any consistent shape can be mapped bet
 
 \subsection{GSP in \textit{d}-dimensions}
 
-
+\label{sec:GSP_dd}
 
 Consider a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ represented in its multi-dimensional array form. In direct analogy to the two dimensional case given in \cref{eq:GFT_2d,eq:IGFT_2d}, we can define the Graph Fourier Transform (GFT) and its corresponding inverse (IGFT) of this signal as follows. 
 
@@ -295,12 +295,13 @@ In this case, the spectral scaling tensor is given by
 
 where $\betaa \in \R^{d}$ is the parameter vector characterising the filter intensity in each dimension, and $\lambdaa(\nn) \in \R^d$ is a vector holding the $n_i$-th eigenvalue of each graph Laplacian in the Cartesian product. 
 
-$$
+\begin{equation}
+    \label{eq:lam_of_n}
 \lambdaa(\nn) = 
 \begin{bmatrix}
     \lambda^{(1)}_{n_1} & \lambda^{(2)}_{n_2} & \dots & \lambda^{(d)}_{n_d}    
 \end{bmatrix}^\top
-$$
+\end{equation}
 
 In general, we can define any spectral transformation in tensor terms as follows. 
 
@@ -792,7 +793,7 @@ To create a prior over $\thetaa$, we can combine the assumption that $\Ct$ shoul
 
 \begin{equation}
     \thetaa \sim \Norm{\zero}{\begin{bmatrix}\gamma^{-1} \HH^2 & \zero \\
-    \zero & \lambda \I_M \end{bmatrix}}
+    \zero & \lambda^{-1} \I_M \end{bmatrix}}
 \end{equation}
 
 The resultant posterior distribution over $\thetaa$ is therefore given by 
