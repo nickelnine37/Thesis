@@ -122,7 +122,7 @@ Therefore, we can rewrite the model in terms of the new transformed variable as 
 \end{equation}
 
 
-The final step to convert this into a non-parametric regression model is to apply the `kernel-trick'. Consider the PSD matrix $\PHI^\top \PHI$. Entry $(i, j)$ will be the inner product between the basis function expansion of $\x_i$ and $\x_j$. 
+The final step to convert this into a non-parametric regression model is to apply the `kernel-trick' \citep{Scholkopf2018}. Consider the PSD matrix $\PHI^\top \PHI$. Entry $(i, j)$ will be the inner product between the basis function expansion of $\x_i$ and $\x_j$. 
 
 \begin{equation}
     \PHI^\top \PHI \in \R^{T \times T} = 
@@ -377,6 +377,8 @@ where
 A proof of this is given in \cref{the:RNC_post}. As before, $\D_\Ss = \diag{\vecc{\Ss}}$. 
     
 \subsection{Solving for the posterior mean}
+
+\label{sec:RNC_solving}
 
 In the case of RNC, there is no simple or convenient way to reuse the SIM method to solve for the posterior mean. To see this, consider splitting the matrix $\widetilde{\PP}$ into $\M - \N$ where 
 

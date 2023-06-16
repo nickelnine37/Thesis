@@ -42,7 +42,8 @@ In this section we define a model for the reconstruction of binary signals exist
 
 In the following, we assume each observed element of the tensor $\Yt$ follows a Bernoulli distribution, according to some underlying latent probability tensor $\Mt$, which specifies the expected value of the outcome at each node. All other elements of $\Yt$, which were not in the set of observed elements $\mathcal{S}$, are set to zero with probability one. This can be summarised by the following statistical model. 
 
-\begin{equation}    
+\begin{equation}
+    \label{eq:lgsr_bern} 
     \Yt_\nn \sim  \begin{cases}
         \text{Bern}\left(\Mt_\nn \right) & \text{if} \;\; \nn \in \mathcal{S} \\
         \text{Bern}\left(0\right) & \text{otherwise}
@@ -53,12 +54,14 @@ In the following, we assume each observed element of the tensor $\Yt$ follows a 
 We refer to $\Mt \in [0, 1]^{N_1, ..., N_d}$ as the mean tensor. It has the same shape as $\Yt$ and elements contained within the interval $[0, 1]$ describing the probability that the corresponding entry of $\Yt$ is one. For a given mean tensor, $\Mt$, the probability of observing a binary signal $\Yt$ is given by the following expression. 
 
 \begin{equation}
+    \label{eq:lgsr_prob}
     p(\Yt \, | \, \Mt) = \prod_{\nn \in \mathcal{S}} \Mt_\nn^{\Yt_\nn}\left(1 - \Mt_\nn\right)^{1 - \Yt_\nn}
 \end{equation}
 
 As such, the log-likelihood of observing a signal $\Yt$, which is simply the natural log of this expression, is given by 
 
 \begin{align}
+    \label{eq:lgsr_logprob}
    \log p(\Yt \, | \, \Mt) &= \sum_{\nn} \St_{\nn} \Big( \Yt_{\nn} \log \Mt_{\nn} + (1 - \Yt_{\nn}) \log \left(1 - \Mt_{\nn}\right) \Big) \notag \\
    &= \s^\top \big(\y \circ \log \muu + \left(\one  - \y\right) \circ \log \left(\one - \muu \right)\big) 
 \end{align}
@@ -110,9 +113,11 @@ The goal of the next section is to find an algorithm for minimising this express
 
 \subsection{Solving for the MAP estimator with the IRLS algorithm}
 
-Unlike the normal models of the previous sections, no closed-form solution exists to minimise \cref{eq:nll_logistic}, meaning we must resort to iterative local minimisation techniques. A standard approach to solving optimisation problems of this form is to use the Iteratively Reweighted Least Squares (IRLS) algorithm. IRLS algorithms have been independently discovered several times and have been studied for over 50 years. Their main use today is found in $L^p$ norm optimisation problems such as sparse recovery (e.g. \cite{Gorodnitsky1997,Daubechies2010}) and maximum likelihood estimation within a generalized linear models \citep{Nelder1972} such as logistic regression. 
+Unlike the normal models of the previous sections, no closed-form solution exists to minimise \cref{eq:nll_logistic}, meaning we must resort to numerical methods. One standard approach is the Iteratively Reweighted Least Squares (IRLS) algorithm. The IRLS algorithm is a numerical method used to solve certain non-linear optimisation problems. It essentially works by iteratively solving a sequence of weighted least squares sub-problems until a satisfactory solution is found. As we will show, in our case, this is particularly attractive, since it is possible to leverage the properties of the Kronecker product to solve these simpler sub-problems efficiently. 
 
-The IRLS algorithm begins with an initial estimate $\f_0$, which is then iteratively refined to reach the global minimum. It begins following update formula. 
+In the context of maximum likelihood estimation for generalised linear models, the IRLS algorithm is equivalent to Fisher's scoring algorithm, which is a variant of the Newton-Raphson method \citep{Nelder1972}. Instead of using the actual Hessian matrix (second derivatives of the log-likelihood), Fisher's scoring algorithm uses its expected value, called the Fisher Information matrix. In this setting, each iteration of the IRLS algorithm involves re-weighting the data based on the current estimate of the parameters, then solving a weighted least squares problem to update the parameters, akin to the update step in Fisher Scoring \citep{Fan2020}.
+
+Fisher's scoring algorithm begins with an initial estimate $\f_0$, which is then iteratively refined to reach the global minimum according to the following formula. 
 
 \begin{equation}
     \label{eq:irls_update}
@@ -125,7 +130,7 @@ where $ \g(\f) \in \R^N$ is the gradient of the optimisation objective $\xi(\f)$
     \g_n = \frac{\partial \xi(\f)}{\partial \f_n}, \aand \PP_{nm} = \frac{\partial^2 \xi(\f)}{\partial \f_n \partial \f_m}
 \end{equation*}
 
-What differentiates the IRLS algorithm from Fisher scoring and Newton's method is that, as we will shortly demonstrate each iteration can be completed in the form of a weighted least squares solution \citep{Fan2020}. In our case, the gradient is given by 
+In our case, the gradient is given by 
 
 \begin{equation}
     \g(\f) = \D_\St \big(\muu(\f) - \y\big) + \gamma \HH^{-2} \f
@@ -144,9 +149,9 @@ where $\D_{\muu}(\f)$ is a diagonal matrix with the following definition.
     \D_{\muu}(\f) = \text{diag}\big(\s \circ \muu(\f) \circ (\one - \muu(\f))\big)
 \end{equation}
 
-A derivation of the expressions for both gradient and the Hessian can be found in \cref{the:gradient_and_hesian}. Note that they are both a function of $\f$. 
+A derivation of the expressions for both gradient and the Hessian in this context can be found in \cref{the:gradient_and_hesian}. Note that they are both evaluated at a given $\f$. 
 
-Consider the update formula given in \cref{eq:irls_update}. Substituting in the values for $\PP$ and $\g$, and using the shorthands
+Consider the update formula given in \cref{eq:irls_update}. Substituting in the derived values of $\g(\f)$ and $\PP(\f)$, and using the shorthands
 
 \begin{equation*}
     \PP(\f_k) = \PP_k, \quad \g(\f_k) = \g_k, \quad \muu(\f_k) = \muu_k, \aand \D_{\muu}(\f_k) = \D_{\muu}^k
@@ -170,14 +175,14 @@ where
     \tee_k = \D_\St \big(\y - \muu_k\big) + \D_{\muu}^k \f_k
 \end{equation}
 
-As visible, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. 
-
-\subsection{Completing iterations with the CGM}
-
-When it comes to solving the linear system $\PP^{-1}_k \tee_k$, we encounter similar challenges to those discussed in previous chapters. Specifically, the implicit dimensionality of $\PP_k$ can be substantial for tensor-valued graph signals, and the inverse-squared filter matrix $\HH^{-2}$ appearing in the definition of $\PP_k$ [see \cref{eq:logistic_gsr_P}] may suffer from ill-conditioning. Once again, these issues can be overcome by employing the SIM or CGM techniques introduced earlier in \cref{sec:SIM,sec:CGM}.
+As visible, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. As such, we must be able to compute a solution to this problem in a way that is maximally efficient. 
 
 
-In this chapter, our focus will be on the CGM for two primary reasons. Firstly, as the dimensionality of tensor-valued binary graph signals increases, it is likely that only a small fraction of nodes will have valid observed data in most practical applications. As demonstrated in \cref{sec:GSR_convergence_implications}, the CGM exhibits superior scaling properties when the input graph signal $\Yt$ is sparsely observed. Secondly, when it comes to sampling from the posterior distribution, certain aspects of the CGM can be reused, as discussed in \cref{sec:GSR_PO}. In this chapter, we also analyse sampling-related questions in \cref{sec:lsamp} and utilise the CGM method. Hence, for the sake of simplicity, it is preferable to use the CGM in both cases instead of mixing methods.
+\subsection{Completing IRLS iterations with the CGM}
+
+When it comes to solving the linear system $\PP^{-1}_k \tee_k$, we encounter familiar challenges relating to dimensionality and conditioning. Specifically, the implicit size of $\PP_k$ can be substantial for tensor-valued graph signals, and the inverse-squared filter matrix $\HH^{-2}$ appearing in the definition of $\PP_k$ [see \cref{eq:logistic_gsr_P}] may suffer from severe ill-conditioning. In a similar manner to previous chapters, these issues can be overcome by employing the SIM or CGM techniques introduced in \cref{sec:SIM,sec:CGM}.
+
+In this chapter, our focus will be on the CGM for two primary reasons. Firstly, as the dimensionality of tensor-valued binary graph signals increases, it is likely that only a small fraction of nodes will have valid observed data in most practical applications. As demonstrated in \cref{sec:GSR_convergence_implications}, the CGM exhibits superior scaling properties when the input graph signal $\Yt$ is sparsely observed. Secondly, as discussed in \cref{sec:RNC_solving}, the CGM is applicable to GSR, KGR and RNC problems while the SIM is not suitable for RNC models. Therefore, for simplicity, and for the sake of brevity we focus on the CGM. 
 
 Recall that the CGM seeks to solve a linear system by introducing the symmetric preconditioner $\PSI$, for the purpose of reducing the condition number of the coefficient matrix. In the case of logistic GSR, we can obtain an alternative expression for the update formula with a reduced condition number as follows. 
 
@@ -185,25 +190,27 @@ Recall that the CGM seeks to solve a linear system by introducing the symmetric 
     \f_k = \PP^{-1}_k \tee_k \quad \Longrightarrow \quad \f_k = \PSI \Q_k^{-1} \PSI^\top \tee_k
 \end{equation*}
 
-where, as in previous sections, 
+where, as in the cass of standard real-valued GSR, 
 
 \begin{equation*}
     \PSI = \U \D_\Gt
 \end{equation*}
 
-By instead solving the linear system $\Q_k^{-1} (\PSI^\top \tee_k)$ using the conjugate gradient method, and then left-multiplying the result by $\PSI$, we can obtain $\f_{k+1}$ with fewer iterative steps than solving $\PP^{-1} \tee_k$ directly. In this case, $\Q_k$ is given by the following expression. 
+By instead solving the linear system $\Q_k^{-1} (\PSI^\top \tee_k)$ using the conjugate gradient method, and then left-multiplying the result by $\PSI$, we can obtain $\f_{k+1}$ with typically far fewer iterative steps than solving $\PP^{-1} \tee_k$ directly. In this case, $\Q_k$ is given by the following expression. 
 
 \begin{equation}
     \label{eq:Q_LGSR}
     \Q_k = \D_\Gt \U^\top \D_{\muu}^k \U \D_\Gt + \gamma \I_N
 \end{equation}
 
-While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa(\Q)$ is guaranteed to have a maximum value of $(0.25 + \gamma) / \gamma$, as shown formally in \cref{the:L_GSR_Q_conditioning}. 
+Note that this is similar to the preconditioned coefficient matrix appearing in standard GSR, with the modification that $\D_\St$ has been replaced by $\D_{\muu}^k$. 
+
+The conditioning of the new coefficient matrix $\Q_k$ is significantly improved from the original problem. While the condition number, $\kappa$, of $\PP_k$ was potentially unbounded, $\kappa(\Q_k)$ is guaranteed to have a maximum value of $(0.25 + \gamma) / \gamma$.  This is shown formally in \cref{the:L_GSR_Q_conditioning}. 
 
 \begin{theorem}
     \label{the:L_GSR_Q_conditioning}
     
-    The condition number of $\Q_k$ is bounded by a maximum value of 
+    The condition number, $\kappa$, of the preconditioned coefficient matrix $\Q_k$, defined in \cref{eq:Q_LGSR}, is bounded as follows. 
     
     \begin{equation}
         \kappa(\Q_k) \leq \frac{0.25 + \gamma}{\gamma}
@@ -232,19 +239,25 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \vspace{0.05cm}
     \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
     \vspace{0.05cm}
-    \Require{Cartesian product graph Laplacian $\LL \in \R^{N \times N}$}
+    \Require{Cartesian product graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$}
     \vspace{0.05cm}
     \Require{Regularisation parameter $\gamma \in \R^+$}
     \vspace{0.05cm}
     \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
     \vspace{0.25cm}
-    \State{Decompose $\LL$ into $\U \LAM \U^\top$ }
+    \State{$\y \leftarrow \vecrm{\Yt}$ }
     \vspace{0.15cm}
-    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)$ }
+    \State{$\s \leftarrow \vecrm{\St}$ }
+    \vspace{0.15cm}
+    \State{Decompose each $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$ }
+    \vspace{0.15cm}
+    \State{$\U \leftarrow \bigotimes \U^{(i)}$ }
+    \vspace{0.15cm}
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big) \quad$ (see \cref{eq:Gn_dd2,eq:lam_of_n})}
     \vspace{0.15cm}
     \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
     \vspace{0.15cm}
-    \State{$\D_\St \leftarrow \diag{\vecrm{\St}}$}
+    \State{$\D_\St \leftarrow \diag{\s}$}
     \vspace{0.15cm}
     \State{$\PSI \leftarrow \U \D_\Gt$}
     \vspace{0.15cm}
@@ -260,7 +273,7 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     \vspace{0.15cm}
     \State{$\Q \leftarrow  \D_\Gt \U^\top \D_{\muu} \U \D_\Gt + \gamma \I_N$}
     \vspace{0.15cm}
-    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ (solve with the CGM, leveraging the structure of $\Q$)}
     \vspace{0.15cm}
     \EndWhile
     \vspace{0.25cm}
@@ -284,29 +297,31 @@ The run time complexity of the overall algorithm of course depends on the conver
 
 \label{sec:multiclass}
 
-Up to this point in the chapter, our focus has been on binary-valued graph signals, which can be used to represent two-class classification tasks over a multiway network. However, in many practical applications, the task may involve classifying each node into one of multiple distinct groups. Therefore, the objective of this section is to extend and generalise the methods we have developed thus far to encompass multiclass classification problems.
+So far we have been focused on binary-valued graph signals, which can be used to represent two-class classification tasks over a multiway network. However, in many practical applications, the task may involve classifying each node into one of multiple distinct groups. Therefore, the objective of this section is to extend and generalise the methods we have developed thus far to encompass multiclass classification problems.
 
-Let us first consider the task of multiclass graph signal reconstruction. Here, the goal is to classify each node, $\nn$, in a $d$-dimensional Cartesian product graph into one of $C>2$ distinct groups. To do this, we have access to the graph Laplacian $\LL \in \R^{N \times N}$, and the true class label at a subset of nodes, $\mathcal{S}$. This partially observed graph signal can be represented as an order-($d + 1$) tensor, where the last dimension contains a ``one-hot" encoding of the class label. As such, the input data can be summarised as follows. 
-
-\begin{equation*}
-    \text{input data} = \Big\{\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
-\end{equation*}
-
-As in previous sections, the tensor $\St$, of shape $(N_1 \times ... \times N_d$), indicates which nodes in the product graph have been successfully observed by holding a one in the corresponding entry, and zeros elsewhere. Note that the observed graph signal, $\Yt$, has an additional dummy dimension of length $C$ to represent the class label. Where no observation was made, the corresponding values of $\Yt_{\nn, :}$ can all be safely set to zero. 
-
-We describe the probability that node $\nn$ has class $c$ with another tensor, $\Mt$, which, like $\Yt$, has shape $(N_1 \times ... \times N_d \times C)$. In particular, 
+Consider the task of multiclass graph signal reconstruction. Here, the goal is to estimate the probability that each node, $\nn$, in a $d$-dimensional Cartesian product graph belongs to each of $C>2$ distinct classes. To do this, we have access to the factor graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$, and the true class label at a subset of nodes, $\mathcal{S}$. The partially observed class labels can be represented as an order-($d + 1$) tensor graph signal, where the final dimension contains a ``one-hot" encoding of the class label. As such, the input data for multiclass L-GSR can be summarised as follows. 
 
 \begin{equation*}
-    p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{\nn, c}
+    \text{input data} = \Big\{\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d\; \Big\}
 \end{equation*}
 
-Every length-$C$ fibre $\Mt_{\nn, :}$ is a probability vector, and therefore exists on a $C$-dimensional simplex with $C-1$ degrees of freedom. For a given $\Mt$, the probability of observing a signal $\Yt$ is therefore given by
+As in previous sections, the tensor $\St$, of shape $(N_1 \times ... \times N_d$), indicates which nodes in the product graph have been successfully observed by holding a one in the corresponding entry, and zeros elsewhere. Note that the observed graph signal, $\Yt$, has an additional dummy dimension of length $C$ to represent the class label, which is not present in $\St$. Where no observation was made (i.e. $\St_{\nn} = 0$), all values along the corresponding fibre $\Yt_{\nn, :}$ can be safely set to zero by default. Note that $\Yt_{\nn, :}$ can have a maximum of one non-zero entry. 
+
+We describe the probability that node $\nn$ has class $c$ by introducing  another tensor, $\Mt$. Like $\Yt$, this tensor has shape $(N_1 \times ... \times N_d \times C)$. Each fiber $\Mt_{\nn, :}$ is interpreted as the probability mass function over the $C$ mutually exclusive classes at node $\nn$. In particular, 
+
+\begin{equation*}
+    p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{\nn, c}, \quad \sum_{c=1}^C \Mt_{\nn, c} = 1
+\end{equation*}
+
+Since every length-$C$ fibre $\Mt_{\nn, :}$ must sum to one, the tensor $\Mt$ exists in the space of $N$ independent $C$-dimensional simplexes with $C-1$ degrees of freedom. 
+
+This implies that, for a given value of $\Mt$, the probability of observing a signal $\Yt$ is given by
 
 \begin{equation}
     p(\Yt \, | \, \Mt) = \prod_{c, \nn \in \mathcal{S}} \Mt_{\nn, c}^{\Yt_{\nn, c}}
 \end{equation}
 
-As such, the log-likelihood of observing a signal $\Yt$ is given by 
+As such, the log-likelihood of observing a signal $\Yt$, for a given value of $Mt$, is
 
 \begin{align}
     \log p(\Yt \, | \, \Mt) &= \sum_{\nn, c} \St_{\nn} \, \Yt_{\nn, c} \log \Mt_{\nn, c} \notag \\
@@ -327,7 +342,7 @@ Here, $\Ft$ is a real-valued tensor signal which, like $\Mt$ and $\Yt$, has shap
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/multiclass.pdf}
     \end{center}
-   \caption[Visualisation of multiclass classification on a 2D lattice]{An example visualisation of multiclass classification on a $20 \times 20$ grid of pixels ($N_1 = 20, N_2 = 20, C=3$). Left: a random smooth tensor signal $\Ft$ split across three channels. Middle: the value of the tensor $\Mt$ found by applying the softmax function of \cref{eq:softmax} in the class dimension. Right: the resultant most likely classification given by the maximum probability class label for each pixel. } 
+   \caption[Visualisation of multiclass classification on a 2D lattice]{An example visualisation of transforming a smooth tensor signal via the softmax function on a $20 \times 20$ grid of pixels ($N_1 = 20, N_2 = 20, C=3$). Left: a random smooth tensor signal $\Ft$, drawn from the Gaussian distribution specified in \cref{eq:f_prior_mc_lgsr}, split across three channels. Middle: the value of the tensor $\Mt$ found by applying the softmax function of \cref{eq:softmax} in the class dimension. Right: the resultant most likely classification given by the maximum probability class label for each pixel. } 
     \label{fig:logistic_gsr_multiclass}
 \end{figure} 
 
@@ -335,10 +350,11 @@ Here, $\Ft$ is a real-valued tensor signal which, like $\Mt$ and $\Yt$, has shap
 Assuming no particular relational structure between the $C$ classes, we can encode the assumption that class probabilities should vary smoothly over the graph by assigning the following prior to $\Ft$. 
 
 \begin{equation}
+    \label{eq:f_prior_mc_lgsr}
     \f \sim \Norm{\zero}{\gamma^{-1} \HH^2 \otimes \I_C}
 \end{equation}
 
-By applying Bayes' rule, we can therefore derive an expression $\xi(\f)$, representing the posterior log-likelihood of an underlying signal $\f$ given an observed signal $\y$. 
+By applying Bayes' rule, we can therefore derive an expression $\xi(\f)$, representing the negative log-likelihood of observing an underlying signal $\f$ given an observed signal $\y$. 
 
 \begin{equation}
     \xi(\f) = - (\s \otimes \one_C)^\top \big(\y \circ \log \muu(\f) \big) + \frac{\gamma}{2} \f^\top \left(\HH^{-2} \otimes \I_C\right) \f
@@ -362,7 +378,7 @@ Unlike the binary model where the Hessian was the sum of a diagonal matrix $\D_{
     \RR_{\muu}(\f) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\f)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n (\f) \m_n^\top(\f) \right)
 \end{equation}
 
-where $\m_n \in \R^C$ is the probability vector at node $n$ (i.e. the $n$-th lexicographically ordered fiber within the tensor $\Mt$), and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
+where $\m_n \in \R^C$ is the probability mass function at node $n$ (i.e. the $n$-th lexicographically ordered fiber within the tensor $\Mt$), and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
 
 \begin{equation*}
     \RR_{\muu}(\f) = \begin{bmatrix}
@@ -426,7 +442,7 @@ where
     \Q_k = \big(\U \D_\Gt \otimes \I_C\big)^\top  \RR_{\muu}^k \big(\U \D_\Gt \otimes \I_C\big) + \gamma \I_{NC}
 \end{equation}
 
-While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa(\Q)$ is guaranteed to have a maximum value of $(0.5 + \gamma) / \gamma$, as shown formally in \cref{the:L_GSR_mc_Q_conditioning}. 
+Once again, the effect of introducing this preconditioner is to radically improve the conditioning of the coefficient matrix. Again, while the condition number, $\kappa$, of $\PP_k$ is potentially unbounded, $\kappa(\Q_k)$ can be strongly bounded. In particular, it is guaranteed to have a maximum value of $(0.5 + \gamma) / \gamma$. The proof, which is somewhat more involved than the binary case, is given formally in \cref{the:L_GSR_mc_Q_conditioning}. 
 
 \begin{theorem}
     \label{the:L_GSR_mc_Q_conditioning}
@@ -448,13 +464,13 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
         &= \kappa\left( \RR_{\muu}^k + \gamma \I_N\right)
     \end{align*}
 
-    Since $\RR_{\muu}^k$ is block-diagonal, its eigenvalues are equal to the union of the eigenvalues of each individual block. Furthermore, each block within  $\RR_{\muu}^k$ is of the form
+    Since $\RR_{\muu}^k$ is block-diagonal, the set of associated eigenvalues is equal to the union of the eigenvalues of each individual block. Furthermore, each block within  $\RR_{\muu}^k$ is of the form
 
     \begin{equation*}
         \B = s \Big(\diag{\m} - \m \m^\top\Big)
     \end{equation*}
     
-    where $\m \in \R^C$ is a probability vector, and $s$ is either zero or one. For the case where $s \neq 0$, we can see that $\B$ must have at least one zero eigenvalue, with eigenvector $\one$.     
+    where $\m \in \R^C$ is a probability mass vector, and $s$ is either zero or one. For the case where $s \neq 0$, we can see that $\B$ must have at least one zero eigenvalue, with eigenvector $\one$, since   
 
     \begin{align*}
         \B \one &= \Big(\diag{\m} - \m \m^\top\Big) \one \\
@@ -462,16 +478,16 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
         &= \m - \m = \zero
     \end{align*}
 
-    Note, we have used the fact that $\m^\top \one = 1$, since $\m$ is a vector of probabilities. Furthermore, we can show that all eigenvalues of $\B$ must be within the interval $[0, 1/2]$, no matter the value of $\m$.  To achieve this, we can make use of the Gerschgorin circle theorem \citep{Gerschgorin1931}. This states that all eigenvalues of a square matrix must fall within at least one of the closed disks $D(a_{ii}, R_i) \subseteq \mathbb{C}$ in the complex plane. Here, $a_{ii}$ are the centres of the disks given by the diagonal elements of the matrix, and $R_i$ are the radii of the disks, given by 
+    Note, we have used the fact that $\m^\top \one = 1$, since $\m$ represents a probability mass function and must therefore sum to one. Furthermore, we can show that all eigenvalues of $\B$ must be within the interval $[0, 1/2]$, no matter the value of $\m$.  To achieve this, we can make use of the Gerschgorin circle theorem \citep{Gerschgorin1931}. This states that all eigenvalues of a square matrix must fall within at least one of the closed disks $D(a_{ii}, R_i) \subset \mathbb{C}$ in the complex plane. Here, $a_{ii}$ are the centres of the disks given by the diagonal elements of the matrix, and $R_i$ are the radii of the disks, given by 
 
     \begin{equation*}
         R_i = \sum_{j \neq i} |a_{ij}|
     \end{equation*}
     
-    i.e. the sum of the absolute value of the off-diagonal elements in row $i$. Consider the structure of $\B$. 
+    i.e. the sum of the absolute value of the off-diagonal elements in row $i$. Consider the structure of $\B$ when $s \neq 0$. 
 
     \begin{equation*}
-        \B = \begin{bmatrix}
+        \B = \diag{\m} - \m \m^\top = \begin{bmatrix}
             m_1 - m_1^2 & -m_1 m_2 & \dots & - m_1 m_C \\
             - m_2 m_1 & m_2 - m_2^2 & \dots & -m_2 m_C \\
             \vdots & \vdots & \ddots & \vdots \\
@@ -479,7 +495,7 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
         \end{bmatrix}
     \end{equation*}
     
-    The disk associated with row $c$ will be given by
+    where $m = [m_1, m_2, ..., m_C]$. The disk associated with row $c$ will be given by
 
     $$
     D\left(m_c - m_c^2, \; \sum_{c' \neq c} |-m_c m_{c'}|\right) = D\Big(m_c\,(1 - m_c), \; m_c\,(1 - m_c)\Big)
@@ -490,12 +506,14 @@ While the condition number, $\kappa$, of $\PP$ is potentially unbounded, $\kappa
     Finally, since $\RR_{\muu}^k$ is composed of blocks $\B_n$, this means the largest possible eigenvalue of $\RR_{\muu}^k$ is 0.5, and the smallest is zero. Therefore
 
     \begin{equation*}
-        \kappa\left( \RR_{\muu}^k + \gamma \I_N\right) = \frac{0.5 + \gamma}{\gamma}
+        \kappa\left( \RR_{\muu}^k + \gamma \I_N\right) \leq \frac{0.5 + \gamma}{\gamma}
     \end{equation*}
+
+    completing the proof.
 
 \end{proof}
 
-For completeness, we now give the full algorithm for logistic graph signal reconstruction in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:fast_kron_dd}, the runtime complexity of the CGM step is bounded by 
+We now present the full algorithm for logistic graph signal reconstruction, which is given in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:fast_kron_dd}, the runtime complexity of the CGM step is bounded by 
 
 \begin{equation*}
     O\left(\frac{0.5 + \gamma}{\gamma} NC \Big(C + \sum_{i=1}^d N_i \Big)\right)
@@ -508,19 +526,25 @@ For completeness, we now give the full algorithm for logistic graph signal recon
     \vspace{0.05cm}
     \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
     \vspace{0.05cm}
-    \Require{Cartesian product graph Laplacian $\LL \in \R^{N \times N}$}
+    \Require{Cartesian product graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$}
     \vspace{0.05cm}
     \Require{Regularisation parameter $\gamma \in \R^+$}
     \vspace{0.05cm}
     \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
     \vspace{0.25cm}
-    \State{Decompose $\LL$ into $\U \LAM \U^\top$ }
+    \State{$\y \leftarrow \vecrm{\Yt}$ }
     \vspace{0.15cm}
-    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}$ as $\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big)$ }
+    \State{$\s \leftarrow \vecrm{\St}$ }
+    \vspace{0.15cm}
+    \State{Decompose each $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$ }
+    \vspace{0.15cm}
+    \State{$\U \leftarrow \bigotimes \U^{(i)}$ }
+    \vspace{0.15cm}
+    \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big) \quad$ (see \cref{eq:Gn_dd2,eq:lam_of_n})}
     \vspace{0.15cm}
     \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
     \vspace{0.15cm}
-    \State{$\D_\St \leftarrow \diag{\vecrm{\St}}$}
+    \State{$\D_\St \leftarrow \diag{\s}$}
     \vspace{0.15cm}
     \State{$\PSI \leftarrow \U \D_\Gt \otimes \I_C$}
     \vspace{0.15cm}
@@ -538,7 +562,7 @@ For completeness, we now give the full algorithm for logistic graph signal recon
     \vspace{0.15cm}
     \State{$\Q \leftarrow  \big(\U \D_\Gt \otimes \I_C\big)^\top  \RR_{\muu} \big(\U \D_\Gt \otimes \I_C\big) + \gamma \I_{NC}$}
     \vspace{0.15cm}
-    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ (solve with the CGM)}
+    \State{$\f \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ (solve with the CGM, leveraging the structure of $\Q$)}
     \vspace{0.15cm}
     \EndWhile
     \vspace{0.25cm}
@@ -554,13 +578,19 @@ For completeness, we now give the full algorithm for logistic graph signal recon
 
 \label{sec:logistic_regression}
 
-So far in this chapter we have developed binary and multiclass multiway graph signal reconstruction algorithms, where no additional data exists to help predict the value of the graph signal at the unlabelled nodes. In this section, we consider several scenarios in which explanatory variables are available and consider models for utilising this information to estimate the underlying class label probabilities.
+So far in this chapter we have developed binary and multiclass multiway graph signal reconstruction algorithms, where no additional data exists to help predict the value of the graph signal at the unlabelled nodes. In this section, we explore several circumstances where explanatory variables are at our disposal, and propose models to leverage this information to estimate the underlying class label probabilities.
 
 \subsection{Logistic Kernel Graph Regression (L-KGR)}
 
 \label{sec:lkgr}
 
-The first models we consider are binary and multiclass Logistic Kernel Graph Regression (L-KGR), applicable to general tensor-valued inputs. As in previous sections, the KGR model can be understood as a relatively simple extension of graph signal reconstruction. First let us consider the case of binary classification. Here, we have a sequence of $T$ partially observed binary tensor graph signals, each of shape $(N_1, ..., N_d)$. These are stacked into a single tensor $\Yt$ of shape $(T, N_1, ..., N_d)$ and accompanied by the binary sensing tensor, $\St$, indicating which values were observed and which were missing. In addition, at each time instant, we have a length-$M$ vector of explanatory variables $\x_t$, which can be stacked together into a matrix $\X$ with shape $(T, M)$. The goal is to utilise the explanatory variables, plus the topology of the underlying graph, to estimate the class probability at each node, at each time instant. The relevant input data can therefore be described as follows. 
+The first regression models we consider are binary and multiclass Logistic Kernel Graph Regression (L-KGR). The goal of L-KGR is to predict the underlying class probabilities at the nodes of a sequence of multiway graph signals, given that each signal is paired with an associated vector of explanatory variables. In this respect, it parallels the real-valued KGR model introduced in \cref{sec:kgr_mdp} (and extended to general tensor signals in \cref{sec:kgr_dd}), except here we are concerned with classification rather than real-valued regression. As we will demonstrate, mirroring the pattern of previous sections, the L-KGR model can be interpreted as a relatively straightforward extension of logistic graph signal reconstruction. 
+
+\subsubsection{Binary L-KGR}
+
+First, let us consider binary L-KGR. In this case, we have a sequence of $T$ partially observed binary tensor graph signals, $\Yt_t$, each with a shape of $(N_1, ..., N_d)$. As before, each signal is interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph, with factor graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$. Where no class outcome was recorded, the relevant element in the signal $\Yt_t$ can default to zero. Furthermore, at each time instant, we have a length-$M$ vector of explanatory variables $\x_t$, which is anticipated to have some non-linear explanatory relation to each $\Yt_t$.
+
+The sequence of partially observed signals can be assembled into a single tensor $\Yt$ of shape $(T, N_1, ..., N_d)$. This is accompanied by a binary sensing tensor, $\St$, of the same shape, which indicates which values were observed and which were absent. The explanation variables can also be aggregated into a single object, in this case a matrix $\X$ with a shape of $(T, M)$. The goal is to leverage the explanatory variables, in conjunction with the topology of the underlying graph, to estimate the class probability at each node, at each time instant. The relevant input data can therefore be described as follows. 
 
 
 \begin{multline*}
@@ -568,29 +598,43 @@ The first models we consider are binary and multiclass Logistic Kernel Graph Reg
     \St \in \{0, 1\}^{T \times N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
 \end{multline*}
 
-Following the same pattern as the KGR algorithms of previous sections (see \cref{sec:KGR_and_GSR} for details and further explanation), we can easily derive a model for the prediction of the class probability given the features $\X$ by making a small modification to the L-GSR algorithm of \cref{sec:lgsr}. Once again, we assume each element of $\Yt$ is distributed according to a Bernoulli distribution, with a mean given by the tensor $\Mt$. Furthermore, we assume $\Mt$ is smooth with respect to the topology of the graph, \textit{and} varies smoothly with with respect to the feature space. This is encoded via a tensor $\Ft$, which is again related to $\Mt$ via the logistic link function of \cref{eq:logistic_link}. We apply these assumptions by setting the following prior distribution for $\f = \vecrm{\Ft}$. 
+Following the same pattern as the KGR algorithms of previous sections (see \cref{sec:KGR_and_GSR} for details and further explanation), we can conveniently derive a logistic kernel graph regression model by making small modifications to the L-GSR model derived in \cref{sec:lgsr}.  
+
+As with L-GSR, we first assume each element of $\Yt$ is distributed according to a Bernoulli distribution, with a mean given by a latent mean tensor $\Mt$, which has the same shape as $\Yt$ (see \cref{eq:lgsr_bern,eq:lgsr_prob,eq:lgsr_logprob}). However, in this case, we assume that $\Mt$ is smooth with respect to both the topology of the graph, \textit{and} with with respect to the feature space. (This is admittedly a somewhat vague statement on its own - see \cref{sec:kgr_mdp} for a more detailed model derivation and \cref{sec:KGR_and_GSR} for further intuition). This belief can be encoded by proxy via a tensor $\Ft$, which is again related to $\Mt$ via the logistic link function of \cref{eq:logistic_link}. We implement these assumptions by establishing the following prior distribution for $\f = \vecrm{\Ft}$.
 
 \begin{equation}
     \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2}
 \end{equation}
 
-
-As before, $\K$ is the $T \times T$ kernel matrix created by applying a symmetric function, such as the Gaussian kernel, $\kappa(\cdot, \cdot)$ to pairs of feature vectors such that $\K_{ij} = \kappa(\x_i, \x_j)$. Next, we compute the eigendecompostion of $\K$ as $\K = \V \LAM_K \V^\top$. Finally, we define the transformed variables $\bar{\U}$ and $\bar{\Gt}$ as follows. 
+As before, $\K$ is the $T \times T$ kernel matrix created by applying a symmetric function, such as the Gaussian kernel, $\kappa(\cdot, \cdot)$ to pairs of feature vectors such that $\K_{ij} = \kappa(\x_i, \x_j)$. Next, we compute the eigendecomposition of $\K$ as $\K = \V \LAM_K \V^\top$. Finally, we define the transformed variables $\bar{\U}$ and $\bar{\Gt}$ as follows. 
 
 \begin{equation}
-    \bar{\U} \in \R^{NT \times NT} = \V \otimes \U, \aand \bar{\Gt}_{t, \nn} \in \R^{T \times N_1 \times ... \times N_d} = g(\lambdaa(\nn), \betaa) \sqrt{\lambda_t^{(K)}}
+    \label{eq:lkgr_substitution}
+    \bar{\U}  = \V \otimes \U, \aand \bar{\Gt}_{t, \nn}  = \Gt_{\nn} \sqrt{\lambda_t^{(K)}}
 \end{equation}
 
-where $\lambda_t^{(K)}$ is the $t$-th eigenvalue of $\K$. The L-KGR algorithm then follows by modifying \cref{al:LGSR} by substituting every instance of $\U$ for $\bar{\U}$ and every instance of $\Gt$ for $\bar{\Gt}$. 
+where $\lambda_t^{(K)}$ is the $t$-th eigenvalue of $\K$. This implies that 
 
-The same principles can be used to generate a multiclass logistic kernel graph regression algorithm. In this case, the input data is a sequence of $T $ partially observed multiway graph signals where each observed node has been classified into one of $C > 2$ classes. This can be represented by the binary tensor $\Yt$ with shape $(T \times N_1 \times ... \times N_d \times C)$, where an extra dimension has been added containing a one-hot encoding of the class label. Where no data was recorded, the full length-$C$ fibre at time $t$ and node $\nn$ can be set to zero. As such, the data is described as follows. 
+\begin{equation}
+    \K \otimes \HH^2 = \bar{\U} \D_{\bar{\Gt}} \bar{\U}^\top
+\end{equation}
+
+where $\D_{\bar{\Gt}} = \diag{\vecrm{\bar{\Gt}}}$. The L-KGR algorithm then follows by modifying \cref{al:LGSR} such that every instance of $\U$ and $\Gt$ is substituted for $\bar{\U}$ and $\bar{\Gt}$ respectively. Note tha, as with the KGR models of previous sections, this has an impact on the convergence rate of the CGM step, since the condition number of the preconditioned coefficient matrix $\Q_k$ is increased. As a result, the upper bound on the run time complexity for the whole algorithm is given by 
+
+\begin{equation*}
+    O\left(\rho(\K)\frac{0.25 + \gamma}{\gamma} TN \Big(T + \sum_{i=1}^d N_i\Big) \right)  \approx O\left( \frac{0.25 + \gamma}{\gamma} T^2 N \Big(T + \sum_{i=1}^d N_i\Big) \right) 
+\end{equation*}
+
+\subsubsection{Multiclass L-KGR}
+
+The same principles can be used to generate a multiclass logistic kernel graph regression algorithm. In this case, the input data is a sequence of $T $ partially observed multiway graph signals, where each observed node has been classified into one of $C > 2$ classes. This can be represented by the binary tensor $\Yt$ with shape $(T \times N_1 \times ... \times N_d \times C)$, where an extra dimension has been added containing a one-hot encoding of the class label. Where no data was recorded, the full length-$C$ fibre at time $t$ and node $\nn$ can be set to zero. As such, the data is described as follows. 
 
 \begin{multline*}
     \text{input data} = \Bigg\{\;\X \in \R^{T \times M}, \;\; \Yt \in \{0, 1\}^{T \times N_1 \times ... \times N_d \times C}, \;\; \\ 
     \St \in \{0, 1\}^{T \times N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
 \end{multline*}
 
-Just as in \cref{sec:multiclass}, we describe the probability that node $(t, \nn)$ has class probability $c$ with the tensor $\Mt$, which has the same shape as $\Yt$. As before, $\Mt$ is described by a real-valued tensor, $\Ft$, according to the multivariate softmax function given in \cref{eq:softmax}, only here it is modified slightly such that 
+Just as with the multiclass L-GSR model derived in \cref{sec:multiclass}, we introduce the tensor $\Mt$, with the same shape as $\Yt$, where each length-$C$ fibre $\Mt_{t, \nn, :}$ describes the probability mass function over the $C$ classes for node $\nn$ at time $t$. As before, $\Mt$ is constructed by applying a softmax function to each fibre of another tensor $\Ft$. 
 
 \begin{equation}
     \label{eq:softmax2}
@@ -603,33 +647,42 @@ We then place a prior over the signal $\f = \vecrm{\Ft} \in \R^{TNC}$ of
     \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2 \otimes \I_C}
 \end{equation}
 
-This encodes the belief that each of the $c$ class probabilities should vary smoothly (and independently) with respect to the topology of the graph and the feature space. once again, the full procedure for outputting the tensor $\Mt$ can be achieved by running \cref{al:LGSR_mc} after substituting the variables $\U \rightarrow \bar{\U}$ and $\G \rightarrow \bar{\G}$. 
+This encodes the belief that each of the $c$ class probabilities should vary smoothly (and independently) with respect to the topology of the graph and the feature space. once again, the full procedure for outputting the tensor $\Mt$ can be achieved by running \cref{al:LGSR_mc} after substituting the variables $\U \rightarrow \bar{\U}$ and $\Gt \rightarrow \bar{\Gt}$, as described in \cref{eq:lkgr_substitution}. Given the effect this substitution has on the the preconditioned coefficient matrix $\Q_k$ appearing in each iteration of the IRLS algorithm, it is simple to show that the run time complexity of multiclass L-KGR becomes bounded by the following. 
+
+\begin{equation*}
+    O\left(\rho(\K) \frac{0.5 + \gamma}{\gamma} TNC \Big(T + C + \sum_{i=1}^d N_i \Big)\right) \approx O\left(\frac{0.5 + \gamma}{\gamma} T^2NC \Big(T + C + \sum_{i=1}^d N_i \Big)\right)
+\end{equation*}
 
 
-\subsection{Logistic Regression with Network Cohesion (L-RNC) }
+\subsection{Logistic Regression with Network Cohesion (L-RNC)}
 
 \label{sec:lrnc}
 
-In this section we present models for binary and multiclass Logistic Regression with Network Cohesion (L-RNC). In this scenario, we encounter a partially observed tensor graph signal $\Yt$, with shape $(N_1 \times ... \times N_d)$, where a subset of the nodes have been labelled with the true class. In addition, each node in the Cartesian product graph has an associated length-$M$ vector of explanatory variables, collected into the tensor $\Xt$ with shape $(N_1 \times ... \times N_d \times M)$. The goal is to predict the class probabilities at each node $\nn$. Once again, we also have a binary tensor $\St$ describing which nodes have been observed. As such, the data for the binary L-RNC algorithm can be summarised as follows. 
+In this section we present models for binary and multiclass Logistic Regression with Network Cohesion (L-RNC). These models are relevant when there is a $d$-dimensional Cartesian product graph, for which a subset of nodes have a known class label. In addition, each node has a length-$M$ vector of explanatory variables. The goal is to utilise both the topology of the graph, and the explanatory variables to estimate the class probabilities at the unlabelled nodes. 
+
+\subsubsection{Binary L-RNC}
+
+First, let us consider binary L-RNC. In this scenario, we encounter a partially observed binary multiway graph signal $\Yt$, with shape $(N_1 \times ... \times N_d)$, where a subset of the nodes have been labelled with the true class. As before, $\Yt$ is interpreted as existing on the nodes of a known Cartesian product graph, with factor Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$. In addition, each node $\nn$ in the product graph has an associated length-$M$ vector of explanatory variables, collected into the tensor $\Xt$ with shape $(N_1 \times ... \times N_d \times M)$. The goal is to predict the class probabilities at each node $\nn$. Once again, we also have a binary tensor $\St$ describing which nodes have been observed. As such, the data for the binary L-RNC algorithm can be summarised as follows. 
 
 \begin{multline*}
     \text{input data} = \Bigg\{\;\Xt \in \R^{N_1 \times ... \times N_d \times M}, \;\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d}, \;\; \\ 
     \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
 \end{multline*}
 
-As with the GSR model, we suppose that each observed element of $\Yt$ is a Bernoulli random variable, with the probability of success given by the tensor $\Mt \in [0, 1]^{N_1 \times ... \times N_d}$. However, unlike the GSR model, we assume that $\Mt$ is generated according to the following expression. 
+As with the L-GSR model, we suppose that each observed element of $\Yt$ is a Bernoulli random variable, with the probability of success given by the tensor $\Mt \in [0, 1]^{N_1 \times ... \times N_d}$. However, in the L-RNC model, we assume that the probability at each node is given by the logistic function applied to the sum of an intercept term and a linear combination of the explanatory variables at that node. As with the real-valued RNC model introduced in \cref{sec:rnc_mdp}, the intercept term is flexible and assumed to vary smoothly with respect to the topology of the product graph. Denoting $\muu = \vecrm{\Mt}$, this is summarised by the following expression. 
 
 \begin{equation}
     \muu(\cc, \w) = \frac{\one}{\one + \exp\big(-(\cc + \X \w) \big)}
 \end{equation}
 
-Here, $\cc = \vecrm{\Ct}$ is a real-valued vector form of a tensor $\Ct$, which is assumed to vary smoothly with respect to the topology of the multiway graph, $\X$ is the tensor of explanatory variables reshaped into a matrix of dimensions $(N \times M)$ (see \cref{eq:X_RNC_dd}), and $\w \in \R^M$ is the length-$M$ vector coefficients specifying the contribution of each of the columns of $\X$. As in previous sections on RNC, we can stack $\cc$ and $\w$ into a single parameter vector $\thetaa$, such that 
+Here, $\cc = \vecrm{\Ct}$ the a real-valued vector form of a tensor $\Ct$, which is assumed to vary smoothly with respect to the topology of the multiway graph, $\X$ is the tensor of explanatory variables reshaped into a matrix of dimensions $(N \times M)$ (see \cref{eq:X_RNC_dd}), and $\w \in \R^M$ is the length-$M$ vector of coefficients specifying the contribution of each of the explanatory variables. As in previous sections on RNC, we can stack $\cc$ and $\w$ into a single parameter vector $\thetaa$, such that 
 
 \begin{equation}
+    \label{eq:lrnc_logistic}
     \muu(\thetaa) = \frac{\one}{\one + \exp\big(-\big[\I_N \;\; \X \big] \thetaa \big)}
 \end{equation}
 
-Furthermore, we can place a prior over $\thetaa$ that encodes the belief that $\Ct$ should be smooth with respect to the graph, as well as preventing overfitting of $\w$ with an L2 penalty. 
+Furthermore, we can place a prior over $\thetaa$ that encodes the belief that $\Ct$ should be smooth with respect to the topology of the Cartesian product graph, as well as preventing overfitting of $\w$ with an L2 penalty. 
 
 \begin{equation}
     \thetaa \sim \Norm{\zero}{\begin{bmatrix}\gamma^{-1} \HH^2 & \zero \\
@@ -640,7 +693,7 @@ As such, the MAP estimator for $\thetaa$ is given by the minimiser of the follow
 
 \begin{equation}
     \label{eq:nll_logistic_rnc}
-    \widetilde{\xi}(\thetaa) = -\s^\top \big(\y \circ \log \muu(\thetaa) + \left(\one  - \y\right) \circ \log \left(\one - \muu(\thetaa) \right)\big) + \frac{1}{2} \thetaa^\top \begin{bmatrix}\gamma^{1} \HH^{-2} & \zero \\
+    \xi(\thetaa) = -\s^\top \big(\y \circ \log \muu(\thetaa) + \left(\one  - \y\right) \circ \log \left(\one - \muu(\thetaa) \right)\big) + \frac{1}{2} \thetaa^\top \begin{bmatrix}\gamma^{1} \HH^{-2} & \zero \\
         \zero & \lambda^{1} \I_M \end{bmatrix}\thetaa
 \end{equation}
 
@@ -664,10 +717,10 @@ and
     \end{bmatrix}
 \end{equation}
 
-where, as with L-GSR, 
+where, as with L-GSR, $\D_{\muu}$ is the diagonal $N \times N$ matrix given by
 
 \begin{equation}
-    \D_{\muu}(\thetaa) \in \R^{N \times N} = \text{diag}\big(\s \circ \muu(\thetaa) \circ (\one - \muu(\thetaa))\big)
+    \D_{\muu}(\thetaa) = \text{diag}\big(\s \circ \muu(\thetaa) \circ (\one - \muu(\thetaa))\big)
 \end{equation}
 
 Then, using the shorthands 
@@ -676,7 +729,7 @@ Then, using the shorthands
     \widetilde{\PP}(\thetaa_k) = \widetilde{\PP}_k, \quad \widetilde{\g}(\thetaa_k) = \widetilde{\g}_k, \quad \muu(\thetaa_k) = \muu_k, \aand \D_{\muu}(\thetaa_k) = \D_{\muu}^k
 \end{equation*}
 
-IRLS update formula is then given by 
+The IRLS update formula can be derived as follows. 
 
 \begin{align*}
     \thetaa_{k + 1} &= \thetaa_k - \widetilde{\PP}^{-1}_k \, \widetilde{\g}_k \\
@@ -718,7 +771,16 @@ where
     \end{bmatrix} \left(\y - \muu_k + \D_{\muu}^k \big[\I_N \;\; \X \big] \thetaa_k \right)
 \end{equation}
 
-Note that, in the derivation above, we have used the fact that $\D_\St \D_{\muu}^k = \D_{\muu}^k \D_\St = \D_{\muu}^k$. 
+Note that, in the derivation above, we have used the fact that $\D_\St \D_{\muu}^k = \D_{\muu}^k \D_\St = \D_{\muu}^k$. This implies that 
+
+\begin{equation*}
+    \begin{bmatrix}
+        \D_\St \\ \X^\top \D_\St
+    \end{bmatrix} \D_{\muu}^k \big[\I_N \;\; \X \big] =  \begin{bmatrix}
+        \D_{\muu}^k & \D_{\muu}^k \X \\ 
+        \X^\top \D_{\muu}^k  & \X^\top \D_{\muu}^k \X
+    \end{bmatrix}
+\end{equation*}
 
 As before, the linear system $\widetilde{\PP}_k^{-1} \widetilde{\tee}_k $ cannot easily be solved in this form due to ill-conditioning. To overcome this issue, we can again use the symmetrically preconditioned CGM. In particular, we can transform the system into 
 
@@ -757,7 +819,7 @@ and
         \end{bmatrix}
 \end{equation}
 
-Note that, in contrast to L-GSR, the preconditioning matrix $\widetilde{\PSI}_k$ is changing on each iteration of the IRLS algorithm. For clarity, we now present the complete L-RNC algorithm in \cref{al:LRNC}. 
+Note that, in contrast to L-GSR, the preconditioning matrix $\widetilde{\PSI}_k$ is changing on each iteration of the IRLS algorithm. We now have all the mechanics in place to compute the value of $\thetaa$ that minimised \cref{eq:nll_logistic_rnc}. This, in turn, can be used to compute $\Mt$, according to \cref{eq:lrnc_logistic}. For clarity, we now present the complete L-RNC algorithm in \cref{al:LRNC}. Once again, we expect the IRLS iterations to quickly converge. As such, the main computational bottleneck occurs in solving the CGM, which can be achieved efficiently by leveraging the Kronecker and block structure of the matrix $\Q_k$. 
 
 
 \begin{algorithm}[ht]
@@ -819,7 +881,7 @@ Note that, in contrast to L-GSR, the preconditioning matrix $\widetilde{\PSI}_k$
         \D_M \U_M^\top \X^\top \D_{\muu} \U \D_\Gt & \I_M
         \end{bmatrix}$}
     \vspace{0.15cm}
-    \State{$\thetaa \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
+    \State{$\thetaa \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ (solve with the CGM, leveraging the structure of $\Q$)}
     \vspace{0.15cm}
     \EndWhile
     \vspace{0.25cm}
@@ -831,35 +893,48 @@ Note that, in contrast to L-GSR, the preconditioning matrix $\widetilde{\PSI}_k$
     \label{al:LRNC}
 \end{algorithm}
 
-\subsection{Multiclass Logistic Regression with Network Cohesion}
+\newpage 
 
-In this section we take the multiclass L-GSR model developed in \cref{sec:multiclass} and adapt it for the purpose of RNC. The data available in this scenario is very similar to that of binary L-RNC, except the observed tensor input signal $\Yt$ now has an extra final dimension of length $C$ which contains a one hot encoding of the class label. As such, the data can be described as follows. 
+$ $ 
+
+\newpage
+
+\subsubsection{Multiclass L-RNC}
+
+In this section, we consider the multiclass generalisation of the L-RNC model. The data available for this model is much the same as the binary version outlined in the previous section, except here we have a partially labelled graph signal where each observed node has been classified into one of $C > 2$ groups. As with the L-GSR model developed in \cref{sec:multiclass}, this input data can be described a multiway tensor signal $\Yt$, with shape $(N_1, ..., N_d, C)$, where the final dimension represents a ``one-hot"  encoding of the class label. Each element, $\nn$, is interpreted as existing on a Cartesian product graph with factor Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$, and is accompanied by a binary sensing tensor $\St$, with shape $(N_1, ..., N_d)$, indicating which nodes were observed and which were not. Once again, we also have a length-$M$ vector of explanatory variables at each node in the product graph, which can be collected into a single tensor $\Xt$. 
 
 \begin{multline*}
     \text{input data} = \Bigg\{\;\Xt \in \R^{N_1 \times ... \times N_d \times M}, \;\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}, \;\; \\ 
     \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \Bigg\}
 \end{multline*}
 
-Just as in \cref{sec:multiclass}, we describe the probability that node $\nn$ is of class $C$ with the tensor $\Mt$, which has the same shape as $\Yt$. Each fibre $\Mt_{\nn, :}$ is a probability vector existing on a $C$-dimensional simplex with $C - 1$ degrees of freedom. As before, the log-likelihood of observing a signal $\Yt$ is given by 
+Just as in \cref{sec:multiclass}, we describe the probability distribution over each of the $C$ classes at node $\nn$ with the tensor $\Mt$, which has the same shape as $\Yt$, where the probability mass function is given by the length-$C$ fibre $\Mt_{\nn, :}$. Given this, the log-likelihood of observing a signal $\Yt$ is given by 
 
 \begin{align}
    \log p(\Yt \, | \, \Mt) &= \sum_{\nn, c} \St_{\nn} \, \Yt_{\nn, c} \log \Mt_{\nn, c} \notag \\
    &= (\s \otimes \one_C)^\top \big(\y \circ \log \muu \big)
 \end{align}
 
-Furthermore, we assume that $\Mt$ is generated by applying a softmax function to each length-$C$ fibre of another tensor $\Ft$ according to
+Furthermore, we assume that $\Mt$ is generated by applying a softmax function to each length-$C$ fibre of another tensor $\Ft$. 
 
 \begin{equation}
     \Mt_{\nn, c} = \frac{\exp(\Ft_{\nn, c})}{ \raisebox{-0.1cm} { $\sum_{c'=1}^C \exp(\Ft_{\nn, c'})$ }}  \quad \Longleftrightarrow \quad \muu(\f) = \frac{\exp(\f)}{ \big((\I_N \otimes \one_C) \exp(\f)\big) \otimes \one_C}
 \end{equation}
 
-where 
+
+The key feature of the multiclass L-RNC model is that each of the $C$ slices of the tensor $\Ft$, denoted as $\Ft_{:, c}$, are given by the sum of a flexible intercept $\Ct_t$, and a weighted linear combination of the features at each node. Both the intercept and the weighting are unique to each slice, $c$. This means, in order to describe the tensor $\Ft$, we need a set of $C$ intercepts and weights $\left\{\Ct_c, \w_c\right\}_{c=1}^C$. These can both be aggregated into singe objects: $\Ct$, a tensor with shape $(N_1, ..., N_d, C)$ and $\w$, a vector with length $MC$. Then, $\Ft$ is defined as follows. 
 
 \begin{equation}
-    \Ft = \Ct + \tenrm{\left(\X \otimes \I_C \right) \w} \quad \Longleftrightarrow \quad \f = \cc + \left(\X \otimes \I_C \right) \w
+     \Ft_{:, c} = \Ct_c + \X \w_c \quad \Longleftrightarrow \quad  \Ft = \Ct + \tenrm{\left(\X \otimes \I_C \right) \w}
+\end{equation}
+
+As before, $\X$ is a matrix view of the tensor $\Xt$ reshaped to have dimensions $(N, M)$. In vectorised form, this can be written as 
+
+\begin{equation}
+    \f = \cc + \left(\X \otimes \I_C \right) \w
 \end{equation}
     
-Here, $\Ct$ is a tensor with shape $(N_1, ..., N_d, C)$ and $\w$ is a coefficient vector of length $MC$. The effect of this assumption is that each slice of the tensor $\Ft$, $\Ft_{:, c}$ is the sum of a tensor $\Ct_{:, c}$ and an independent linear combination of slices of the tensor $\Xt_{:, m}$. We can stack $\cc$ and $\w$ into a single vector $\thetaa$ as follows. 
+The goal of L-RNC will be to find the most likely values for $\Ct$ and $\w$ which, in turn, will allow us to compute $\Mt$, generating the predicted class probabilities across the product graph. Following the pattern of previous RNC models, we can stack $\cc$ and $\w$ into a single vector $\thetaa$ as follows. 
 
 \begin{equation}
     \thetaa \in \R^{NC + MC} = \begin{bmatrix}
@@ -881,7 +956,7 @@ As such, we can rewrite the formula for $\muu$ in terms of $\thetaa$.
  \muu(\thetaa) = \frac{\exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)}{ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C}
 \end{equation}
 
-Next, we place the following prior over $\thetaa$. 
+Next, we place the following prior over $\thetaa$, to encode the assumption that each of the flexible intercept terms should vary smoothly with respect to the topology of the graph, and to regularise the coefficient vector $\w$. 
 
 \begin{equation}
     \thetaa \sim \Norm{\zero}{\begin{bmatrix}\gamma^{-1} \HH^2 \otimes \I_C & \zero \\
@@ -896,10 +971,10 @@ This leads to the following negative log-likelihood.
         \zero & \lambda \I_{MC} \end{bmatrix} \thetaa
 \end{equation}
 
-The gradient is given by 
+The gradient of $\xi(\thetaa)$ is the vector of length $NC + MC$ given by 
 
 \begin{equation}
-    \g(\thetaa) \in \R^{NC + MC} = \begin{bmatrix}
+    \widetilde{\g}(\thetaa) \in \R^{NC + MC} = \begin{bmatrix}
         \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
     \end{bmatrix} \big(\muu(\thetaa) - \y\big) + \begin{bmatrix}
         \gamma \HH^{-2} \otimes \I_C & \zero \\
@@ -917,45 +992,57 @@ The Hessian $\widetilde{\PP}(\thetaa)$ with shape $(NC + MC) \times (NC + MC)$  
     \end{bmatrix}
 \end{equation}
 
-where 
+where, as in \cref{sec:multiclass}, 
 
 \begin{equation}
     \RR_{\muu}(\thetaa) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\thetaa)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n (\thetaa) \m_n^\top(\thetaa) \right)
 \end{equation}
 
-The IRLS algorithm then proceeds as. 
+Using the shorthands
+
+\begin{equation*}
+    \widetilde{\PP}(\thetaa_k) = \widetilde{\PP}_k, \quad \widetilde{\g}(\thetaa_k) = \widetilde{\g}_k, \quad \muu(\thetaa_k) = \muu_k, \aand \RR_{\muu}(\thetaa_k) = \RR_{\muu}^k
+\end{equation*}
+
+the IRLS algorithm then proceeds according to the following update formula. 
+
+
+\begingroup
+\allowdisplaybreaks
 
 \begin{align*}
-    \thetaa_{k+1} &= \thetaa_k - \PP^{-1}_k \, \g_k\\
-    &= \thetaa_k - \PP^{-1}_k \left(\begin{bmatrix}
+    \thetaa_{k+1} &= \thetaa_k - \widetilde{\PP}^{-1}_k \, \widetilde{\g}_k\\
+    &= \thetaa_k - \widetilde{\PP}^{-1}_k \left(\begin{bmatrix}
         \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
     \end{bmatrix} \big(\muu_k - \y\big) + \begin{bmatrix}
         \gamma \HH^{-2} \otimes \I_C & \zero \\
     \zero & \lambda \I_{MC}
     \end{bmatrix} \thetaa_k \right) \\
-    &= \thetaa_k + \PP^{-1}_k \begin{bmatrix}
+    &= \thetaa_k + \widetilde{\PP}^{-1}_k \begin{bmatrix}
         \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
-    \end{bmatrix} \big(\y - \muu_k\big) - \PP^{-1}_k  \begin{bmatrix}
+    \end{bmatrix} \big(\y - \muu_k\big) - \widetilde{\PP}^{-1}_k  \begin{bmatrix}
         \gamma \HH^{-2} \otimes \I_C & \zero \\
     \zero & \lambda \I_{MC}
     \end{bmatrix} \thetaa_k \\
-    &= \PP^{-1}_k \begin{bmatrix}
+    &= \widetilde{\PP}^{-1}_k \begin{bmatrix}
         \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
-    \end{bmatrix} \big(\y - \muu_k\big) + \PP^{-1}_k \Big(\PP_k \thetaa_k - \begin{bmatrix}
+    \end{bmatrix} \big(\y - \muu_k\big) + \widetilde{\PP}^{-1}_k \Big(\widetilde{\PP}_k \thetaa_k - \begin{bmatrix}
         \gamma \HH^{-2} \otimes \I_C & \zero \\
     \zero & \lambda \I_{MC}
     \end{bmatrix} \thetaa_k\Big) \\
-    &= \PP^{-1}_k \begin{bmatrix}
+    &= \widetilde{\PP}^{-1}_k \begin{bmatrix}
         \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
-    \end{bmatrix} \big(\y - \muu_k\big) + \PP^{-1}_k \begin{bmatrix}
+    \end{bmatrix} \big(\y - \muu_k\big) + \widetilde{\PP}^{-1}_k \begin{bmatrix}
         \RR_{\muu}^k & \RR_{\muu}^k (\X \otimes \I_C) \\ 
         (\X^\top \otimes \I_C) \RR_{\muu}^k  & (\X^\top \otimes \I_C) \RR_{\muu}^k (\X \otimes \I_C) 
     \end{bmatrix} \thetaa_k \\
-    &= \PP^{-1}_k  \begin{bmatrix}
+    &= \widetilde{\PP}^{-1}_k  \begin{bmatrix}
         \D_\St \otimes \I_C \\ \left(\X^\top \D_\St\right) \otimes \I_C
     \end{bmatrix} \left( \y - \muu_k + \RR_{\muu}^k  \big[\I_N \;\; \X \otimes \I_C\big] \thetaa_k \right) \\
-    &= \PP^{-1}_k \tee_k
+    &= \widetilde{\PP}^{-1}_k \tee_k
 \end{align*}
+
+\endgroup
 
 where 
 
@@ -965,13 +1052,13 @@ where
     \end{bmatrix} \left( \y - \muu_k + \RR_{\muu}^k  \big[\I_N \;\; \X \otimes \I_C\big] \thetaa_k \right)
 \end{equation}
 
-As before, the linear system $\widetilde{\PP}_k^{-1} \widetilde{\tee}_k $ cannot easily be solved in this form due to ill-conditioning. To overcome this issue, we can again use the symmetrically preconditioned CGM. In particular, we can transform the system into 
+As before, to overcome the ill-conditioning present in the linear system $\widetilde{\PP}_k^{-1} \widetilde{\tee}_k $, we can use the symmetrically preconditioned CGM. In particular, we can transform the system into 
 
 \begin{equation*}
     \thetaa_k = \widetilde{\PP}^{-1}_k \widetilde{\tee}_k \quad \Longrightarrow \quad \thetaa_k = \widetilde{\PSI}_k \widetilde{\Q}_k^{-1} \widetilde{\PSI}_k^\top \widetilde{\tee}_k
 \end{equation*}
 
-In order to define $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$, first we must compute the eigendecomposition of $\X^\top \RR_{\muu}^k \X$. 
+where $\widetilde{\Q}_k$ has a lower condition number than the matrix $\widetilde{\PP}_k$. In order to define $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$, first we must compute the eigendecomposition of $\X^\top \RR_{\muu}^k \X$. 
 
 \begin{equation}
     \X^\top \RR_{\muu}^k \X = \U_M^k \LAM_M^k (\U_M^k)^\top 
@@ -1001,6 +1088,8 @@ and
         \D_M^k \left(\U_M^k\right)^\top \X^\top \RR_{\muu}^k \U \D_\Gt & \I_M
         \end{bmatrix}
 \end{equation}
+
+This leads to the complete algorithm for computing the class probabilities, given in \cref{al:LRNC_mc}. 
 
 \begin{algorithm}[ht]
     \begin{algorithmic}
