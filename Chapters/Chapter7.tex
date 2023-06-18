@@ -1058,10 +1058,10 @@ As before, to overcome the ill-conditioning present in the linear system $\widet
     \thetaa_k = \widetilde{\PP}^{-1}_k \widetilde{\tee}_k \quad \Longrightarrow \quad \thetaa_k = \widetilde{\PSI}_k \widetilde{\Q}_k^{-1} \widetilde{\PSI}_k^\top \widetilde{\tee}_k
 \end{equation*}
 
-where $\widetilde{\Q}_k$ has a lower condition number than the matrix $\widetilde{\PP}_k$. In order to define $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$, first we must compute the eigendecomposition of $\X^\top \RR_{\muu}^k \X$. 
+where $\widetilde{\Q}_k$ has a lower condition number than the matrix $\widetilde{\PP}_k$. In order to define $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$, first we must compute the eigendecomposition of $(\X^\top \otimes \I_C) \RR_{\muu}^k (\X \otimes \I_C)$. 
 
 \begin{equation}
-    \X^\top \RR_{\muu}^k \X = \U_M^k \LAM_M^k (\U_M^k)^\top 
+    (\X^\top \otimes \I_C) \RR_{\muu}^k (\X \otimes \I_C) = \U_M^k \LAM_M^k (\U_M^k)^\top 
 \end{equation}
 
 Next, we define the matrix $\D_M^k$ as follows. 
@@ -1074,7 +1074,7 @@ Then, the operators $\widetilde{\PSI}_k$ and $\widetilde{\Q}_k$ are defined as f
 
 \begin{equation}
     \widetilde{\PSI}_k = \begin{bmatrix}
-        \U \D_\Gt & \zero \\
+        \U \D_\Gt \otimes \I_C & \zero \\
         \zero & \U_M^k \D_M^k
     \end{bmatrix}
 \end{equation}
