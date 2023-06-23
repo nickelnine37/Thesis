@@ -25,9 +25,9 @@ This example represents a binary classification task over the network, since the
     \label{fig:mutliclass_graph}
 \end{figure} 
 
-Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally well-suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. By contrast, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received notably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, there, the graph is usually constructed by considering a distance metric in a feature space, and the focus is on maximising the utility of unlabelled data using algorithms such as label propagation (see, for example \cite{Zhang2017}). The GSP community, by contrast, focuses on statistical processes that occur over intrinsically graph-structured objects using spectral methods. While some work on binary reconstruction and regression from this perspective has occurred (see, for example \cite{Tran2020}), many of the important GSP algorithms are yet to be generalised to binary data. In this chapter, we build on the models already developed in this thesis to define several reconstruction and regression algorithms for binary graph signals. In contrast to some of the prior work discussed, these models are focused on GSP applications and are applicable to general $d$-dimensional multiway graph signals. This means they are particularly suited to multivariate applications such as hyperspectral image processing, graph time series etc.  
+Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally well-suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. By contrast, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received notably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, there, the graph is usually constructed by considering a distance metric in a feature space, and the focus is on maximising the utility of unlabelled data using algorithms such as label propagation (see, for example \cite{Zhang2017}). The GSP community, by contrast, focuses on statistical processes that occur over intrinsically graph-structured objects using spectral methods. While some work on binary reconstruction and regression from this perspective has occurred (see, for example \cite{Tran2020}), many of the prominent GSP algorithms and frameworks are yet to be generalised to binary data. In this chapter, we build on some of the models already developed in this thesis (GSR, KGR and RNC) to define associated ``logistic" reconstruction and regression algorithms (L-GSR, L-KGR and L-RNC). These models are targeted towards applications of interest to the GSP community and are applicable to multiway graph signals in an arbitrary number of dimensions. This means they are particularly suited to multivariate applications such as hyperspectral image processing, graph time series etc.  
 
-This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for the reconstruction of binary graph signals on a Cartesian product graph. Here, we describe how the multiway GSR model developed in \cref{chap:nd_gsp} can be modified to produce a statistical model for the generation of binary signals in $d$ dimensions. By making use of the CGM in conjunction with the Iteratively Reweighted Least Squares (IRLS) algorithm, we demonstrate how to efficiently solve for the underlying probability tensor. Next, in \cref{sec:multiclass}, we adapt this algorithm to accommodate multiclass classification problems. This necessitates the introduction of a new class of Kronecker operator, which appears in the preconditioned coefficient matrix. Using Gerschgorin's circle theorem we are able to bound the eigenvalues of this operator and provide an upper bound for the condition number. In \cref{sec:logistic_regression}, we generalise both binary and multiclass signal reconstruction to encompass the regression models introduced in \cref{chap:kgr_rnc_2d} and extended to the multiway setting in \cref{chap:nd_gsp}. Finally, in \cref{sec:logistic_rnc_application}, we explore the behaviour of the logistic RNC model on an image segmentation task. 
+This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for Logistic Graph Signal Reconstruction (L-GSR) on a Cartesian product graph. Here, we describe how the real-valued multiway GSR framework we developed in \cref{chap:nd_gsp} can be modified to produce a statistical model to describe $d$-dimensional binary graph signals. By making use of the Conjugate Gradient Method (CGM) in conjunction with the Iteratively Reweighted Least Squares (IRLS) algorithm, we demonstrate how to efficiently estimate the underlying class probabilities at each node. Next, in \cref{sec:multiclass}, we adapt this algorithm to accommodate multiclass classification problems. This necessitates the introduction of a new class of Kronecker operator, which appears in the preconditioned coefficient matrix. Using Gerschgorin's circle theorem we are able provide guarantees for the CGM convergence by ascertaining an upper bound for its condition number. In \cref{sec:logistic_regression}, adapt the Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) models developed in \cref{chap:kgr_rnc_2d}, and adapt them for the task of binary and multiclass node classification, given additional explanatory variables. Finally, in \cref{sec:logistic_rnc_application}, we explore the behaviour of the L-GSR and L-RNC models on an image segmentation task. In particular, we analyse the interpretation of the hyperparameters $\gamma$ and $\beta$ in the context of the logistic models, and provide intuition for how these can be set in practice. We also discuss some of the convergence issues associated with the IRLS algorithm and provide practical solutions for mediating them. 
 
 
 \section{Logistic Graph Signal Reconstruction (L-GSR)}
@@ -397,7 +397,7 @@ Despite no longer being diagonal, we can still leverage the block structure of t
     \RR_{\muu}(\f) \ve = (\s \otimes \one_C) \circ  \muu(\f) \circ \ve - \Big(\big((\D_\St \otimes \one_C) (\muu(\f) \circ \ve) \big) \otimes \one_C \Big) \circ \muu(\f)
 \end{equation}
 
-While a naive implementation of the product $\RR_{\muu}(\f) \ve$ would have memory time and memory complexity $O\left(C^2N^2\right)$, by following the formula given in \cref{eq:R_mu_eff}, it can instead be achieved with $O(NC)$ for both, as it would for a diagonal operator of size $(NC \times NC)$. 
+While a naive implementation of the product $\RR_{\muu}(\f) \ve$ would have memory time and memory complexity $O\left(C^2N^2\right)$, by following the formula given in \cref{eq:R_mu_eff}, it can instead be achieved with time complexity $O(NC^2)$ and memory complexity $O(NC)$. 
 
 Now consider the IRLS update formula. As before, we will use the following shorthands. 
 
@@ -1084,14 +1084,14 @@ and
 \begin{equation}
     \widetilde{\Q}_k = 
        \begin{bmatrix}
-        \D_\Gt \U^\top \RR_{\muu}^k \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \RR_{\muu}^k \X \U_M^k \D_M^k \\[0.1cm] 
-        \D_M^k \left(\U_M^k\right)^\top \X^\top \RR_{\muu}^k \U \D_\Gt & \I_M
+        (\U \D_\Gt \otimes \I_C)^\top \RR_{\muu}^k (\U \D_\Gt \otimes \I_C) + \gamma \I_{NC}  &  (\U \D_\Gt \otimes \I_C)^\top \RR_{\muu}^k (\X \otimes \I_C) \U_M^k \D_M^k \\[0.1cm] 
+        \D_M^k \left(\U_M^k\right)^\top (\X^\top \otimes \I_C) \RR_{\muu}^k (\U \D_\Gt \otimes \I_C) & \I_{MC}
         \end{bmatrix}
 \end{equation}
 
 This leads to the complete algorithm for computing the class probabilities, given in \cref{al:LRNC_mc}. 
 
-\begin{algorithm}[ht]
+\begin{algorithm}[H]
     \begin{algorithmic}
     \vspace{0.15cm}
     \Require{Explanatory variables $\Xt \in \R^{N_1 \times ... \times N_d \times M}$}
@@ -1165,13 +1165,160 @@ This leads to the complete algorithm for computing the class probabilities, give
 \end{algorithm}
 
 
-\section{Image segmentation with L-RNC}
+\section{Image segmentation}
 
 \label{sec:logistic_rnc_application}
 
-\cite{Li2012}
+In this section, we examine the behaviour of the binary and multiclass algorithms developed in this chapter using an image segmentation task. The objective is to estimate the true class label at unlabelled pixels within an image, where a subset of the pixels have been classified into two or more groups. As briefly discussed in \cref{sec:gsp_cpg}, we can interpret image data as a special case of a 2D graph signal, with underlying graphs being simple chains reflecting the image's dimensions. By performing a Cartesian product of these factor graphs, we generate a lattice structure where each node corresponds to a pixel.
 
-% \section{Approximate Sampling via the Laplace Approximation}
+In the following sections we analyse the properties of the L-GSR and L-RNC models introduced earlier in this chapter, in both their binary and multiclass form. For the binary case, we consider a foreground/background separation task on standard RGB images sourced from the Berkeley Segmentation Dataset \citep{Martin2001}. For the multiclass case, we consider a hyperspectral image segmentation task, with data captured by an airborne sensor of farmland that has been divided into seventeen classes based on land use \citep{Baumgardner2015}. 
 
-% \label{sec:lsamp}
+
+Many sophisticated techniques, most notably utilising deep neural networks, exist for image segmentation tasks (refer to \cite{Minaee2022,Wang2022} for a comprehensive review). Whilst the classical statistical models introduced in this section are unlikely to be competitive with such methods on image segmentation tasks, they bring the advantage of versatility, enabling classification over generic Cartesian product graphs. However, since image segmentation datasets are readily accessible and easy to interpret visually, they serve as a useful test bed to investigate the properties of our more general graph-based algorithms. As such, it is worth emphasising that the goal of this section is not to produce a state-of-the-art image segmentation algorithm, but only to verify and analyse the properties of the techniques presented in this chapter. 
+
+
+\subsection{Background/foreground separation}
+
+The first task we attempted was to separate the background from the foreground using four $481 \times 321$ pixel images taken from the Berkeley Segmentation Dataset \citep{Martin2001}. These images had been manually labelled on a per-pixel basis into multiple objects, which we manually divided into background and foreground. We then randomly selected a certain fraction of pixels to serve as the labelled set $\mathcal{S}$, generating the input graph signals $\Yt$ and $\St$, both of shape (481, 321). Then, we attempted to estimate the class probabilities of the remaining pixels using both the L-GSR and L-RNC algorithms on a lattice graph using an isotropic diffusion graph filter. For L-RNC, the algorithm also had access to the the RGB pixel data, creating a tensor of explanatory variables, $\Xt$, with shape (481, 321, 3). To ensure that the algorithms generated sensible outputs, we ran preliminary tests with 10\% of the pixels labelled. The results can be seen in \cref{fig:foreground_separation}, where the output, $\Mt$, is depicted as a colour-map. As can be seen, both algorithms broadly succeed at the separating the background from the foreground. 
+
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=0.8\linewidth]{Figures/segmentation.pdf}
+    \end{center}
+   \caption[Foreground/background separation with L-GSR and L-RNC]{A color-map of the output probabilities, $\Mt$, from the L-GSR and L-RNC are shown, along with the original image and the ground truth for the four examples. These were generated with 10\% of the pixels labelled, using an isotropic diffusion filter with $\beta = 50$, and $\gamma = 5 \times 10^{-5}$. For L-RNC, $\lambda$ was set to $10^4$. } 
+    \label{fig:foreground_separation}
+\end{figure} 
+
+\subsubsection{Assessing accuracy as a function of label percentage}
+
+In the first experiment, we examined the accuracy of each method as a function of the fraction of labelled pixels. \Cref{fig:starfish} provides a visual depiction of the estimated probability tensor $\Mt$ over a range of fractions. As expected, both methods progressively improve as the labelled fraction increases. The L-RNC model appears to outperform the L-GSR, particularly at lower label fractions, likely due to its access to the RGB colour profile in the explanatory tensor $\Xt$. L-GSR, on the other hand, only has access to the lattice graph structure and the location of the labelled pixels. This effect is visible in the first column, where the L-GSR model can only identify the approximate shape of the object, whereas the L-RNC model shows artifacts from the original image, such as the texture of the starfish body. 
+
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/starfish.pdf}
+    \end{center}
+   \caption[Image segmentation output as a function of labelled pixel fraction]{The estimated probability tensor, $\Mt$, output from the L-GSR and L-RNC models, is shown for several fractions of observed data.} 
+    \label{fig:starfish}
+\end{figure}
+
+To further scrutinise this, we measured each model's accuracy across a range of label fractions for each image. Here, accuracy is gauged by counting the rate of correct predictions for all pixels, by determining whether the probability is less than or greater than 1/2. Simultaneously, we also measured each method's runtime for each label fraction. The results, shown in \cref{fig:fraction_labelled}, reveal both methods steadily improving in accuracy as the label fraction increases. L-RNC generally outperforms L-GSR, especially at lower label percentages, confirming our visual intuition from \cref{fig:starfish}. However, this comes at the cost of a longer runtime, likely due to additional matrix and memory management operations when running the CGM with block matrices. 
+
+It is clear that the runtime of both methods increases as the label fraction grows, consistent with the features of the CGM algorithm, which, as discussed in \cref{sec:GSR_convergence_implications}, is expected to converge quicker when the fraction of missing data is higher. We also observe sporadic spikes in runtime above the general trend, which can likely be attributed to Jax's JIT compiler, which periodically retraces functions to ascertain their impact on inputs of a specific shape and data type \citep{Bradbury2018}.
+
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=0.9\linewidth]{Figures/fraction_labelled.pdf}
+    \end{center}
+   \caption[Accuracy of binary L-GSR and L-RNC models as a function of label fraction]{The accuracy on a per-pixel basis is shown for the L-GSR and L-RNC models for each of the four images as a function of the fraction of randomly selected pixels that were labelled} 
+    \label{fig:fraction_labelled}
+\end{figure}
+
+\subsubsection{Qualitative effects of varying \texorpdfstring{$\gamma$}{gamma} and \texorpdfstring{$\beta$}{beta}}
+
+The second experiment sought to assess the effects on the probability output of the L-GSR and L-RNC algorithms when $\gamma$ and $\beta$ are varied independently. After randomly selecting 0.05\% of the pixels to have their true label revealed, we evaluated the output of the L-GSR and L-RNC algorithms over a range of $\beta$ values while maintaining $\gamma$ fixed at $5 \times 10^{-5}$ and, for L-RNC, $\lambda$ fixed at $100$. Subsequently, we performed the experiment again keeping $\beta$ fixed at 100 and varying $\gamma$. In both cases, an isotropic diffusion filter was used. The results from these experiments are depicted in \cref{fig:starfish2,fig:starfish3}, respectively.
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/starfish2.pdf}
+    \end{center}
+   \caption[Qualitative effects of varying $\beta$ on the output of the L-GSR and L-RNC algorithms]{A color-map of the probability output of the L-GSR and L-RNC algorithms are shown for various increasing values of $\beta$. Here, $\gamma$ is set to $5 \times 10^{-5}$ and for L-RNC, $\lambda$ is set to $10^4$. } 
+    \label{fig:starfish2}
+\end{figure}
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/starfish3.pdf}
+    \end{center}
+    \caption[Qualitative effects of varying $\gamma$ on the output of the L-GSR and L-RNC algorithms]{A color-map of the probability output of the L-GSR and L-RNC algorithms are shown for various increasing values of $\gamma$. Here, $\beta$ is set to $100$ and for L-RNC, $\lambda$ is set to $10^4$.}
+    \label{fig:starfish3}
+\end{figure}
+
+
+As seen in \cref{fig:starfish2}, an increase in beta tends to extend the range over which each labelled pixel can influence nearby probability. When $\beta$ is low, at 10, the labelled pixels only affect other pixels in the immediate vicinity, with the probability quickly reverting to 0.5 (i.e. unknown) for more distant unlabelled pixels. As $\beta$ increases, so does this influence range, which is most visible in the L-GSR model where, when $\beta = 500$, the probability prediction becomes quite blurred. Furthermore, these results suggest that increasing $\beta$ assists the L-RNC model in utilising the RGB data, as the outline of the foreground object becomes more defined with the increase in $\beta$.
+
+\Cref{fig:starfish3} illustrates the impact of altering $\gamma$. As visible, a lower $\gamma$ tends to accentuate the transition between class probabilities, with the model yielding probabilities that cluster around zero or one. Interestingly, in this low $\gamma$ region, the graph intercept predominates over the explanatory variables within the L-RNC model. On the other hand, with higher $\gamma$ values, we observe the L-GSR probabilities leaning towards 1/2 across the entire lattice. For the L-RNC model in this scenario, the influence of the graph intercept term wanes, allowing the explanatory variables to take precedence in the prediction process.
+
+
+\subsection{Multiclass segmentation with hyper-spectral images}
+ 
+In this section, we test the multiclass L-GSR and L-RNC algorithms on a segmentation task using a hyperspectral image of a patch of farmland in North-western Indiana \citep{Baumgardner2015}. The image has been manually segmented into seventeen distinct classes representing different crop types and land uses. The image is $145 \times 145$ pixels in shape, and has 200 channels representing the response over a wavelength range of $0.4-2.5 \times 10^{-6}$m, with some bands covering the region of water absorption removed.  \Cref{fig:hyperspectral} gives an overview of this dataset, with the image on the left an example reading from one of the wavelength channels, and the image on the right a color-representation of the different land types. 
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/hyperspectral.pdf}
+    \end{center}
+    \caption[A visual overview of the Indian Pines hyperspectral image dataset]{An overview of the Indian Pines hyperspectral image dataset. On the left is an example reading of the intensity response form the channel representing a wavelength of $0.9 \times 10^{-6}$m. On the right is the ground truth for the land use types, along with the associated color key.}
+    \label{fig:hyperspectral}
+\end{figure}
+
+In order to verify the algorithms behave as expected, we tested the output when 20\% of the pixels had the correct class labelled. This generated the binary input tensor $\Yt$ of shape $(145, 145, 17)$, with a one-hot encoding along the class dimension, and the sensing tensor $\St$ of shape $(144, 144)$. For the L-RNC algorithm, we allowed access to the pixel data as a tensor of explanatory variables $\Xt$, of shape $(144, 144, 200)$. We then ran the L-GSR and L-RNC algorithms using an isotropic diffusion filter with parameter $\beta = 20$, and set $\gamma = 5 \times 10^{-3}$. For the L-RNC algorithm, we used a regularisation parameter of $\lambda = 100$.  
+
+Both these algorithms produced tensors representing the class probabilities at each pixel in the form of a tensor $\Mt$ of shape $(144, 144, 17)$. From this, we obtained the most likely class by taking the maximum element along the final dimension. The results can be seen in \cref{fig:pines}. The L-GSR model achieved an accuracy of 84\%, and the L-RNC algorithm achieved 89\%. 
+
+
+\begin{figure}[t] 
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/pines.pdf}
+    \end{center}
+    \caption[The predicted class labels from the multiclass L-GSR and L-RNC algorithms as applied to the Indian pines dataset]{A color representation of the predicted classes from the multiclass L-GSR an L-RNC algorithms as applied to the Indian Pines dataset. On the left, we show the represent the input $\Yt$ available to the models, which contains 20\% of the labelled pixels randomly selected. }
+    \label{fig:pines}
+\end{figure}
+
+
+
+\section{Discussion}
+
+\subsection{Convergence of the IRLS algorithm}
+
+In general, algorithms based on Newton's method, including Iteratively Reweighted Least Squares (IRLS), frequently encounter convergence difficulties \citep{Kelley2003}. In the course of our experimental work, we encountered two distinct problems, both of which we managed to rectify through relatively straightforward solutions.
+
+Initially, we employed 32-bit floating point numbers for all arrays, with a termination criterion for the IRLS iterations defined as the point at which the absolute change in the target vector or tensor had an average value less than $10^{-6}$. Nevertheless, we often noted an issue where the algorithm failed to converge, with the average change in each element stagnating around the order of $10^{-5}$. To mitigate this issue, we upgraded to 64-bit floating point arrays. Although this change resulted in marginally slower computational speeds and a somewhat larger memory footprint, it effectively addressed the convergence problem.
+
+A second challenge we faced manifested as either divergence or cyclic behaviour, where the target vector would oscillate through a finite series of points without ever achieving convergence. Broadly speaking, we found that these difficulties could be circumvented by selecting a more precise initial value for the iterative process. Our initial strategy was to simply set the initial estimate to a vector of zeros, but this approach led to inconsistent convergence outcomes.
+
+Instead, we found that using an initial estimate derived from the solution to the real-valued GSR/KGR/RNC problem proved to be more effective. To illustrate, for a binary L-GSR problem with inputs $\Yt$, $\St$, $\gamma$, and $\beta$, our initial estimate was the solution to the real-valued GSR problem with inputs $2 \Yt - \St$, $\St$, $\gamma$, and $\beta$. The transformation $\Yt \rightarrow 2 \Yt - \St$ preserves all values equal to one, while all observed values that were zero are converted to negative one, with all unobserved values remaining at zero. This method provided a generally superior initial estimate for the underlying signal, and once implemented, eliminated all previously observed convergence issues. In the case of multiclass problems, we essentially solved the real-valued problem $C$ times, corresponding to each dimension of the class label. This strategy ensured a smoother and more consistent convergence across various hyperparameter settings. 
+
+
+\subsection{Efficient computation in the multiclass L-RNC algorithm}
+
+It is straightforward to see how the binary L-GSR and L-RNC algorithms can be executed efficiently, using the same ideas used consistently in this thesis. The CGM primarily entails repeated multiplications of the coefficient matrix by an arbitrary vector, while the IRLS algorithm involves repetitive execution of the CGM. In the L-GSR model, the coefficient matrix $\Q$ is constructed solely of diagonal and Kronecker-structured operators, enabling accelerated multiplication onto tensors. This is achieved by efficiently applying \cref{al:GFT_dd}, as elaborated in \cref{sec:fast_kron_dd}. In the L-RNC scenario, the coefficient matrix $\widetilde{\Q}$ is a block matrix. The blocks aligned along the diagonal consist only of diagonal and Kronecker operators, while the off-diagonal blocks can be directly computed.
+
+As we progress to the multiclass L-GSR algorithm, a complication emerges due to the presence of a non-diagonal, non-Kronecker-structured operator, $\RR_{\muu}$, within the coefficient matrix. Nevertheless, as detailed in \cref{sec:multiclass} and explicitly stated in \cref{eq:R_mu_eff}, the action of $\RR_{\muu}$ on a vector or tensor can be computed efficiently by leveraging its special structure, with a time-complexity of $O(NC)$. 
+
+The multiclass L-RNC, however, presents two additional challenges. First, it becomes necessary to compute the matrix $(\X^\top \otimes \I_C) \RR_{\muu} (\X \otimes \I_C)$, so that it can then be decomposed into $\U_M \LAM_M (\U_M )^\top$. We assume that this decomposition step, which entails solving the eigenvalue problem for a dense symmetric matrix of dimensions $MC \times MC$, is feasible. This assumption is likely reasonable for most problem scenarios. For instance, in our case study involving 200 explanatory variables and 17 classes, the process required the decomposition of a $3400 \times 3400$ matrix. Nevertheless, efficient computation of the matrix $(\X^\top \otimes \I_C) \RR_{\muu} (\X \otimes \I_C)$ is non-trivial. The straightforward strategy of instantiating the $NC \times MC$ matrix $\X \otimes \I_C$ directly, and then sequentially multiplying $\RR_{\muu}$ onto each column demands $C^2$ copies of $\X$, which may be challenging for large problems. In our relatively modest example, this matrix would be of size $(4.2 \times 10^6) \times 3400$, amounting to almost 10GB of 64-bit floating point memory. With a memory complexity of $O(NMC^2)$, this is potentially intractable. 
+
+Fortunately, a more efficient approach is possible. The matrix $(\X^\top \otimes \I_C) \RR_{\muu} (\X \otimes \I_C) \in \R^{MC \times MC}$ can be viewed as a block matrix comprising $M^2$ blocks, each of dimensions $C \times C$. The computation of Block $(i, j)$ can be conducted as follows.
+
+\begin{equation*}
+    \text{Block}_{ij} = \text{Block}_{ji} = \Diag{(\X_i \circ \X_j \circ \M)^\top \one_C } - (\X_{i} \circ \M)^\top  (\X_{j} \circ \M)
+\end{equation*}
+
+where, in this context, $\X_{i} \in \R^{N \times C}$ is the $i$-th column of $\X$ repeated $C$ times, and $\M$ is $\Mt$ reshaped to have dimensions $(N, C)$. Thus the memory complexity of this approach is reduced to $O(NM + NC)$.  
+
+The second complication that arises is in the computation of the block matrix $\widetilde{\Q}$. Here, the upper right block is given by 
+
+\begin{equation*}
+    (\U \D_\Gt \otimes \I_C)^\top \RR_{\muu} (\X \otimes \I_C) \U_M \D_M \in \R^{NC \times MC}
+\end{equation*}
+
+and the lower left block is the transpose of this. Again, since this object has $NMC^2$ elements, instantiating it in memory may be problematic. Instead, we can efficiently compute its action on a vector $\ve$ of length $MC$ by taking the following steps.
+
+\begin{enumerate}
+    \item $\ve \in \R^{MC} \leftarrow \U_M \D_M \ve \quad$ \textit{(compute this as usual)}
+    \item $\ve \in \R^{NC} \leftarrow \vecrm{\X \; \text{reshape}\big(\ve, (M, C)\big)} \quad $ \textit{(compute using the standard row-major vec trick)}
+    \item $\ve \in \R^{NC} \leftarrow \RR_{\muu} \ve \quad$ \textit{(compute efficiently using  \cref{eq:R_mu_eff})}
+    \item $\ve \in \R^{NC} \leftarrow (\U \D_\Gt \otimes \I_C)^\top \ve \quad$ \textit{(compute efficiently using fast Kronecker product)}
+\end{enumerate}
+
+The reverse process, of multiplying the transpose of this block onto a vector of length $NC$ can be achieved by reversing these steps with each operation transposed. In both cases, this reduces the computational and memory footprint substantially.  
+
+
+\section{Conclusions}
+
+Classification tasks over networks can be effectively represented by partially labelled binary graph signals. Although the Graph Signal Processing (GSP) community has made significant strides in the study of real-valued signals, binary signals have received comparatively less attention. In this chapter, we have taken a graph spectral approach to network-based classification tasks, examining several statistical models for regression and reconstruction that incorporate binary-valued graph signals.
+
+In particular, we have developed several three novel graph signal processing models by generalising the Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR), and Regression with Network Cohesion (RNC) models, which were developed earlier in this thesis for real-valued signals, to accommodate binary graph signals. This led to the creation of three ``logistic" models: L-GSR, L-KGR, and L-RNC. Similar to their real-valued counterparts introduced in \cref{chap:nd_gsp}, all three models are devised to handle signals residing on the nodes of general Cartesian product graphs, making them relevant for applications such as network time series modelling. Additionally, we introduced multiclass versions of these three algorithms to manage scenarios where nodes need to be classified into one of several groups or classes. 
 

@@ -440,6 +440,12 @@ where, as before, $\U = \U_T \otimes \U_N $. We choose this preconditioner becau
 
 Note that the upper left block can be multiplied onto a length $NT$ vector with complexity $O(N^2T + NT \log T)$, by leveraging the properties of the Kronecker product and making use of the Fast Cosine Transform (FCT). The upper right block of this matrix consists of $M$ length $NT$ column vectors, which can be computed with complexity $O(MN^2T + MNT \log T)$ and multiplied onto a length $M$ vector with complexity $O(NTM)$. This also applies to the lower left block, which is the transpose of the upper right, and can be multiplied onto a length $M$ vector in the same number of operations. Finally, the lower right block can be multiplied onto a length $M$ vector with $M$ operations. Therefore, the overall complexity of multiplying the entire matrix onto a vector of length $NT + M$ is $O(N^2T + NT \log T)$. 
 
+\subsection{Discussion}
+
+Limits as $\gamma, \lambda \rightarrow \infty$. 
+
+\subsection{}
+
 % Unfortunately, it is difficult to precisely quantify the spectrum of this block matrix. 
 
 
