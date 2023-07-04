@@ -845,31 +845,34 @@ Then we instead solve the modified linear system as follows.
 
 
  
+\newpage 
 
+\section{GSR and KGR for green bond yield prediction}
 
-\section{Kernel Graph Regression for green bond yield prediction}
+\label{sec:green_bonds}
 
-In this section we conduct an analysis of the multiway Kernel Graph Regression algorithm developed in \cref{sec:kgr_dd} as applied to the problem of predicting green bond yields. Recently, green finance has emerged as an important asset class for funding the transition to a lower carbon economy \citep{Peters2022}. Green bonds provide a way for governments and municipalities to raise capital for large projects with specific climate or environmental sustainability purposes. In this case study, we consider the yield time series for a number of green bonds issued by US state authorities, and attempt to predict the missing values given external factors such as yields on US government treasuries. 
+In this section, we undertake an analysis of the multiway Graph Signal Reconstruction and Kernel Graph Regression algorithms, developed in \cref{sec:tensor_gsr,sec:kgr_dd}, applying them to the problem of predicting the yield of a set of green bonds over time. Green finance has recently emerged as an important asset class for funding the transition to a lower carbon economy \citep{Peters2022}. Green bonds provide a mechanism for governments and municipalities to raise capital for large projects with specific climate or environmental sustainability objectives. In this case study, we utilise the yield time series for a number of US municipal green bonds, collected from Bloomberg, and attempt to estimate the missing values. This approach presents a novel method for estimating the theoretical price of bonds with various characteristics and for analysing the relationship between external factors, such as the federal funding rate or inflation, and yield. 
 
-Bond yields over various maturities present an interesting use case for multiway graph signal processing methods. At any given time, for a given bond issuer, the yield over various maturities is expected to interpolate smoothly, forming the so called yield curve. Typically, shorter-maturity bonds have lower yields than those with a longer maturity, however under certain circumstances the trend may be flat or inverted. \Cref{fig:US_yield_curve} shows how the yield on US treasuries of various maturities has varied in the last 35 years.  
- 
-\begin{figure}[t] 
+The yield (to maturity) of a bond is the single discount rate that, when applied to all cash flows, results in a present value equal to the current market price \citep{Hull2009}. Broadly speaking, yields represent return on investment and therefore reflect the perceived risk of a particular security, with higher yields necessary to justify risker assets. External macroeconomic factors such as inflation, central bank interest rates, and economic uncertainty also play a key role in determining yields. 
+
+\begin{figure}[b] 
     \begin{center}
-        \includegraphics[width=0.8\linewidth]{Figures/fed_rates.pdf}
+        \includegraphics[width=0.75\linewidth]{Figures/fed_rates.pdf}
     \end{center}
-   \caption[3D plot of yield on US treasuries of various maturities over time]{A representation of the graph used for categorising municipal green bonds based on the sector of the project. } 
+   \caption[3D plot of the yield on US treasuries of various maturities over time]{A 3D plot of the yield on US treasuries of various maturities over time. } 
     \label{fig:US_yield_curve} 
 \end{figure} 
 
-For bonds issued by other bodies such as state authorities there may be many other intrinsic factors that affect the yield. These include the credit rating of the issuer, the coupon rate, the tax exemption status, and, of particular relevance to green bonds, the Environmental, Social and Governance (ESG) impact of the project being funded. In this case study, we frame the problem of estimating unknown yields as a multiway graph signal processing problem, where several of these factors are treated as separate tensor coordinates. In particular, we categorise each bond based on the following factors. 
+One key intrinsic factor that can influence the yield of a bond is its maturity, representing the length of time before the principal must be repaid. Under normal market conditions, long-term fixed-income securities, such as 20-year bonds, typically provide higher returns than their short-term counterparts, such as 2-year bonds. This is primarily due to the greater uncertainty associated with longer-term securities, especially concerning potential fluctuations in future interest rates. For a set of equivalent bonds differing only based on their maturity length, the yield is expected to interpolate smoothly at any given time, forming the so-called yield curve. \Cref{fig:US_yield_curve} demonstrates how the yield curve for US treasuries has varied over the past 35 years.
 
+For bonds issued by other entities, such as state authorities, numerous intrinsic factors other than maturity may affect the yield. These include the credit rating of the issuer, the tax exemption status, and, particularly relevant to green bonds, the Environmental, Social and Governance (ESG) impact of the funded project. In this case study, we frame the problem of estimating unknown yields as a multiway graph signal processing task. Specifically, we categorise the bonds based on several factors likely to influence the yield, such that each bond can be associated with a node on a four-dimensional Cartesian product graph. In particular, we take into account the following factors, each of which forms the basis of one of the factor graphs. 
 
 \begin{enumerate}
-    \item \textit{Use of funds}. Each bond in our dataset has an associated project category (such as water, pollution or power) and sub-category (such as waste management, habitat conservation, or solar farms). We used this information to construct a tree graph, beginning with a root node, and branching into category and sub-category nodes. The resultant tree, with a total of 161 nodes, is visualised in \cref{fig:green_bond_graph}. Each bond can then be associated with a particular leaf node based on their particular project. (No bonds were associated with the root or parent category nodes and, as such, all data here was interpreted as missing). 
-    \item \textit{Credit rating}. Each bond also had an assigned credit rating associated with the issuer, designated by a ratings agency. These range from the highest possible rating of ``AAA", to the lowest in our dataset of ``BBB+", giving a total of eight categories.  
-    \item \textit{Maturity}. Each bond has a fixed amount of time from its issue date to the date of maturity. Unlike treasury bonds, the green bonds we considered did not necessarily have standard maturity lengths. We therefore categorised each bond by the length of this period, sorted into seven different bins, with edges corresponding to 0, 1, 2, 5, 10, 20, 30, 40 and 50 years.  
-    \item \textit{Coupon}. Each bond also had an associated coupon, expressed as a percentage of the principal, with biannual payments. We categorised each bond based on which of six bins this percentage fell within, using edges of 0, 1, 2, 3, 4, 5, and 6\%. 
-\end{enumerate} 
+    \item \textit{Use of funds}. Each bond in our dataset was associated with a project category (such as water, pollution or power) and sub-category (such as waste management, habitat conservation, or solar farms). We used this information to construct a tree graph, beginning with a root node, and branching into category and sub-category nodes. The resulting tree, comprising a total of 161 nodes, is visualised in \cref{fig:green_bond_graph}. Each bond can then be associated with a specific leaf node based on their particular project category.
+    \item \textit{Credit rating}. Each bond also had an assigned credit rating associated with the issuer, designated by a ratings agency. These ratings range from the highest possible, ``AAA", to the lowest in our dataset, ``BBB+", giving a total of eight categories. Since these ratings have a natural order, they can be represented using a simple chain graph.
+    \item \textit{Maturity}. Each bond has a fixed period from its issue date to the date of maturity. Unlike treasury bonds, the green bonds we considered did not necessarily have standard maturity lengths. We thus categorised each bond by the length of this period, sorted into eight different bins, with edges corresponding to 0, 1, 2, 5, 10, 20, 30, 40 and 50 years. As with credit rating, the natural order enables us to represent this with a chain graph.
+    \item \textit{Tax status}. Each bond also has an associated tax status. This includes information about whether the bond was taxed at the federal and state level, as well as certain other provisions such as special exemptions for specific institutions. We represented tax status as a network, where any two codes were connected if they shared at least one property in common. Further information on the possible green bond tax statuses is presented in \cref{table:student}, and the graph we used to connect them is depicted in \cref{fig:tax_graph}.
+    \end{enumerate}
 
 \begin{figure}[t]  
     \begin{center}
@@ -877,28 +880,102 @@ For bonds issued by other bodies such as state authorities there may be many oth
     \end{center}
    \caption[Graph categorising green bonds based on sector]{A representation of the graph used for categorising municipal green bonds based on the sector of the project. } 
     \label{fig:green_bond_graph}
+    \vspace{1.5cm}
 \end{figure} 
 
-Given these factors, each bond could be associated with a particular four dimensional coordinate. With the addition of a time coordinate, which included monthly data from March 2003 to March 2023, the resultant input tensor $\Yt$ had five distinct axes, with an overall shape of $(421, 161, 8, 8, 6)$. This can be understood as $T=421$ repeated measurements of a Cartesian product graph signal, where the first factor graph has an adjacency matrix specified by the tree shown in \cref{fig:green_bond_graph}, and the other three axes are simple chain graphs. \Cref{fig:bond_tensor} gives a visual representation of this object. 
+\begin{table}[t]
+    \centering
+    \def\arraystretch{1.5}
+    \begin{tabular}{l p{9cm}}
+        \toprule
+        \textbf{Tax Status} & \textbf{Description} \\ 
+        \midrule
+        Fed \& St Tax-Exempt & Exempt from tax at both the federal and state level.  \\ 
+        Fed Taxable/St Tax-Exempt & Taxable at the federal level, exempt at the state level.  \\ 
+        Fed Tax-Exempt/St Taxable & Exempt at the federal level, taxable at the state level. \\ 
+        Fed BQ/St Tax-Exempt & ``Bank Qualified'' (special provisions for large banks) at the federal level, exempt at the state level.  \\ 
+        Fed Tax-Exempt & Exempt at the federal level, no information about the state level. \\ 
+        AMT/St Tax-Exempt & ``Alternate Minimum Tax'' (special provision removing certain tax deductions) at the federal level, exempt at the state level. \\ 
+        Fed Taxable/St Taxable & Taxable at both the federal and state level. \\ 
+        \bottomrule
+       \end{tabular}
+        \caption[Information on the tax status of green bonds]{Further information on the possible tax status of the green bonds used in this case study.}
+        \label{table:student}
+\end{table}
+
+\begin{figure}[b]  
+    \begin{center}
+        \includegraphics[width=0.66\linewidth]{Figures/tax_graph.pdf}
+    \end{center}
+   \caption[Graph categorising green bonds based on tax status]{A representation of the graph used for categorising municipal green bonds based on the associated tax status. Two different statuses are linked via an edge if they share at least one property in common. } 
+    \label{fig:tax_graph}
+\end{figure} 
+
+
+\newpage 
+
+\phantom{blabla}
+
+\newpage
+
+
+Given these factors, each bond could be associated with a particular four-dimensional coordinate: use of funds, credit rating, maturity, and tax status. With the inclusion of a time coordinate, encompassing weekly data from June 2018 to March 2023, the resulting input tensor $\Yt$ had five distinct axes, with an overall shape of $(429, 161, 8, 8, 7)$. For the KGR model, this can be interpreted as $T=429$ repeated measurements of a 4-dimensional multiway graph signal, and for the GSR model, it can be regarded as a single measurement of a 5-dimensional graph signal, with time also represented by a chain graph. \Cref{fig:bond_tensor} provides a visual representation of the tensor signal, $\Yt$, utilised in this application.
 
 \begin{figure}[t] 
     \begin{center}
-        \includegraphics[width=0.85\linewidth]{Figures/bond_tensor.pdf}
+        \includegraphics[width=0.9\linewidth]{Figures/bond_tensor.pdf}
     \end{center}
    \caption[A visualisation of the tensor coordinates used in the greed bond application]{A visualisation of the tensor coordinates used in this application. Rating, maturity and coupon are all represented by a chain graph, while category is a tree graph as described above.} 
     \label{fig:bond_tensor}
 \end{figure} 
 
-For many specific tensor coordinates, no bond yield existed. This could be due to the fact that the bond was not trading at this particular time, or because no bond ever existed with these particular characteristics. Furthermore, as mentioned, since the parent nodes in the graph representing use of funds are in a sense ``artificial'', in that they serve only to create the tree structure, no realised yield could possibly exist there. Under the framework developed in this thesis, this does not present a problem, since we can simply allocate these coordinates as containing missing data, as specified by the binary sensing tensor $\St$. 
+For many specific tensor coordinates, no bond yield existed, and as such the tensor $\Yt$ was very sparse. This could be due to the fact that the bond was not trading at this particular time, or because no bond ever existed with these particular characteristics. Moreover, since the parent nodes in the graph representing the use of funds are in a sense ``artificial" - serving solely to create the tree structure - no realised yield could possibly exist there. Under the framework developed in this thesis, this does not present a problem, since we can simply allocate these coordinates as containing missing data, as specified by the binary sensing tensor $\St$. 
 
-Additionally, there were certain bonds that shared the same characteristics, i.e. the same use of funds, rating, maturity and coupon. In these cases, we simply chose the bond with the longest available history and broke ties randomly. In total, we used 1045 bonds, over an average of 56.2 months, covering a total of 0.4\% of the total tensor space. 
+Additionally, there were certain bonds that shared identical characteristics, i.e., the same use of funds, rating, maturity, and tax status. In these instances, we simply selected the bond with the longest available history and randomly broke ties. In total, we used 829 bonds (out of a theoretically possible $161 \times 8 \times 8 \times 7 = 72,128$). As many bonds did not span the total 429 weeks, this left a total missingness of $m=99.27\%$.
 
-As mentioned, in this case study, we use Kernel Graph Regression to predict the yields. This means, in addition to the input tensor $\Yt$ and the sensing tensor $\St$, a matrix of explanatory variables $\X$ of shape $(T, M)$ is required. Here, we use the treasury yields over $11$ different maturities, along with core inflation and Federal reserve fund rate, to give a total of $M=13$ explanatory variables.  
-
-
+As previously noted, one model we employ in this case study to predict the yields is Kernel Graph Regression. This necessitates, in addition to the input tensor $\Yt$ and the sensing tensor $\St$, a matrix of explanatory variables $\X$ with shape $(T, M)$. Here, we use the treasury yields over 11 different maturities, along with core inflation, the Federal Reserve fund rate, and a simple linear variable $t$ ranging from -1 to 1, totalling $M=14$ explanatory variables. This data was obtained from the FRED API \citep{FRED2023}.
 
 
+\begin{table*}[t] 
+    \centering
+    \def\arraystretch{1.5} 
+    \begin{tabular}{@{}ccccccccc}
+    \toprule
+    & \multicolumn{2}{c}{Training} & \phantom{abc} & \multicolumn{2}{c}{Validation} & \phantom{abc} & \multicolumn{2}{c}{Test} \\
+    \cmidrule{2-3} \cmidrule{5-6} \cmidrule{8-9}
+    & MSE  & $R^2$  &&  MSE  & $R^2$ &&  MSE  & $R^2$  \\ \midrule \rule{0pt}{1cm}
+
+    GSR & 0.263 & 0.846 && 0.332 & 0.819 && 0.319 & 0.823 \\ \rule{0pt}{6ex}
+    
+    KGR & 0.266 & 0.845 &&  0.333 & 0.820 && 0.317 & 0.824 \\\rule{0pt}{6ex}
+    
+    Ridge & 0.387 & 0.775 && 0.501 & 0.729 && 0.497 & 0.725 \\ \rule{0pt}{6ex}
+    
+    Lasso &  0.424 & 0.753 && 0.482 & 0.739 && 0.506 & 0.720 \\[0.5cm] 
+
+    \bottomrule 
+    \end{tabular}
+    \caption[Results for bond yield experiments]{The Mean Square Error (MSE) and $R^2$ statistic from the bond yield experiment are shown for both GSR and KGR. Results are reported on the training set, the validation set, and the test set. }
+    \label{tab:bond_yield_results} 
+\end{table*}
+
+Our experiment proceeded as follows. Firstly, we randomly divided the 829 bonds into a training, validation, and test set in an 80:10:10 ratio. We then trained the GSR and KGR models on the training set, using the validation set to select the optimal hyperparameters, identified using an optimisation algorithm based on the Nelder-Mead method \citep{Gao2012}. In addition, we evaluated two standard linear regression techniques, namely Ridge and Lasso \citep{Murphy2012}. In these scenarios, the yield at each moment in time for each bond was modelled as a linear combination of a constant term, the features comprising the matrix $\X$, and a one-hot encoding of each of the bond descriptors (use of funds, rating, etc). This resulted in $1 + 14 + 159 + 8 + 8 + 7 = 197$ explanatory variables for each yield. The regularisation parameter for the Ridge and Lasso models was also selected on the validation set using a straightforward line search.
+
+The results from the experiment can be found in \cref{tab:bond_yield_results}. As can be observed, the GSR and KGR methods attain similar performance to each other, consistently outperforming the Ridge and Lasso techniques. Both also display a Mean Square Error (MSE) and $R^2$ statistic that remains relatively constant across the training, validation, and test sets, suggesting that overfitting has largely been avoided. \Cref{fig:bond_yield_predictions} showcases the output of both GSR and KGR compared with the ground truth, for nine randomly selected bonds from the test set. We can observe that both GSR and KGR make broadly similar predictions, which often correlate closely with the ground truth. However, there are instances where the predictions noticeably overestimate or underestimate the yield. Further investigation into the reasons for these deviations would be valuable.
+
+\begin{figure}[t]  
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/bond_yield_predictions.pdf}
+    \end{center}
+   \caption[The output of the KGR and GSR algorithms on several green bonds from the test set]{The predicted yield is shown from the KGR and GSR algorithms as compared to the ground truth on a set of green bonds taken from the test set. } 
+    \label{fig:bond_yield_predictions}
+\end{figure} 
 
 
 
 \section{Conclusions}
+
+In this chapter we have been concerned with generalising several graph signal processing methods to the $d$-dimensional tensor setting. In \cref{sec:dd_gsp}, we discussed how the Cartesian product can be generalised to include more than two factor graphs, resulting in tensor-valued multiway graph signals. In \cref{sec:GSP_dd,sec:fast_kron_dd}, we reviewed how GSP techniques such as the GFT can be understood for $d$-dimensional signals, and introduced the concept of a general anisotropic graph filter. We also discussed how $d$-dimensional Kronecker products can be efficiently computed and presented the PyKronecker software library for this purpose \citep{Antonian2023}.
+
+In \cref{sec:tensor_gsr}, we reexamined the Graph Signal Reconstruction model developed in \cref{chap:gsr_2d}, generalising it to $d$ dimensions. This necessitated a fresh look at the SIM and CGM methods previously developed to make them applicable for this setting. Next, in \cref{sec:kgr_dd,sec:rnc_dd} respectively we took the Kernel Graph Regression and Regression with Network Cohesion techniques, which were developed in \cref{chap:kgr_rnc_2d}, and generalised them for the multiway case. Finally, in \cref{sec:green_bonds}, we showed how the multiway KGR and GSR methods could be applied to the problem of predicting the yield of novel green bonds in a time series application. In particular, we showed that both GSR and KGR could achieve good performance, significantly out-performing the standard techniques of Ridge and Lasso regression. 
+

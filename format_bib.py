@@ -11,7 +11,7 @@ with open('Bibliography.bib', 'r+') as f:
     bib_database = bibtexparser.load(f)
 
 
-skipitems = ['EPA2023']
+skipitems = ['EPA2023', 'FRED2023']
 
 for item in bib_database.entries:
 
