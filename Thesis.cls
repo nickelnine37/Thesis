@@ -181,33 +181,39 @@
 %	defined as \examname above so you cite it as \examname
 %---------------------------------   
 
-\thesistitle{Bayesian Reconsruction and Regression over Networks} % Your thesis title - this is used in the title and abstract
+\thesistitle{Bayesian Reconsruction and Regression with Multivariate Graph Signals} % Your thesis title - this is used in the title and abstract
 %---------------------------------   
-\supervisor{Dr. James \textsc{Smith}} % You supervisor's name - this is used in the title page
+\supervisor{Prof. Mike \textsc{Chantler} \& Prof. Gareth W. \textsc{Peters}} % You supervisor's name - this is used in the title page
 %---------------------------------   
 \examiner{} % Your examiner's name - this is not currently used anywhere in the template, cite it with \examname if you want it
 %---------------------------------   
-\degree{MSc.} % Your degree name - this is currently used in the title page and abstract
+\degree{PhD.} % Your degree name - this is currently used in the title page and abstract
 %---------------------------------   
-\authors{John \textsc{Smith}} % Your name - this is used in the title page and abstract
+\authors{Edward \textsc{Antonian}} % Your name - this is used in the title page and abstract
 %---------------------------------   
 \addresses{} % Your address - this is not currently used anywhere in the template, cite it with \addressnames if you want it
 %---------------------------------    
 \subject{} % Your subject area - this is not currently used anywhere in the template, cite it with \subjectname if you want it
 %---------------------------------   
 \keywords{} % Keywords for your thesis - this is not currently used anywhere in the template, cite it with \keywordnames if you want it
-%---------------------------------   
-\university{\texorpdfstring{\href{http://www.hw.ac.uk} % Your university's URL
-                {Heriot-Watt University}} % Your university's name - this is currently used in the title page
-                {Heriot-Watt University}}
+%---------------------------------  
+
+\university{Heriot-Watt University}
+
 %---------------------------------     
 \UNIVERSITY{\texorpdfstring{\href{http://www.hw.ac.uk)} % Your university's URL
                 {HERIOT_WATT UNIVERSITY}} % Your university's name in capitals - this is currently used in the abstract page
                 {UNIVERSITY NAME (IN BLOCK CAPITALS)}}
 %---------------------------------               
-\department{\texorpdfstring{\href{http://www.macs.hw.ac.uk} % Your department's URL
-                {School of Mathematical and Computer Sciences}} % Your department's name - used in the title page and abstract
-                {School of Mathematical and Computer Sciences}}
+
+\department{School of Mathematical and Computer Sciences}
+
+%---------------------------------               
+% \department{\texorpdfstring{\href{http://www.macs.hw.ac.uk} % Your department's URL
+%                 {School of Mathematical and Computer Sciences}} % Your department's name - used in the title page and abstract
+%                 {School of Mathematical and Computer Sciences}}
+
+
 %---------------------------------                
 \DEPARTMENT{\texorpdfstring{\href{http://www.macs.hw.ac.uk} % Your department's URL
                 {DEPARTMENT OR SCHOOL NAME (IN BLOCK CAPITALS)}} % Your department's name in capitals - this is not currently used anywhere in the template, cite it with \DEPTNAME if you want it
