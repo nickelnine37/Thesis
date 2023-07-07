@@ -9,9 +9,12 @@
 
 \title{\ttitle} 
 
+\makeatletter
+\def\footnoterule{\kern-8\p@
+  \hrule \@width 2in \kern 7.6\p@} % the \hrule is .4pt high
+\makeatother
 
 \begin{document}
-
 
 \frontmatter 
 
@@ -22,11 +25,11 @@
 
 % \input{Front & Back Matter/declaration}
 
-\input{Front & Back Matter/quotation}
-
 \input{Front & Back Matter/abstract}
 
 \input{Front & Back Matter/acknowlegements}
+
+\input{Front & Back Matter/quotation}
 
 \input{Front & Back Matter/contents}
 

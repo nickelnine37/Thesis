@@ -43,7 +43,7 @@ In this thesis, we focus primarily on the area of Graph Signal Processing (GSP),
 
 A graph signal represents a value that is measured simultaneously at every node in a graph. For example, consider a social media network, where each node represents an individual, and presence of an edge indicates that the two individuals have connected. An example of a graph signal in this context could be the age of each person in the network, or a score indicating their propensity to engage with certain content. In either case, this is a value that could theoretically be measured or estimated across the network, though it may be subject to missing data or noise. 
 
-GSP typically uses tools that stem from classical signal processing. There, the focus is on manipulating data that resides on a regular domain, such as audio, images and digital communication. GSP utilises spectral graph theory to generalise these classical techniques, leading to graph-based counterparts of algorithms such as filtering, sampling, and reconstruction \citep{Shuman2013, Sandryhaila2013}. Applications of GSP are numerous, ranging from social networks \citep{Dong2015} and brain connectivity modelling \citep{Huang2016} to sensor networks \citep{Zhu2012}, and molecular structures \citep{Kearnes2016}. As an emerging field, there are many opportunities for the development of theory, and new use-cases to explore, making it an exciting and dynamic area of research. 
+GSP typically uses tools that stem from classical signal processing. There, the focus is on manipulating data that resides on a regular domain, such as audio, images and digital communication. GSP utilises spectral graph theory to generalise these classical techniques, leading to graph-based counterparts of algorithms such as filtering, sampling, and reconstruction \citep{Sandryhaila2013}. Applications of GSP are numerous, ranging from social networks \citep{Dong2015} and brain connectivity modelling \citep{Huang2016} to sensor networks \citep{Zhu2012}, and molecular structures \citep{Kearnes2016}. As an emerging field, there are many opportunities for the development of theory, and new use-cases to explore, making it an exciting and dynamic area of research. 
 
 The primary focus of this thesis is on statistical models for the estimation of noisy, partially observed multivariate graph signals. In particular, we formulate several Bayesian regression and reconstruction models designed for multivariate data, and investigate scalable approaches to solving them in practice. This begins, in \cref{chap:gsr_2d}, with the reconstruction of signals with two axes, such as network time series data. \Cref{chap:kgr_rnc_2d} introduces several regression techniques for two-dimensional graph signals, and \cref{chap:nd_gsp} generalises the techniques developed prior in the thesis to $d$-dimensional data, under the ``Multiway" GSP (MGSP) framework. This is followed, in \cref{chap:variance}, by an investigation into the posterior covariance of the models, and finally \cref{chap:binary} introduces generalisations for binary and categorical graph signals. Along the way, there are several methodological contributions as well as some detailed case studies. In this introductory chapter, we first establish some basic definitions and concepts from GSP, as well as highlighting some motivating use cases. In \cref{chap:lit_review}, we define the precise scope of this thesis, review the relevant literature, and present our core contributions. 
 
@@ -52,11 +52,11 @@ The primary focus of this thesis is on statistical models for the estimation of 
 
 A graph, $\mathcal{G}$, with $N$ vertices is described by a node set $\mathcal{V}$, and an edge set $\mathcal{E}$. In this thesis, we will be primarily concerned with undirected graphs without self-loops, meaning the edges have no preferential direction and nodes do not connect to themselves. By imposing some arbitrary but consistent ordering on the nodes, this graph can also be described by an $N \times N$ adjacency matrix $\A$, where the entry $\A_{ij} = \A_{ji} \geq 0$ holds the strength of connection between nodes $i$ and $j$. In the basic case of a non-weighted graph, $\A_{ij}$ is simply one if the corresponding edge exists and zero otherwise. Using the same ordering, a graph signal can be represented by a vector, $\y$, of length $N$, where $\y_i$ holds the value of the graph signal at node $i$. 
 
-One key property of a graph signal is its \textit{smoothness}. Intuitively speaking, a smooth graph signal should have gentle variation between closely connected nodes, as is the case in \cref{fig:graph_signal}. Conversely, a rough graph signal might see large jumps in signal value between neighbouring nodes. Mathematically, the smoothness of a signal, $\y$, defined over the nodes of an undirected graph, can be measured in several ways. One simple option is the Total Square Variation (TSV), defined as follows. 
+One key property of a graph signal is its \textit{smoothness}. Intuitively speaking, a smooth graph signal should exhibit gentle variation between closely connected nodes, as is the case in \cref{fig:graph_signal}. Conversely, a rough graph signal might see large jumps in signal value between neighbouring nodes. Mathematically, the smoothness of a signal, $\y$, defined over the nodes of an undirected graph, can be measured in several ways. One simple option is the Total Square Variation (TSV), defined as follows. 
 
 \begin{equation}
     \label{eq:TSV1}
-    \text{TSV}(\y) = \frac{1}{2}\sum_{i, j} \A_{ij} (\y_i - \y_j)^2
+    \text{TSV}(\y) = \frac{1}{2}\sum_{i=1}^N \sum_{j=1}^N \A_{ij} (\y_i - \y_j)^2
 \end{equation}
 
 This measure sums up the square difference in signal value at each neighbouring node, weighted by the corresponding entry in the adjacency matrix, with the factor of a half adjusting for the double counting of nodes. This expression can also be written in terms of a single quadratic form, by introducing a new matrix $\LL$ - the so-called graph \textit{Laplacian}. 
@@ -66,88 +66,124 @@ This measure sums up the square difference in signal value at each neighbouring 
     \text{TSV}(\y) = \y^\top \LL \y
 \end{equation}
 
-The Laplacian, $\LL$, is another symmetric $N \times N$ matrix, and is defined as $\LL = \D - \A$, where $\D$ is the degree matrix. $\D$ is diagonal, where entry $\D_{ii}$ holds the sum of all the edge weights linked to node $i$, or in other words, the vector along the diagonal of $\D$ is the column (or row) sum of $\A$. It is straightforward to show that the two expressions for the total square variation given in \cref{eq:TSV1,eq:TSV2} are equivalent, see for example chapter 3 of \cite{Ortega2022}. 
+The Laplacian, like the adjacency matrix $\A$, is another symmetric $N \times N$ matrix, and is defined as $\LL = \D - \A$, where $\D$ is the degree matrix. $\D$ is diagonal, where entry $\D_{ii}$ holds the sum of all the edge weights linked to node $i$, or in other words, the vector along the diagonal of $\D$ is the column (or row) sum of $\A$. The Laplacian, which can be interpreted as a generalisation of the discrete second order derivative operator for an irregular topology, is of central importance to many aspects of GSP \citep{Shuman2013}. 
 
 \newpage
 
-A few basic facts stand out about the Laplacian quadratic form.
+It is straightforward to show that the two expressions for the total square variation given in \cref{eq:TSV1,eq:TSV2} are equivalent, see for example chapter 3 of \cite{Ortega2022}. A few basic facts stand out about the Laplacian quadratic form.
 
 \begin{enumerate}
     \item $\y^\top \LL \y \geq 0$ for any $\y$. Since $\text{TSV}(\y)$ sums the square difference between the signal at each pair of nodes, weighted by the non-negative entries of the adjacency matrix, the Laplacian quadratic form must be strictly non-negative. By definition, this implies that the matrix $\LL$ is positive semi-definite (PSD). 
     \item $\one^\top \LL \one = 0$, where $\one$ is a length-$N$ vector of ones. If the signal of interest is constant over the whole graph, the total square variation must be zero. Furthermore, if the graph contains two or more isolated sub-graphs, with edges connecting nodes within a each group but not between groups, then any signal that is constant over each sub-graph will have a Laplacian quadratic form of zero. 
 \end{enumerate}
 
-Since $\LL$ is positive semi-definite, its eigenvalues are all real and non-negative, and its eigenvectors can be chosen to be real and orthonormal. Thus, $\LL$ can be decomposed as 
+Since $\LL$ is positive semi-definite, its eigenvalues are all real and non-negative, and its eigenvectors can be chosen to be real and orthonormal. Thus, $\LL$ can be decomposed as follows. 
 
 \begin{equation}
     \LL = \U \LAM \U^\top
 \end{equation}
 
-where $\U$ is the square, $N \times N$ matrix of orthogonal eigenvectors $\{\uu_i\}$, and $\LAM$ is the diagonal matrix of eigenvalues, typically listed in ascending order. 
+where $\U$ is the square, $N \times N$ matrix of orthogonal eigenvectors $\{\uu_i\}$, and $\LAM$ is the diagonal matrix of eigenvalues $\{\lambda_i\}$, typically given in ascending order. Since $\U$ is orthonormal, it holds that $\uu_i^\top \uu_j = \delta_{ij}$, and that $\{\uu_i\}$ form a set spanning $\R^N$. Given the definition of the Laplacian quadratic form, the eigenvectors are the unique set of orthonormal vectors that sequentially minimise the total square variation, subject to perpendicularity to all those previous \citep{Spielman2019}. 
 
-\begin{equation*}
-    \U = \begin{bmatrix}
-        \vertbar{4.5}{0.5}{-3} & \vertbar{4.5}{0.5}{-3} & & \vertbar{4.5}{0.5}{-3} \\
-        \uu_1    & \uu_2    & \ldots & \uu_N    \\
-        \vertbar{4.5}{0.5}{0.5} & \vertbar{4.5}{0.5}{0.5} & & \vertbar{4.5}{0.5}{0.5} 
-    \end{bmatrix}, \quad\quad\quad \LAM = \begin{bmatrix}
-        \lambda_1 & & & \\
-        & \lambda_2 & & \\
-        & & \ddots & \\
-        & & & \lambda_N
-    \end{bmatrix}
-\end{equation*}
-
-Since $\U$ is orthonormal, it holds that $\uu_i^\top \uu_j = \delta_{ij}$, and that $\{\uu_i\}$ form a set spanning $\R^N$. Given the definition of the Laplacian quadratic form, the eigenvectors are the orthonormal set of vectors that sequentially minimise the total square variation, subject to perpendicularity to all those previous. 
 
 $$
 \begin{matrix}
-    \uu_1 & = & \underset{|\uu|^2 = 1}{\text{argmin}} \quad & \text{TSV}(\uu) \\[0.5cm]
-    \uu_2 & = & \underset{|\uu|^2 = 1, \perp \uu_1}{\text{argmin}} \quad & \text{TSV}(\uu) \\[0.5cm]
-    \uu_3 & = & \underset{|\uu|^2 = 1, \perp \uu_1, \uu_2}{\text{argmin}} \quad & \text{TSV}(\uu) \\[0.5cm]
-    & & \vdots & 
+    \uu_1 & = & \underset{\raisebox{-0.1cm} { $ \scriptstyle |\uu|^2 = 1$ }}{\text{argmin}} \quad & \text{TSV}(\uu) \\[0.7cm]
+    \uu_2 & = & \underset{\raisebox{-0.1cm} { $ \scriptstyle |\uu|^2 = 1, \; \perp \uu_1$ }}{\text{argmin}} \quad & \text{TSV}(\uu) \\[0.7cm]
+    \uu_3 & = & \underset{\raisebox{-0.1cm} { $ \scriptstyle |\uu|^2 = 1, \;\perp \uu_1, \uu_2$ }}{\text{argmin}} \quad & \text{TSV}(\uu) \\[0.7cm]
+    \uu_4 & = & \ldots
 \end{matrix}
 $$
 
-In this way, the eigenvectors of the graph Laplacian can be understood as sequentially less and less smooth, with respect to the topology of the graph. The corresponding eigenvalue, often referred to as the frequency, gives a value specifying how ``rough'' each eigenvector is relative to the others. Note that, for any undirected graph, the first Laplacian eigenvector will always be constant with an eigenvalue of zero. \Cref{fig:cali_eigs} gives a visual depiction of the first nine Laplacian eigenvectors and eigenvalues for a network representing regions in California. 
+\newpage
+
+In this way, the eigenvectors of the graph Laplacian can be understood as sequentially less and less smooth, with respect to the topology of the graph. The corresponding eigenvalue, often referred to as the frequency, gives a value specifying how ``rough'' each eigenvector is relative to the others. Note that, for any undirected graph, the first Laplacian eigenvector will always be constant with an eigenvalue of zero. \Cref{fig:uk_eigs} gives a visual depiction of the first eight Laplacian eigenvectors and eigenvalues for a network representing local authority regions in the UK. \footnote{Using boundary data published by the Office for National Statistics \citep{ONS2019}}  
 
 \begin{figure}[t]
 	\centering
-		\includegraphics[width=0.85\linewidth]{Figures/cali_plot_eigs.pdf}
-	\caption[A visualisation of the Laplacian eigenvectors for a network of regions in California]{A visualisation of the first nine Laplacian eigenvectors, along with their associated eigenvalue, for a network of regions in California. Each node represents a region, and each pair or regions share an edge if they border one another. Again, color is used to represent the value of the the graph signal. }
-	\label{fig:cali_eigs}
+		\includegraphics[width=0.85\linewidth]{Figures/uk_plot.pdf}
+		% \rule{35em}{0.5pt}
+        \caption[A visualisation of the Laplacian eigenvectors for a network of regions in the UK]{A visualisation of the first eight Laplacian eigenvectors, along with their associated eigenvalue, for a network of local authority regions in the UK. Each node represents a region, and each pair or regions share an edge if they border one another (or have a direct ferry crossing). Again, color is used to represent the value of the the graph signal. }
+	\label{fig:uk_eigs}
 \end{figure}
 
 
-  
-% \begin{figure}[t]
-% 	\centering
-% 		\includegraphics[width=0.7\linewidth]{Figures/loop_plot.pdf}
-% 		% \rule{35em}{0.5pt}
-% 	\caption[Eigenvectors of the loop graph Laplacian]{A graphical depiction of the eigenvectors of the loop graph Laplacian.  }
-% 	\label{fig:loop_plot}
-% \end{figure}
- 
-
-Since $\{\uu_i\}$ span the total space of $\R^N$, any graph signal $\y$ can be decomposed into a weighted sum of the Laplacian eigenvectors. This has a direct analogy with classical signal processing, where a 1D signal on a regular domain can be broken into its frequency components via the Fourier transform. 
-
-\begin{equation}
-    \y = \sum_{i=1}^N z_i \uu_i 
-\end{equation}
-
-As such, any graph signal, $\y$, has a duel representation, $\z$, in the Laplacian frequency space. Transformations between these two representations can be achieved by applying the Graph Fourier Transform (GFT) and Inverse Graph Fourier Transform (IGFT), which amounts to multiplying by the matrices $\U^\top$ and $\U$ respectively. 
+Since $\{\uu_i\}$ span the total space of $\R^N$, any graph signal, $\y$, can be decomposed into a weighted sum of the Laplacian eigenvectors. This parallels the classical Fourier transform, which expands signals into the basis of complex exponentials. As such, any graph signal, $\y$, has a duel representation, $\z$, in the frequency domain. Transformations between these two representations can be achieved by applying the Graph Fourier Transform (GFT) and Inverse Graph Fourier Transform (IGFT), which amounts to multiplying by the matrices $\U^\top$ and $\U$ respectively. 
 
 \begin{align}
-    \z &= \text{GFT}(\y) = \U^\top \y \\[0.2cm]
+    \z &= \mkern 2mu \text{GFT}(\y) \mkern 2mu = \U^\top \y \\[0.2cm]
     \y &= \text{IGFT}(\z)  = \U \z
 \end{align}
 
+For some simple graphs, the GFT is equivalent to a well-known transform in classical signal processing. For example, the Laplacian of the cycle graph (i.e. a set of nodes connected in a loop) has eigenvectors that can be expressed as sines and cosines (or, in full generality, complex exponentials). \Cref{fig:cycle_eighs} gives a visualisation of the real eigenvectors of a 50-node cycle graph Laplacian. 
+
+\begin{figure}[t]
+	\centering
+		\includegraphics[width=0.65\linewidth]{Figures/loop_plot.pdf}
+        \caption[A visualisation of the real Laplacian eigenvectors of the cycle graph]{A visualisation of the first nine Laplacian eigenvectors of a cycle graph with 50 nodes, along with their associated eigenvalue.}
+	\label{fig:cycle_eighs}
+\end{figure}
+
+Given that any graph signal can be decomposed into its Laplacian frequency components, filters and other spectral operators can be defined quite naturally. First, take a signal $\y$ and transform it into the frequency domain via the GFT. Next, scale each frequency component according to some predetermined function. Finally, transform back into the node domain via the IGFT. 
+
+
+\begin{wraptable}{l}{0.5\linewidth}
+    \centering
+    \def\arraystretch{1.7}
+    \begin{tabular}{@{}l c@{}}
+        \toprule
+        \textbf{Filter}   & $g(\lambda; \,\beta)$   \\
+        \midrule
+        1-hop random walk & $(1 + \beta \lambda)^{-1}$ \\
+        Diffusion         & $\exp(-\beta \lambda)$\\
+        ReLu              & $\max (1 - \beta \lambda, 0)$\\
+        Sigmoid           & $2 \big( 1 + \exp(\beta \lambda)\big)^{-1}$\\
+        Bandlimited       & $1, \,\text{if} \; \beta \lambda \leq 1 \; \text{else} \; 0$ \\
+        \bottomrule
+       \end{tabular}
+       \caption[Example graph filter functions]{Some example graph filter functions}
+        \label{tab:filters}
+\end{wraptable}
+
+A low-pass filter is a spectral operator that attenuates high-frequency components from a graph signal. It can be described by a monotonically decreasing filter function, $g(\lambda)$, which maps a Laplacian frequency, $\lambda$, to a number ranging between one and zero. The filtered signal, $\y'$, can then be computed as follows. \phantom{A low-pass filter is another matric}
 
 
 
+\begin{equation}
+    \y' \, =\U \mkern 2mu g(\LAM) \mkern 2mu \U^\top = \, \HH \y
+\end{equation}
+
+$g(\LAM)$ is the diagonal matrix found by applying the function $g$ to each entry along the diagonal of $\LAM$, and $\HH = \U g(\LAM) \U^\top$ is the resultant positive semi-definite graph filter operator. \Cref{tab:filters} gives some example filter functions, which also depend on a positive scalar parameter $\beta$ controlling the intensity of the filtering operation. Larger values of $\beta$ correspond to more aggressive attenuation of the high frequency content. In the limit as $\beta \rightarrow \infty$, these filters retain only the constant component, and as $\beta \rightarrow 0$, all frequency components are allowed through the filter unaffected. 
 
 
-\section{Some motivating examples}
+\begin{wrapfigure}{r}{0.4\linewidth}
+	\centering
+		\includegraphics[width=0.75\linewidth]{Figures/uk_smooth.pdf}
+	\caption[An example of a random smooth graph signal]{An example of a random smooth signal on the UK district graph, sampled from $\Norm{\zero}{\HH^2}$ using a bandlimited filter. }
+	\label{fig:random_smooth_uk}
+\end{wrapfigure}
+
+Graph filters can also be used to describe a probability distribution over possible signals. Consider an independent multivariate normal random variable $\x \sim \Norm{\zero}{\I_N}$. Applying a graph filter to a random signal $\x$ will result in a new signal, $\HH \x$, which is smoother with respect to the graph topology. This will be distributed according to $\HH \x \sim \Norm{\zero}{\HH^2}$, meaning $\HH^2$ can be interpreted as a covariance matrix with which to generate smooth, normally distributed graph signals. \Cref{fig:random_smooth_uk} gives a visual example of a random smooth signal, drawn from a distribution constructed from a bandlimited filter, allowing only the first ten frequency components through. 
+
+
+
+\section{GSP use cases}
+
+Graph signal processing methods have proven effective in many real world applications. In this short section, we highlight some motivating use-cases from the literature. This is by no means 
+
+\subsection{Biology}
+
+The world of biology provides many interesting use cases for graph signal processing methods. One area which has garnered significant interest is in analysing protein-protein interactions. Here, the concept is to model a set of proteins as nodes in an ``interactome'', which is the network of physical molecular interactions in a particular cell. Recent work such as \cite{Colonnese2021} used GSP methods to predict new interactions between proteins, while work such as \cite{Jha2022} used graph neural networks for the same task. These models aim to automate the prediction of protein interactions, reducing the time and cost associated with experimental methods. Other work has modelled an individual protein molecule as network of residues connected to each other based on their physical distance in 3D space, with the aim of predicting its biophysical properties \citep{Srivastava2023}. 
+
+Another area in biology that has been the subject of study via GSP methods is brain connectivity modelling. Work such as \cite{Goldsberry2017,Atasoy2016,Menoret2017} has found that the graph-spectral frequency profile of signals derived form fMRI imaging can provide useful insight into brain activity. In particular, these and related works have found specific spectral profiles associated with different emotional states, task familiarity and neurological diseases. 
+
+\subsection{Traffic flow modelling}
+
+
+
+\subsection{Finance}
+
+\subsection{Sensor networks}
 
 Graphs and graph signals have proven a useful way to describe data across a broad range of applications owing to their flexibility and relative simplicity. They are able to summarise the of key properties large, complex systems within a single easily-digestible structure. Much of the data encountered in modern applications can be wel-described by a graph, evidenced by the rise of graph databases such as Neo4j \citep{Webber2012}. 
 

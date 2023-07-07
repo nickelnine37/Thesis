@@ -458,7 +458,7 @@ Unless otherwise specified, the following naming conventions apply.
 \btypeout{Acknowledgements}
 \addtotoc{Acknowledgements}
 \thispagestyle{plain}
-\begin{center}{\huge{\textit{Acknowledgements}} \par}\end{center}
+\begin{center}{\hspace{-1cm}\LARGE{\textit{Acknowledgements}} \par}\end{center}
 {\normalsize #1}
 \vfil\vfil\null
 
@@ -468,7 +468,7 @@ Unless otherwise specified, the following naming conventions apply.
 \thispagestyle{plain}
 \null\vfil
 \vskip 60\p@
-\begin{center}{\Large \sl #1}\end{center}
+\begin{center}{\normalsize \sl #1}\end{center}
 \vfil\null
 \cleardoublepage
 }
