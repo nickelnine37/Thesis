@@ -50,16 +50,18 @@ The primary focus of this thesis is on statistical models for the estimation of 
 
 \section{GSP fundamentals}
 
+\label{sec:fundamentals}
+
 A graph, $\mathcal{G}$, with $N$ vertices is described by a node set $\mathcal{V}$, and an edge set $\mathcal{E}$. In this thesis, we will be primarily concerned with undirected graphs without self-loops, meaning the edges have no preferential direction and nodes do not connect to themselves. By imposing some arbitrary but consistent ordering on the nodes, this graph can also be described by an $N \times N$ adjacency matrix $\A$, where the entry $\A_{ij} = \A_{ji} \geq 0$ holds the strength of connection between nodes $i$ and $j$. In the basic case of a non-weighted graph, $\A_{ij}$ is simply one if the corresponding edge exists and zero otherwise. Using the same ordering, a graph signal can be represented by a vector, $\y$, of length $N$, where $\y_i$ holds the value of the graph signal at node $i$. 
 
-One key property of a graph signal is its \textit{smoothness}. Intuitively speaking, a smooth graph signal should exhibit gentle variation between closely connected nodes, as is the case in \cref{fig:graph_signal}. Conversely, a rough graph signal might see large jumps in signal value between neighbouring nodes. Mathematically, the smoothness of a signal, $\y$, defined over the nodes of an undirected graph, can be measured in several ways. One simple option is the total square variation ($\text{TV}_2$), defined as follows. 
+One key property of a graph signal is its \textit{smoothness}. Intuitively speaking, a smooth graph signal should exhibit gentle variation between closely connected nodes, as is the case in \cref{fig:graph_signal}. Conversely, a rough graph signal might see large jumps in signal value between neighbouring nodes. Mathematically, the smoothness of a signal, $\y$, defined over the nodes of an undirected graph, can be measured in several ways. One simple option is the total square variation ($\text{TV}_2$), which is defined as follows. 
 
 \begin{equation}
     \label{eq:TSV1}
     \text{TV}_2(\y) = \frac{1}{2}\sum_{i=1}^N \sum_{j=1}^N \A_{ij} (\y_i - \y_j)^2
 \end{equation}
 
-This metric sums up the square difference in signal value at each neighbouring node, weighted by the corresponding entry in the adjacency matrix, with the factor of a half adjusting for the double counting of nodes. It can also be written in terms of a single quadratic form, by introducing a new matrix $\LL$ - the so-called graph \textit{Laplacian}. 
+This metric, also known as Dirichlet energy, sums up the square difference in signal value at each neighbouring node, weighted by the corresponding entry in the adjacency matrix, with the factor of a half adjusting for the double counting of nodes. It can also be written in terms of a single quadratic form, by introducing a new matrix $\LL$ - the so-called graph \textit{Laplacian}. 
 
 \begin{equation}
     \label{eq:TSV2}
@@ -195,19 +197,20 @@ The world of biology provides many interesting use cases for graph signal proces
 
 Another area in biology that has been the subject of study via GSP methods is brain connectivity modelling. Work such as \cite{Goldsberry2017,Atasoy2016,Menoret2017,Itani2021} has found that the graph-spectral frequency profile of signals derived form fMRI imaging can provide useful insight into brain activity. In particular, these and related works have found specific Laplacian spectral profiles associated with different emotional states, task familiarity and neurological diseases. 
 
-\subsection{Transportation and Infrastructure}
+\subsection{Transportation and infrastructure}
 
 Another area in which GSP methods have been widely applied is in transportation and infrastructure applications. In \cite{Hasanzadeh2017}, the authors propose an adaptive ARMA model in the graph frequency domain for real-time traffic prediction, which was able to achieve a substantial increase in performance over non-graph-aware alternatives. The prediction of traffic was also tackled using GSP methods in \cite{Chakraborty2017}, using a technique known as trend filtering \citep{Wang2016}, and automatic incident detection using spatio-temporally denoised thresholds was applied in \citep{Chakraborty2019}. In \cite{Xiu2022}, the authors use a spatial-temporal multi-graph convolutional wavelet network to predict passenger numbers on a metro system. 
 
 GSP has also been used to analyse patterns of power consumption in electricity grids \citep{Ramakrishna2021}, and pressure in hydraulic networks \citep{Zhou2022}. In \cite{He2018} and \cite{Zheng2022}, the authors use GSP to address non-intrusive load disaggregation, which is an active area of research in the field of smart grids and energy conservation where the goal is to estimate how much each appliance or electrical load contributes to the total consumption. In \cite{Ying2022}, the authors address the recovery of harmonic data lost during power transmission, based on the spectral graph theory, and in \cite{Wang2022b}, the authors use GSP to identify abnormal batteries from cell-level voltage signals in a network of electric bicycle charging stations. 
 
 
-\subsection{Finance and Economics}
+\subsection{Finance and economics}
 
-Networks have been used in financial and economic models for many years \citep{Marti2021}, however, recently GSP specifically has found some interesting use-cases. In \cite{Vinicius2020}, the authors use a spectral model to learn an underlying graph structure from financial time-series data, and show that meaningful physical interpretations related to the market index factor can be extracted from this representation. In \citep{Zhang2023}, the authors consider how GSP can be incorporated into momentum-based financial forecasting models, showing that the additional topological information can enhance the accuracy of such models. Graph Neural Networks have also been used extensively in financial applications \citep{Wang2022c}. 
+Networks have been used in financial and economic models for many years \citep{Marti2021}, however, recently GSP specifically has found some interesting use-cases. In \cite{Vinicius2020}, the authors use a spectral model to learn an underlying graph structure from financial time-series data, and show that meaningful physical interpretations related to the market index factor can be extracted from this representation. In \citep{Zhang2023}, the authors consider how GSP can be incorporated into momentum-based financial forecasting models, showing that the additional topological information can enhance the accuracy of such models. 
 
 GSP has also recently been used in the context of asset allocation and portfolio theory. The portfolio cut paradigm, introduced in \citep{Dees2020}, is a graph-theoretic portfolio partitioning technique that allows the investor to group economically meaningful clusters of assets. In \citep{Arroyo2022}, this is extended by considering a dynamic portfolio, with time-evolving clusters. 
 
+Graph Neural Networks have also been used extensively in financial applications \citep{Wang2022c}. 
 
 
 \subsection{Sensor networks}

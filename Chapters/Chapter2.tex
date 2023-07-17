@@ -4,35 +4,73 @@
 
 \lhead{Chapter 2. \emph{Literature Review, Contributions and Scope}} 
 
-The aim of this literature review is to provide an overview of the field of Graph Signal Processing (GSP) with a particular emphasis on multivariate  reconstruction and regression models. First, we will give some historical context for the subject, highlighting the key theoretical advancements and canonical examples, before moving towards the contemporary developments relevant to this thesis. By presenting a holistic view of the existing literature, this review aims to set a firm foundation upon which we can build the discussion for our ensuing research questions.
+The aim of this literature review is to provide an overview of the field of Graph Signal Processing (GSP) with a particular emphasis on multivariate reconstruction and regression models. First, we will give some historical context for the subject, highlighting the key theoretical advancements and canonical examples, before moving towards the contemporary developments relevant to this thesis. This begins with a discussion of graph filters and kernels, which are a fundamental building block of the methods presented in this thesis. Next, we discuss the topic of graph signal reconstruction, before covering different approaches to regression with graph signals. This is followed by a survey the emerging field of multiway graph signal processing, and finally we discuss node classification methods. For each of this topics we explain how the methods presented in this thesis contribute to the field. 
 
-In examining the existing body of work, this chapter will also hone in on the specific scope of this thesis and define the boundaries of our research. In particular, we aim to identify the areas of interest that remain under-explored or incomplete in the current state of research, as well as clearly demarcate the topics which are not directly relevant to our research focus. 
+By presenting a holistic view of the existing literature, this review aims to set a firm foundation upon which we can build the discussion for our ensuing research questions. In addition, this chapter will also hone in on the specific scope of this thesis and define the boundaries of our research. In particular, we aim to identify the areas of interest that remain under-explored or incomplete in the current state of research, as well as clearly demarcate the topics which are not directly relevant to our research focus. 
 
 
 \section{A historical perspective on GSP}
 
-Though GSP as a field in its own right is generally understood to have been established in the early 2000s, its underlying conceptual framework draws upon the well-established fields of Spectral Graph Theory (SGT), and Digital Signal Processing (DSP), which both date back several decades. SGT is branch of mathematics that studies the eigenvalues and eigenvectors associated with a graph's adjacency or Laplacian matrix to gain insight into its structural properties \citep{Chung1997}. Early work on SGT can be traced back to the 1950s and '60s \citep{Collatz1957,Hoffman1969}, although many of the concepts had already been studied in parallel within quantum chemistry \citep{Huckel1931}. One of the foundational results in SGT is the multiplicity of the Laplacian's zero eigenvalue gives the number of connected components in the graph \citep{Cvetkovic1980}. Another key result is Cheeger's inequality, which relates the second smallest eigenvalue of the Laplacian (also known as the algebraic connectivity) to the isoperimetric number of the graph (a measure of a graph's bottleneck) \citep{Cheeger1971}. 
+Though GSP as a field in its own right is generally understood to have been established in the early 2000s, its underlying conceptual framework draws upon the well-established fields of Spectral Graph Theory (SGT), and Digital Signal Processing (DSP), which both date back several decades. SGT is a branch of mathematics that studies the eigenvalues and eigenvectors associated with a graph's adjacency or Laplacian matrix to gain insight into its structural properties \citep{Chung1997}. Early work on SGT can be traced back to the 1950s and '60s \citep{Collatz1957,Hoffman1969}, although many of the concepts had already been studied in parallel within quantum chemistry \citep{Huckel1931}. One of the foundational results in SGT is the multiplicity of the Laplacian's zero eigenvalue gives the number of connected components in the graph \citep{Cvetkovic1980}. Another key result is Cheeger's inequality, which relates the second smallest eigenvalue of the Laplacian (also known as the algebraic connectivity) to the isoperimetric number of the graph (a measure of a graph's bottleneck) \citep{Cheeger1971}. 
 
-Digital Signal Processing, sometimes considered a branch of engineering, utilises digital computation to analyse, transform, or filter signals, which can be in forms such as sound, images, and sensor data \citep{Rabiner1975}. The core principles of DSP are grounded in in linear algebra, calculus, differential equations, and statistics. This theoretical basis has given rise to a wealth of practical applications in diverse domains, including telecommunications, audio processing, image and video processing, astronomy, and seismology, among others. In DSP, the Discrete Fourier Transform (DFT) and its fast algorithmic implementation, the Fast Fourier Transform (FFT), play a central role, with many tasks such as reconstruction, denoising, compression, and filtering requiring analysis and manipulation of the frequency content of signals \citep{Duhamel1990}.
+Digital Signal Processing (DSP), sometimes considered a branch of engineering, utilises digital computation to analyse, transform, or filter signals, which can be in forms such as sound, images, and sensor data \citep{Rabiner1975}. The core principles of DSP are grounded in linear algebra, calculus, differential equations, and statistics. This theoretical underpinning has led to a plethora of practical applications across varied fields, such as telecommunications, audio processing, image and video processing, astronomy, and seismology, to name a few. Within DSP, the Discrete Fourier Transform (DFT) and its fast algorithmic implementation, the Fast Fourier Transform (FFT), play a central role, with many tasks such as reconstruction, denoising, compression, and filtering requiring analysis and manipulation of the frequency content of signals \citep{Duhamel1990}.
 
+GSP began to take shape as a separate discipline around the start of the 21st century, as the proliferation of data and advancements in computer technology gave rise to more complex, irregular, and high-dimensional data structures. The theoretical framework underpinning GSP emerged from work on Algebraic Signal Processing (ASP), with several papers published by Puschel and Moura from 2003 to 2008 establishing an axiomatic approach to discrete time signal processing \citep{Puschel2003,Puschel2006,Puschel2008}. This mathematical formalism, based on the concept of shift operators, established a unifying framework for several concepts from classical signal processing. For example, under the ASP paradigm, the Discrete Cosine Transform (DCT) and DFT are understood as generated from different discrete shift operators (a chain and cycle respectively) \citep{Isufi2022}. 
 
-GSP began to take shape as a separate discipline around the start of the 21st century, as the proliferation of data and advancements in computing technology gave rise to more complex, irregular, and high-dimensional data structures. The theoretical framework underpinning GSP emerged from work on Algebraic Signal Processing (ASP), with several papers published by Puschel and Moura from 2003 to 2008 establishing an axiomatic approach to discrete time signal processing \citep{Puschel2003,Puschel2006,Puschel2008}. This mathematical formalism, based on the concept of shift operators, established a unifying framework for several concepts from classical signal processing. For example, under the ASP paradigm, the Discrete Cosine Transform (DCT) and DFT are understood as generated from different discrete shift operators (a chain and cycle respectively). 
+Meanwhile, in the data science and machine learning community, concepts from SGT were being applied to nonlinear dimensionality reduction using the Laplacian eigenbasis \citep{Roweis2000,Belkin2003,Donoho2003}. This was followed by work such as \cite{Kondor2002}
+and \cite{Smola2003}, who studied the topic of graph kernels. This work was subsequently applied in semi-supervised learning, where the goal is to maximise the utility of unlabelled data using its topology in feature space \citep{Belkin2004,Zhou2004,Zhu2003}. We return to the topic of graph kernels in greater detail in \cref{sec:graph_kernels}. 
 
-Meanwhile, in the data science community, concepts from SGT were being applied to nonlinear dimensionality reduction using the Laplacian eigenbasis \citep{Roweis2000,Belkin2003,Donoho2003}. This was followed by work such as \cite{Kondor2002}
-and \citep{Smola2003}, who studied the topic of graph kernels. This work was subsequently applied in semi-supervised learning, where the goal is to maximise the utility of unlabelled data using its topology in feature space \citep{Belkin2004,Zhou2004,Zhu2003}. We return to the topic of graph kernels in greater detail in \cref{sec:graph_kernels}. 
+Around the same time, in the signal processing community, authors were working on both distributed and global algorithms for denoising and regression on sensor networks \cite{Guestrin2004,Wagner2005,Wagner2006}. 
 
-Additionally, in the signal processing community, authors were working on both distributed and global algorithms for denoising, regression and sensor networks
-
-\subsection{The graph Laplacian}
-
-\cite{LeMagoarou2016}
+In the early 2010s, two distinct yet complementary approaches to GSP emerged, as discussed in \cite{Leus2023}. The first approach, often credited to \cite{Sandryhaila2013,Sandryhaila2013b}, adopted an algebraic perspective, building upon existing work in Algebraic Signal Processing. This methodology primarily focused on defining the Graph Fourier Transform and related concepts using the foundational operation of graph shifts. Conversely, the second approach, as proposed by  \cite{Hammond2011,Shuman2013}, endorsed the use of the graph Laplacian as the core component for GSP algorithms. This second paradigm, which aligns closely with the concepts presented in \cref{sec:fundamentals}, is also the primary approach utilised in this thesis.
 
 
-\subsection{Graph filters}
-
-\subsection{Graph Kernels}
+\section{Graph kernels and graph filters}
 
 \label{sec:graph_kernels}
+
+In GSP, two distinct but closely-related concepts are graph filters and graph kernels. In the Laplacian-based GSP paradigm, both can understood as a function applied to the frequency profile of a graph signal. 
+
+
+\subsection{Probability distributions with graph filters}
+
+\subsection{Approximating graph filters with Chebyshev polynomials}
+
+A popular and longstanding technique, which can be traced back to some of the earliest work on Laplacian-based GSP \citep{Hammond2011}, involves computing the action of a graph filter using Chebyshev polynomials. These functions, which form an orthonormal basis on the space $L^2 \left([-1, 1], \frac{dx}{\sqrt{1 - x^2}}\right)$ \citep{Mason2002}, can be used to approximate an arbitrary graph filter function $h(\lambda)$. Since the domain of the filter is $[0, \lambda_{\text{max}}]$, first consider the change of variables $\lambda = \frac{1}{2}\lambda_{\text{max}}(x + 1)$ to define the shifted Chebyshev polynomials as follows. 
+
+\begin{equation}
+    \bar{\T}_k(\lambda) := \T_{k}\left(\frac{2\lambda - \lambda_{\text{max}}}{\lambda_{\text{max}}}\right)
+\end{equation}
+
+The target filter function is then expanded using $K$ terms as follows. 
+
+\begin{equation}
+    h(\lambda) \approx \frac{1}{2} c_0 + \sum_{k=1}^K c_k \bar{\T}_k(\lambda)
+\end{equation}
+
+where the coefficients $c_k$ are given by the solution to the following integral. 
+
+\begin{equation}
+    c_k = \int_{0}^{\pi} \cos(k \theta) h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) d\theta
+\end{equation}
+
+The benefit of this approach is that Chebyshev polynomials can be defined recursively as 
+
+\begin{equation}
+    \bar{\T}_k(\lambda) = \left(\frac{4 \lambda }{\lambda_{\text{max}}}  - 2\right) \bar{\T}_{k-1}(\lambda) - \bar{\T}_{k-2}(\lambda)
+\end{equation}
+
+with the initial values
+
+\begin{equation}
+    \bar{\T}_0 = 1, \quad \bar{\T}_1 = \frac{2 \lambda }{\lambda_{\text{max}}} - 1
+\end{equation}
+
+which implies that the computation can be applied in a distributed manner using message passing \citep{Shuman2018}. 
+
+
+
+FFT on graphs? \cite{LeMagoarou2016}
 
 \cite{Kondor2002}
 
@@ -40,45 +78,18 @@ Additionally, in the signal processing community, authors were working on both d
 
 \cite{Zhu2003}
 
-\cite{Zhi2023}
 
 
-\begin{table}[b]
-    \renewcommand{\arraystretch}{1.7}
-    \small
-    \begin{center}
-    \begin{tabular}{|l|c|}
-    \hline
-    \textbf{Filter}   & $g(\lambda; \,\beta)$    \\ 
-    \hline
-    1-hop random walk & $(1 + \beta \lambda)^{-1}$ \\
-    \hline
-    Diffusion         & $\exp(-\beta \lambda)$       \\
-    \hline
-    ReLu              & $\max (1 - \beta \lambda, 0)$  \\
-    \hline
-    Sigmoid           & $2 \big( 1 + \exp(\beta \lambda)\big)^{-1}$ \\
-    \hline
-    Bandlimited       & $1, \,\text{if} \; \beta \lambda \leq 1 \; \text{else} \; 0$   \\
-    \hline
-    \end{tabular}
-    \end{center}
-    \caption{Isotropic graph filter functions}
-    \label{tab:iso_filters}
-    \end{table}
+\section{Graph Signal Reconstruction}
 
-
-
-\section{Regression and Reconstruction}
-
-\cite{Guestrin2004} Regression
-
-
-\subsection{Graph Signal Reconstruction}
 
 \cite{Qiu2017} Time varying signal reconstruction. 
 
-\subsection{Kernel Graph Regression}
+
+
+\section{Graph Signal Regression}
+
+\cite{Guestrin2004} Regression
 
 \cite{Takeda2007}
 
@@ -87,11 +98,15 @@ Additionally, in the signal processing community, authors were working on both d
 \cite{Venkitaraman2019}
 
 
-\subsubsection{Gaussian Processes on Graphs}
+\subsection{Kernel Graph Regression}
 
 \cite{Venkitaraman2020}
 
 \cite{Miao2022}: GPoG + graph learning
+
+\cite{Zhi2023}: GPoG + kernel learning
+
+\cite{Elias2022}
 
 \subsection{Regression with Network Cohesion}
 
@@ -112,8 +127,6 @@ Multiway data processing
 \cite{Cammoun2009}
 
 
-
-
 \subsection{Multi-Layer Graph Signal Processing}
 
 \cite{Zhang2022} describe M-GSP 
@@ -130,20 +143,129 @@ Multiway data processing
 
 
 
-\section{classification}
+\section{Graph signal classification}
 
 \cite{Tran2020}
+
+\cite{Sandryhaila2013a}
+
+\citep{Ahmed2017}
 
 No one has done it on multiway graphs. Limited regression models. No one using graph filters. 
 
 in ML: \citep{Belkin2002}
 
-\section{What it's not}
 
-Directed graphs  \cite{Chung2005, Bauer2012}
 
-Total variation: \citep{Shafipour2019,Sardellitti2017}
 
-Magnetic Laplacian \citep{DeResende2020,Zhang2021,Furutani2020}
+\section{Related topics}
 
-Graph neural networks, distributed, graph learning
+For the sake of clarity, in this section we give a high-level overview of some important sub-fields of GSP which are adjacent to the work in this thesis, but not directly relevant to the core subject matter. While not addressed directly in this thesis, some of these topics offer potentially useful avenues for extension of our work. 
+
+
+\subsection{Graph learning}
+
+When GSP was originally formulated, the graph of interest was typically assumed to be known a priori, with the subsequent methods following from the existence of this basic structure. In real-world applications, this can often be the case, for example, in a social, transport or citation network it is clear how objects should be connected given the nature of the problem. In other applications, for example in a protein-protein interactome, domain specific knowledge can be incorporated in a principled way to construct a graph \citep{Li2023}. In others, such as a sensor network, $k$-nearest neighbour, $\varepsilon$-ball, or permuted minimum spanning tree techniques can be used to construct a reasonable graph \citep{Qiao2018}. 
+
+However, in other circumstances, it may not be so clear how to derive or construct a graph, and instead one must be learned from the data. An example of this may be the stock price returns of a network of companies. While it may be possible to construct a graph using information such as industry, supply chain, or strategic alliance \citep{Gao2021,Cheng2021}, this information may be difficult to gather or otherwise unavailable. Another approach would be simply to learn a graph directly from the returns data. In general, the graph learning problem can be formulated as, given a set of graph signals $\{\y_t \in \R^N\}_{t=1}^T$, find an appropriate sparse $N \times N$ adjacency matrix \citep{Dong2019}. From the perspective of GSP, it is assumed that these observations are generated from some network process, operating on a latent underlying graph structure. 
+
+One of the oldest and simplest approaches, predating work on GSP, is so-called correlation networks. Here, a graph can be constructed by considering the pairwise correlation between the signal at nodes $i$ and $j$. For example, one approach is to set $\A_{ij} = 1$ if $\rho_{ij} > 0$ and zero otherwise \citep{Mateos2019}. While such approaches are simple and have an intuitive notion of pairwise interaction, correlations may be due to latent network effects rather than from direct pairwise influence. For example, two nodes may be interacting via a third node $k$, in which case it is more prudent to set $\A_{ik} = \A_{jk} = 1$, and $\A_{ij} = 0$. While there are techniques to overcome such confounding of variables (see, \cite{Kolaczyk2009}, section 7), in general this can be problematic from the perspective of graph learning. 
+
+An alternative prominent technique is the Graphical Lasso (GL) \citep{Friedman2007}. The GL is a sparse penalised maximum likelihood estimator for the precision matrix $\PP$ (the inverse of the covariance matrix $\SIG$) of a multivariate Gaussian random variable. The estimated value of $\PP$ is given by 
+
+\begin{equation}
+    \hat{\PP} = \underset{\PP \succcurlyeq 0}{\text{argmin}} \left[\tr{\PP \hat{\SIG}} - \log \det \left(\PP\right) + \lambda \sum_{i\neq j} |\PP_{ij}|\right]
+\end{equation}
+
+where $\hat{\SIG}$ is the sample covariance, with the L\textsubscript{1} norm promoting sparsity in $\PP$. The graph Laplacian is then derived by assuming $\PP$ is a regularised version of $\LL$ \citep{Lake2010}. 
+
+Other approaches favour more GSP-oriented estimation models by incorporating signal smoothness assumptions. For example, in \cite{Hu2015}, the authors propose learning thee Laplacian matrix directly by solving the following optimisation problem. 
+
+\begin{equation}
+    \begin{gathered}
+        \hat{\LL} = \text{argmin} \left[ \tr{\Y^\top \LL \Y} - \beta ||\LL ||_F^2 \right], \\ \text{s.t.} \quad \tr{\LL} = N, \quad \LL \one = \zero, \quad \LL_{ij} = \LL_{ji} >0
+    \end{gathered}
+\end{equation}
+
+where $\Y \in \R^{N \times T}$ is the matrix obtained by stacking each observed graph signal $\y_t$. This was modified slightly in \cite{Dong2016} by introducing a new matrix $\X$, of the same dimensions as $\Y$, meant to be a smooth approximation of $\Y$. Their optimisation objective was then given by 
+
+\begin{equation}
+    \begin{gathered}
+        \hat{\LL}, \hat{\X} = \text{argmin} \left[ ||\X - \Y||_F^2 + \alpha \tr{\X^\top \LL \X} - \beta ||\LL ||_F^2 \right], \\ \text{s.t.} \quad \tr{\LL} = N, \quad \LL \one = \zero, \quad \LL_{ij} = \LL_{ji} > 0
+    \end{gathered}
+\end{equation}
+
+A more computationally efficient approach was proposed in \cite{Kalofolias2016}, but using the adjacency matrix rather than the Laplacian. There has been a substantial amount of additional work on graph learning from a GSP perspective. For a detailed review, see \cite{Dong2019,Mateos2019}. 
+
+
+\subsection{GSP on directed graphs}
+
+The work presented in this thesis, and indeed the majority of published literature on GSP, is focused on undirected graphs. The benefit of this framework is that the undirected graph Laplacian naturally gives rise to a simple definition of signal smoothness. It is also a well-behaved Hermitian operator, with real eigenvalues and orthonormal eigenvectors that serve as a well-motivated and coherent Fourier basis \citep{Ortega2018}. However, there is also a rich literature regarding GSP for directed graphs (or digraphs) \citep{Marques2020}. Directed graphs, while less commonly found in GSP, are more suitable for modelling certain applications such as web links, citation networks, trade flows and follower-model social networks, since they can accommodate both incoming and outgoing edges. However, extending the Graph Fourier Transform framework to signals on digraphs less straightforward and a number of alternative proposals exist. 
+
+One originates from some of the earliest work on GSP from Sandryhaila and Moura, where the GFT for a general directed graph is constructed from the total variation of a graph signal $\y$ defined as follows. 
+
+\begin{equation}
+    \text{TV}_1(\y) = || \y - \A^{\text{norm}} \, \y ||_1
+\end{equation}
+
+where $\A^{\text{norm}}$ is the adjacency matrix (or, more generally, any graph shift operator) divided by its spectral radius to ensure that the transformed signal is appropriately scaled for comparison with the original signal \citep{Sandryhaila2013b}. A Fourier basis $\{\uu_i \}$ is then defined by first taking an eigendecomposition of the adjacency matrix, and then ordering the eigenvectors according to their total variation. Where the adjacency matrix is non-diagonalisable, one can instead resort to the generalised eigenvectors using Jordan decomposition. 
+
+While this definition is attractive from a theoretical standpoint, it suffers from several drawbacks. In general, the eigenvectors are complex-valued and may be more difficult to interpret, for example, constant signals no longer have zero variation. Furthermore, the eigenvectors are typically non-orthonormal, meaning Parseval's identity no longer holds and  signal power is not preserved when transforming between the vertex and spectral domains. Other work has attempted to remedy this by proposing a new definition for variation on directed graphs. In \cite{Sardellitti2017}, the authors define the Graph Directed Variation (GDV) as follows. 
+
+\begin{equation}
+    \text{GDV}(\y) = \sum_{i,j}^N \A_{ij} [\y_i - \y_j]_{+}
+\end{equation}
+
+where $[\y_i - \y_j]_{+} = \text{max}(\y_i - \y_j, \, 0)$. The search for the GFT basis is then given by the optimisation problem of finding the set of orthonormal vectors that subsequently minimise the GDV subject to perpendicularity with all those preceding. Under this framework, smooth signals on digraphs represent a flow from a smaller value to a larger one over a directed edge. Hence, the signal at two nodes $i$ and $j$ is only penalised if $\y_i > \y_j$. For example, if there were a set of temperature sensors over a mountain range, a directed graph would connect stations based on elevation, since readings at higher altitudes are expected to be lower. 
+
+A similar strategy was used in \cite{Shafipour2019}, where here the variation was defined as follows.  
+
+\begin{equation}
+    \text{GDV}_2(\y) = \sum_{i,j}^N \A_{ij} [\y_i - \y_j]_{+}^2
+\end{equation}
+
+In order to generate a Fourier basis that is roughly evenly spread with respect to the variation measure, these authors proposed solving the following optimisation objective. 
+
+\begin{equation}
+    \begin{gathered}
+    \U^{\star} = \text{argmin} \;\; \sum_{i}^{N-1} \Big(\text{GDV}_2(\uu_{i+1}) - \text{GDV}_2(\uu_i)\Big)^2 \\
+    \text{s.t.} \quad \U^\top\U = \I, \quad \uu_1 \propto \one, \quad \uu_N = \underset{|\uu| = 1}{\text{argmin} } \;\; \text{GDV}_2(\uu)
+    \end{gathered}
+\end{equation}
+
+These approaches, whilst offering a simple and meaningful definition of directed variation are potentially limited in their applicability, since the underlying assumption that a graph signal should flow from lower to higher values over directed edges may not be suitable for all scenarios. It also implies that any signal that monotonically increases over the direction of the network has the same variation, namely zero. Furthermore, there is a significant additional computation cost to solving these optimisation problems that makes scaling to large graphs difficult. 
+
+One other interesting and novel proposal for the GFT of a directed graph is to use the so-termed ``magnetic Laplacian'' \citep{DeResende2020,Zhang2021}. The magnetic Laplacian is a complex-valued Hermitian matrix which generalises the standard undirected Laplacian for directed graphs and is defined as follows. 
+
+\begin{equation}
+    \LL_M = \D - \boldsymbol{\Gamma} \circ \A_S
+\end{equation}
+
+Here, $\D$ is the diagonal degree matrix defined as $\D_{ii} = \sum_{j} \A_{ij}$, $\A_S$ is the symmetric adjacency matrix, defined as $\A_S = \frac{1}{2} (\A + \A^\top)$, and $\boldsymbol{\Gamma}$ is a Hermitian matrix given by 
+
+\begin{equation}
+    \boldsymbol{\Gamma} = \exp\big( \,2 \pi \text{i} q \, (\A - \A^\top)\big)
+\end{equation}
+
+Here, i is the imaginary unit and $q$ is a parameter known as the \textit{charge}. The exponentiation is element-wise. Each element $\boldsymbol{\Gamma}_{ij}$ represents a complex phase, where the angle is proportional to the net outflow between nodes $i$ and $j$. The effect is that $\LL_M$ is a Hermitian matrix that captures both the magnitude and the direction of the edges at each node. This operator arises in quantum mechanics to describe the Hamiltonian of a charged particle on a graph subject to the action of a magnetic field \citep{Shubin1994}. Note that, for an undirected graph, the magnetic Laplacian reduces to the standard Laplacian. 
+
+As a complex Hermitian operator, $\LL_M$ has eigenvectors given by unitary matrix $\U$, and real-valued eigenvalues. 
+
+\begin{equation}
+    \LL_M = \U \LAM \U^\dagger
+\end{equation}
+
+where $\U^\dagger$ is the Hermitian adjoint of $\U$. Therefore, the GFT of a signal $\y$ is given by $\U^\dagger \y$ and the IGFT by $\U\y$. This elegant formulation maintains many of the desirable properties of the undirected GFT, such as power preservation. Early results indicate that the magnetic Laplacian may be effective in tasks such as community detection and denoising on directed graphs \citep{Furutani2020,Fanuel2017}. However, some uncertainty remains on how to interpret the complex-valued signals after transformations via the GFT and IGFT. In \cite{Furutani2020}, the authors opt to take the real part of the signal only, however best practices have not yet been established. 
+
+In general, spectral methods on directed graphs present a number of additional challenges and there is no clear front-runner for how to handle them. For this reason, as well as the additional computational challenges associated with many of the methods, the authors of \cite{Marques2020} suggest that node-domain algorithms may generally be preferable when it comes to directed graphs. 
+
+
+\subsection{Graph neural networks}
+
+Another are that is strongly related to GSP, although has arguably evolved into a field in its own right, is graph neural networks. 
+
+
+
+
+\section{Summary of contributions}
+
