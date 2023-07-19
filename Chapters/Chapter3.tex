@@ -343,7 +343,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
         (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{T}\big(i - \frac{1}{2}\big)\pi \, \Big)
     $$
 
-    where the columns of $\U$ are appropriately normalised such that the magnitude of each eigenvector is one. Furthermore, this implies that that the graph Fourier transform of a signal $\y \in \R^{T}$ is given by the orthogonal type-II Discrete Cosine Transform (DCT) \citep{Ahmed1974}. This is of significance, as it means we can leverage Fast Cosine Transform (FCT) algorithms \citep{Makhoul1980} which operate in a similar manner to the well-known Fast Fourier Transform (FFT) \citep{Cooley1965}. See chapter 4 of \cite{Rao1990} for an overview of FCT algorithms.
+    where the columns of $\U$ are appropriately normalised such that the magnitude of each eigenvector is one. Furthermore, this implies that that the graph Fourier transform of a signal $\y \in \R^{T}$ is given by the orthogonal type-II Discrete Cosine Transform (DCT) \citep{Ahmed1974}. This is of significance, as it means we can leverage Fast Cosine Transform (FCT) algorithms \citep{Makhoul1980} which operate in a similar manner to the well-known Fast Fourier Transform (FFT) \citep{Cooley1965}. See chapter 4 of \cite{Rao1990} for an overview of FCT algorithms. In general, FFT-type algorithms are challenging to derive for the GFT \citep{LeMagoarou2016}, however, this is a simple case where it can be achieved. 
 
     \vspace{0.2cm}
 

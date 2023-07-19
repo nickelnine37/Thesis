@@ -29,10 +29,42 @@ In the early 2010s, two distinct yet complementary approaches to GSP emerged, as
 
 \label{sec:graph_kernels}
 
-In GSP, two distinct but closely-related concepts are graph filters and graph kernels. In the Laplacian-based GSP paradigm, both can understood as a function applied to the frequency profile of a graph signal. 
+In GSP, two distinct but closely-related concepts are graph filters and graph kernels. In the Laplacian-based GSP paradigm, both can understood as a function $g(\lambda)$ applied to the frequency profile of a graph signal or, equivalently, a power series applied to the Laplacian itself. Note that, in this context, graph kernel should not be confused with another concept that bares the same name which refers to distance measures between pairs of graphs \citep{Kriege2020}. Graph filters and graph kernels provide a map $\R^N \mapsto \R^N$, and can be represented as a matrix operator $\HH \in \R^{N \times N}$.
+
+\begin{equation}
+    \HH = g(\LL) = \U g(\LAM) \U^\top
+\end{equation}
+
+ $g(\cdot)$ can be set such that it promotes certain properties in the output signal, for example, a low-pass filter (such as those specified in \cref{tab:filters}) is monotonically decreasing function which attenuates the high frequency content of a signal. In the GSP community, typically the terms `filter' is preferred to refer to this class of operator \citep{Shuman2013}, however, there are those who prefer the term `kernel' \citep{Ioannidis2016,Romero2017}. Often the difference is simply that a kernel is an increasing function, used to construct penalty terms, whereas a filter is a decreasing one, used to operate on graph signals. In the machine learning community, the term kernel is typically preferred \cite{Kondor2002,Smola2003}. Either convention can be used, and in this thesis we use filters for the most part. 
 
 
-\subsection{Probability distributions with graph filters}
+\subsection{Probability distributions over graph signals}
+
+Spectral operators can be used to define probability distributions over smooth graph signals. An early example of this is found in \cite{Gadde2015}, where the authors propose a Gaussian Random Field (GRF) model for the generation of graph signals. In particular, they build a model for vertex sampling that assumes signals are random variables drawn from the following underlying multivariate Gaussian distribution. 
+
+
+\begin{equation}
+    \y \sim \Norm{\zero}{(\LL + \delta \I)^{-1}}
+\end{equation}
+
+
+This probabilistic interpretation offers a principled way of reasoning about graph signals, making the relationship between GSP and certain methods from semi-supervised learning more apparent \citep{Zhu2003}. More recently, in \cite{Venkitaraman2020}, the authors propose using graph filters to specify a probability distribution. In particular, they advocate using the following Gaussian distribution. 
+
+\begin{equation}
+    \label{eq:gaussian_filter}
+    \y \sim \Norm{\zero}{\gamma^{-1} \HH^2}
+\end{equation}
+
+\begin{wrapfigure}{r}{0.4\linewidth}
+	\centering
+		\includegraphics[width=0.7\linewidth]{Figures/uk_smooth.pdf}
+	\caption[An example of a random smooth graph signal]{An example of a random smooth signal on the UK district graph, sampled from $\Norm{\zero}{\HH^2}$ using a bandlimited filter. }
+	\label{fig:random_smooth_uk}
+\end{wrapfigure}
+
+where $\HH$ is a generic graph filter. The justification for this is as follows. Consider an independent multivariate normal random variable $\y \sim \Norm{\zero}{\I_N}$. Applying a graph filter to a random signal $\x$ will result in a new signal, $\HH \x$, which is smoother with respect to the graph topology. This will be distributed according to $\HH \x \sim \Norm{\zero}{\HH^2}$, meaning $\HH^2$ can be interpreted as a covariance matrix with which to generate smooth, normally distributed graph signals. This more flexible approach allows for various beliefs about the frequency profile of graph signals to be encoded. \Cref{fig:random_smooth_uk} shows an example of a random signal drawn from the distribution of \cref{eq:gaussian_filter}. 
+
+In a similar manner, \citep{Perraudin2017} suggest a flexible class of Laplacian-based covariance matrices, although this approach lacks the interpretability of the aforementioned filter-based formulation. In this thesis, we follow the example of \cite{Venkitaraman2020}, extending their method to describe distributions over multidimensional graph signals (two-dimensional matrix signals in \cref{chap:gsr_2d}, and $d$-dimensional tensor signals in \cref{chap:nd_gsp}). This allows us to build a rich class of Bayesian models for tasks such as reconstruction and regression. 
 
 \subsection{Approximating graph filters with Chebyshev polynomials}
 
@@ -44,17 +76,25 @@ A popular and longstanding technique, which can be traced back to some of the ea
 
 The target filter function is then expanded using $K$ terms as follows. 
 
+\begin{figure}[t]
+	\centering
+		\includegraphics[width=0.7\linewidth]{Figures/cheb.pdf}
+	\caption[Successive approximations of a filter function using Chebyshev polynomials.]{Successive approximations of the filter function $g(\lambda) = \exp(-3\lambda)$ using Chebyshev polynomials. }
+	\label{fig:Chebyshev}
+\end{figure}
+
+
 \begin{equation}
     h(\lambda) \approx \frac{1}{2} c_0 + \sum_{k=1}^K c_k \bar{\T}_k(\lambda)
 \end{equation}
 
-where the coefficients $c_k$ are given by the solution to the following integral. 
+The coefficients, $c_k$, are given by the solution to the following integral and can be quickly computed numerically. 
 
 \begin{equation}
-    c_k = \int_{0}^{\pi} \cos(k \theta) h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) d\theta
+    c_k = \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) d\theta
 \end{equation}
 
-The benefit of this approach is that Chebyshev polynomials can be defined recursively as 
+The benefit of this approach is that Chebyshev polynomials can be defined recursively as follows. 
 
 \begin{equation}
     \bar{\T}_k(\lambda) = \left(\frac{4 \lambda }{\lambda_{\text{max}}}  - 2\right) \bar{\T}_{k-1}(\lambda) - \bar{\T}_{k-2}(\lambda)
@@ -66,24 +106,20 @@ with the initial values
     \bar{\T}_0 = 1, \quad \bar{\T}_1 = \frac{2 \lambda }{\lambda_{\text{max}}} - 1
 \end{equation}
 
-which implies that the computation can be applied in a distributed manner using message passing \citep{Shuman2018}. 
-
-
-
-FFT on graphs? \cite{LeMagoarou2016}
-
-\cite{Kondor2002}
-
-\cite{Smola2003}
-
-\cite{Zhu2003}
-
+This means that the computation can be applied in a distributed manner using message passing, or simply that computationally expensive eigenvalue decomposition of the Laplacian can be avoided \citep{Shuman2018}. In particular, if the Laplacian is sparse (which is often the case), its action onto a vector can be computed with complexity proportional to the number of edges. 
 
 
 \section{Graph Signal Reconstruction}
 
+Graph Signal Reconstruction (GSR), sometimes also known as graph signal interpolation, is a classic problem in GSP \citep{Ortega2018}. The task can be stated as, given a partially observed graph signal, estimate the signal value at the unobserved vertices using only the topology of the graph. Closely related, is the topic of signal sampling, which seeks to find an informative set of vertices to measure a graph signal at, in order to perform an accurate reconstruction \citep{Tanaka2020}. Typically, GSR is posed as an optimisation problem where one seeks to identify a smooth underlying graph signal that simultaneously minimises a measure of error across the observed nodes, as well as a penalty term that enforces some kind of signal smoothness or bandlimited assumption. 
 
-\cite{Qiu2017} Time varying signal reconstruction. 
+Early work on GSR, such as \cite{Narang2013b,Narang2013,Wang2015b,Anis2016}, mainly focused on the reconstruction of bandlimited graph signals. Here, the goal is to find the optimal reconstruction of a signal using only the first $K$ eigenvectors of the graph Laplacian, with a frequency less than $\omega$ (the so-called Paley-Wiener space). In \cite{Narang2013b}, this is achieved using an Iteratively Reweighted Least Squares (IRLS) algorithm, with a Chebyshev polynomial approximation to the bandlimited filter. Further work such as \citep{Romero2017b} proposes using a more flexible specification of the reconstructed signal profile based on graph kernels. 
+
+Several methods have also been proposed for the reconstruction of time-varying graph signals. In \cite{Qiu2017}, the penalty term in the optimisation objective promotes both smoothness across the graph using a Laplacian penalty, and consistency across time, by introducing a temporal difference operator $\D$. The problem is then solved for both the noiseless and noisy case using a gradient projection algorithm with backtracking line search. A similar method is adopted in \cite{Giraldo2022}, but with a regularised version of the Laplacian for improved computational robustness. In \cite{Ioannidis2016}, this approach is modified to incorporate a more dynamic penalty that can adjust the strength of regularisation across the graph and across time independently, using so-termed ``space-time kernels''. Furthermore, in this paper, as well as \cite{Romero2017,Ioannidis2018}, the authors propose an online algorithm that can accommodate dynamic graphs (i.e. graphs for which the edge weights can change over time), although this is only possible for a special class of kernel which have a tri-diagonal inverse. 
+
+Recently, some methods have also been proposed for distributed reconstruction of time varying graph signals. In \cite{Chi2022}, as well as \citep{Zhou2022b}, the authors propose distributed algorithms that draw upon the work of \cite{Qiu2017} using the temporal difference operator. In these two papers, which have similar goals but were developed separately, the authors use a modified Newton method to solve the optimisation problem, by making use of an approximation to the Hessian. 
+
+In this thesis, we take inspiration from space-time kernels developed in \cite{Ioannidis2016}, as well as the graph spectral priors of \cite{Venkitaraman2020}, to develop a flexible Bayesian formulation of the reconstruction problem. In addition, while the problem of time-varying graph signal reconstruction has been examined by several papers, in \cref{chap:gsr_2d} we propose reconstruction on two-dimensional Cartesian products graphs, of which time varying graph signals can be considered a special case. Furthermore, we offer two alternative optimisation algorithms, one a Stationary Iterative Method (SIM) using matrix splitting, and the other based on the Conjugate Gradient Method (CGM) with a specialised graph-spectral preconditioner. By conducting a detailed asymptotic analysis, we compare and contrast the convergence behaviour of these two algorithms. Whilst convergence is discussed in many of the aforementioned papers, we provide fresh insight into the effect of the model hyperparameters, and present synthetic data studies to confirm our theoretical findings. Furthermore, we show how the SIM can be conducted in a distributed manner, and how the fraction of missing data in the original graph signal affects which of these two methods is preferable. In \cref{chap:nd_gsp}, we extend our methods to encompass GSR on Cartesian products graphs with an arbitrary number of dimensions, under the multiway GSP paradigm. To the best of our knowledge, these all represent novel contributions to the field. 
 
 
 
