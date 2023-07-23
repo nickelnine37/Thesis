@@ -24,11 +24,11 @@ Multiway Graph Signal Processing (MWGSP) is an emerging framework for analysing 
 
 \begin{figure}[b] 
     \begin{center}
-        \includegraphics[width=0.4\linewidth]{Figures/coloured_tensor.pdf}
+        \includegraphics[width=0.45\linewidth]{Figures/colored_tensor.pdf}
     \end{center}
    \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of an order-3 tensor signal with graphs underlying each axis, which are linked together to form a Cartesian product graph.} 
     \label{fig:coloured_tensor}
-\end{figure}  
+\end{figure}   
 
 The goal of this chapter is to extend the methods developed in \cref{chap:gsr_2d,chap:kgr_rnc_2d} such that they can accommodate multiway graph signals. In particular, Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) can all be understood as a special two-dimensional case of their more general MWGSP counterpart. In this chapter, we translate all three models into a their $d$-dimensional form, and demonstrate how to solve efficiently for the posterior mean.  
 
@@ -168,7 +168,7 @@ In the following, we use bold lower-case symbols (e.g. $\y$) to indicate graph s
 
 \begin{figure}[t]
     \begin{center}
-        \includegraphics[width=\linewidth]{Figures/Tensor_Digaram.pdf}    
+        \includegraphics[width=\linewidth]{Figures/tensor_vec.pdf}    
     \end{center}
     \caption[Conversion between a multidimensional array and a vector]{A graphical depiction of the process of converting an order-3 tensor between its multidimensional array and vector form in row-major order. Note that the elements in the vectorised signal are lexicographically ordered. }
     \label{fig:ten_to_vec}
@@ -961,17 +961,26 @@ As previously noted, one model we employ in this case study to predict the yield
 
 Our experiment proceeded as follows. Firstly, we randomly divided the 829 bonds into a training, validation, and test set in an 80:10:10 ratio. We then trained the GSR and KGR models on the training set, using the validation set to select the optimal hyperparameters, identified using an optimisation algorithm based on the Nelder-Mead method \citep{Gao2012}. In addition, we evaluated two standard linear regression techniques, namely Ridge and Lasso \citep{Murphy2012}. In these scenarios, the yield at each moment in time for each bond was modelled as a linear combination of a constant term, the features comprising the matrix $\X$, and a one-hot encoding of each of the bond descriptors (use of funds, rating, etc). This resulted in $1 + 14 + 159 + 8 + 8 + 7 = 197$ explanatory variables for each yield. The regularisation parameter for the Ridge and Lasso models was also selected on the validation set using a straightforward line search.
 
-The results from the experiment can be found in \cref{tab:bond_yield_results}. As can be observed, the GSR and KGR methods attain similar performance to each other, consistently outperforming the Ridge and Lasso techniques. Both also display a Mean Square Error (MSE) and $R^2$ statistic that remains relatively constant across the training, validation, and test sets, suggesting that overfitting has largely been avoided. \Cref{fig:bond_yield_predictions} showcases the output of both GSR and KGR compared with the ground truth, for nine randomly selected bonds from the test set. We can observe that both GSR and KGR make broadly similar predictions, which often correlate closely with the ground truth. However, there are instances where the predictions clearly systematically under or overestimate the yield, for example in the upper middle, middle left, and lower middle plots. This may indicate there was hidden information about this bond not accounted for in our explanatory variables. Further investigation into the reasons for these deviations would be valuable.
+The results from the experiment can be found in \cref{tab:bond_yield_results}. As can be observed, the GSR and KGR methods attain similar performance to each other, consistently outperforming the Ridge and Lasso techniques. Both also display a Mean Square Error (MSE) and $R^2$ statistic that remains relatively constant across the training, validation, and test sets, suggesting that overfitting has largely been avoided. \Cref{fig:yield_predictions_GSR,fig:yield_predictions_KGR} showcases the output of the GSR and KGR models respectively compared with the ground truth, for nine randomly representative bonds from the test set. The shaded regions represent two standard deviations of uncertainty, which is calculated by taking 20 samples from the posterior. (The method for producing these samples is explained in \cref{chap:variance}). We can observe that both GSR and KGR make broadly similar predictions, which often correlate closely with the ground truth. However, there are instances where the predictions do systematically under or overestimate the yield, for example in the upper middle, middle left, and lower middle plots. This may indicate there was hidden information about this bond not accounted for in our explanatory variables. Further investigation into the reasons for these deviations would be valuable.
 
 \begin{figure}[t]  
     \begin{center}
-        \includegraphics[width=\linewidth]{Figures/bond_yield_predictions.pdf}
+        \includegraphics[width=\linewidth]{Figures/yield_predictions_GSR.pdf}
     \end{center}
-   \caption[The output of the KGR and GSR algorithms on several green bonds from the test set]{The predicted yield is shown from the KGR and GSR algorithms as compared to the ground truth on a set of green bonds taken from the test set. } 
-    \label{fig:bond_yield_predictions}
+   \caption[The output of the GSR model on several green bonds from the test set]{The predicted yield is shown from the GSR model, as compared to the ground truth, on a set of green bonds taken from the test set. } 
+    \label{fig:yield_predictions_GSR}
 \end{figure} 
 
 
+\begin{figure}[t]  
+    \begin{center}
+        \includegraphics[width=\linewidth]{Figures/yield_predictions_KGR.pdf}
+    \end{center}
+   \caption[The output of the KGR model on several green bonds from the test set]{The predicted yield is shown from the KGR model as compared to the ground truth on a set of green bonds taken from the test set. } 
+    \label{fig:yield_predictions_KGR}
+\end{figure} 
+
+\newpage
 
 \section{Conclusions}
 

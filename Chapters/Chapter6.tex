@@ -306,13 +306,13 @@ where the exponential is understood as element-wise, and $\overline{\exp(\Omegat
 For each of these different estimators, we measured the performance via these two metrics across a range of values of $Q$, i.e. for different numbers of queries. In the case of the Bekas estimator, we measured the performance for different values of $R$ [see \cref{eq:bekas}]. Since each query requires solving the linear system $\PP^{-1}\e_n$, and each iteration of the Bekas algorithm requires solving the linear system $\PP^{-1}\ve_r$, these two measures have a direct correspondence in terms of total compute time. 
 
 For the case of RR, RNC and LFP, we also compared the performance when using a random query strategy, and the representative sampling query strategy as outlined in \cref{al:K_means}. The results are shows in \cref{fig:var_solvers}. On the $x$-axis, we show the number of queries (number of Bekas iterations) as a percentage of the total number of elements, i.e. $Q/N$ (or $R/N$ for Bekas). 
-
+ 
 
 \begin{figure}[t] 
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/VarSolvers.pdf}
     \end{center}
-   \caption[Performance of various algorithms for predicting the posterior log-variance]{The performance of the various algorithms for predicting the posterior log-variance is shown as a function of the percentage of $\Omegat$ that has been queried. The top row shows the total square error of the posterior variance, and the bottom row shows the $R^2$ statistic. The left column shows results for random queries and the right column show the results when using representative queries as outlined in \cref{al:K_means}. Since the Bekas technique does not depend on this algorithm, it is repeated in the left and right columns for reference. } 
+   \caption[Performance of various algorithms for predicting the posterior log-variance]{The performance of the various algorithms for predicting the posterior log-variance is shown as a function of the percentage of $\Omegat$ that has been queried. The top row shows the total square error of the posterior variance, and the bottom row shows the $R^2$ statistic. The left column shows results for random queries and the right column show the results when using representative queries as outlined in \cref{al:K_means}. Since the Bekas technique does make use of the active learning strategy, it is repeated in the left and right columns for reference. } 
     \label{fig:var_solvers}
 \end{figure} 
 

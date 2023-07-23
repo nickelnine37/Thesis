@@ -309,9 +309,9 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 
 \begin{figure}[t]
     \begin{center}
-        \includegraphics[width=0.5\linewidth]{Figures/T-V.pdf}
+        \includegraphics[width=0.8\linewidth]{Figures/TV.pdf}
     \end{center}
-    \caption[A time-vertex Cartesian product graph]{A graphical depiction of a time-vertex Cartesian product graph}
+    \caption[A time-vertex Cartesian product graph]{A graphical depiction of a time-vertex Cartesian product graph. }
     \label{fig:TV}
 \end{figure}
 
@@ -583,7 +583,7 @@ In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is 
         \vspace{0.15cm}
         \State{Decompose $\LL_N$ into $\U_N \LAM_L \U_N^\top$ and $\LL_T$ into $\U_T \LAM_T \U_T^\top$}
         \vspace{0.15cm}
-        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)$ }
+        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left(\lambda^{(N)}_n, \lambda^{(T)}_t; \, \betaa \right)$ }
         \vspace{0.15cm}
         \State{Compute $\J \in \R^{N \times T}$ as $\J_{nt} = \G_{nt}^2 / (\G_{nt}^2 + \gamma)$ }
         \vspace{0.15cm}
@@ -606,6 +606,74 @@ In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is 
         \label{al:SIM}
     \end{algorithmic}
 \end{algorithm}
+
+\subsubsection{An eigendecomposition-free distributed implementation}
+
+In the previous section, we introduced the SIM algorithm, premised on the assumption that the matrices $\LL_T$ and $\LL_N$ could be decomposed into $\U_T \LAM_T \U_T^\top$ and $\U_N \LAM_N \U_N^\top$ respectively. However, it is also feasible to implement the SIM in a manner that avoids the eigendecomposition of both Laplacians, and instead only requires the repeated multiplication of vectors by $\LL_T \oplus \LL_N$ in the node domain. If, as is often the case, the original graphs are sparse, this can be achieved with complexity $O(T|\mathcal{E}_N| + N |\mathcal{E}_T|)$. This alternative is particularly beneficial when working with large factor graphs, since the complexity involved in decomposition generally scales at $O(N^3 + T^3)$. 
+
+Moreover, in certain contexts like sensor or IoT networks, nodes may possess the capability to communicate and compute locally. In such instances, a distributed approach to the signal reconstruction problem, employing a message-passing algorithm, may be more desirable. In this section, we will discuss on how these two objectives can be realised by utilising Chebyshev polynomials \citep{Rivlin2020}.
+
+First, note that each iteration of the SIM algorithm is computed by multiplying some vector, $\vecc{\Z}$, by the matrix $\M^{-1}$, which is given by \cref{eq:M_inv}. Crucially, since $\M^{-1}$ has eigenvectors $\U_T \otimes \U_N$, it can be understood as function applied to a weighted Kronecker sum of the factor graph Laplacians. In particular, 
+
+\begin{equation}
+    \M^{-1} = J(\beta_T \LL_T \oplus \beta_N \LL_N)
+\end{equation}
+
+where 
+
+$$
+J(x) = \frac{g^2(x)}{g^2(x) + \gamma} 
+$$
+
+and $g(\cdot)$ represents the original filter function used, with parameters $\beta_T, \beta_N$. (Here, we interpret the application of $J(x)$ to a matrix in terms of a power series rather than element-wise.) Thus, eigendecomposition can be entirely bypassed by approximating the function $J(x)$ using shifted Chebyshev polynomials \citep{Isufi2022}. This requires knowledge of the largest eigenvalues of $\LL_T$ and $\LL_N$, $ \lambda_T^{(\text{max})}$ and $ \lambda_N^{(\text{max})}$ respectively, but these can also be computed efficiently using methods that take advantage of sparsity such as Arnoldi iterations.
+ 
+Assuming an order $K$ approximation to the function $J(x)$ is used, with shifted Chebyshev polynomials ${\bar{T}_k(x)}$ defined over the interval $[0, \bar{\lambda}]$, where $\bar{\lambda} = \beta_T \lambda_T^{(\text{max})} + \beta_N \lambda_N^{(\text{max})}$,  the approximation is given by
+
+\begin{equation}
+    J(x) \approx \sum_{k=0}^K c_k \bar{T}_k(x)
+\end{equation}
+
+where the coefficients, $c_k$, are computed numerically via the integral given in \cref{eq:Cheb_int} of \cref{sec:Chebyshev}. The action of $\M^{-1}$ on an arbitrary vector $\vecc{\Z}$ can then be approximately computed as
+
+\begin{equation}
+    \M^{-1} \vecc{\Z} \approx \sum_{k=0}^K c_k \, \bar{T}_k(\bar{\LL}) \vecc{\Z} 
+\end{equation}
+
+where $\bar{\LL} = \beta_T \LL_T \oplus \beta_N \LL_N$. The result of $\bar{T}(\bar{\LL}) \vecc{\Z} $ is defined recursively as 
+
+\begin{equation}
+    \bar{T}_k(\bar{\LL}) \vecc{\Z} = \left(\frac{4 \bar{\LL}}{\bar{\lambda}} - 2\right) \bar{T}_{k-1}(\bar{\LL}) \vecc{\Z} -\bar{T}_{k-2}(\bar{\LL}) \vecc{\Z}
+\end{equation}
+
+with the initial conditions
+
+\begin{equation}
+    \bar{T}_0(\bar{\LL}) \vecc{\Z} = \vecc{\Z}, \aand \bar{T}_1(\bar{\LL}) \vecc{\Z} = \frac{2}{\bar{\lambda}} \bar{\LL} \vecc{\Z} - \vecc{\Z}
+\end{equation}
+
+In addition, the action of $\bar{\LL}$ on $\vecc{\Z}$ can be efficiently computed as
+
+\begin{equation}
+    \mat{\bar{\LL} \vecc{\Z}} = \beta_N \LL_N \Z + \beta_T \Z \LL_T 
+\end{equation}
+
+with complexity $O(T|\mathcal{E}_N| + N |\mathcal{E}_T|)$. When performed in a distributed manner, this operation can be executed at each node utilising information about the value of $\vecc{\Z}$ at its direct neighbours only. This implies that, to compute an order $K$ polynomial, information will need to be gatherer from nodes that are a maximum of $K$ hops away via graph edges. 
+
+In the context of a graph time series problem, this method also lends itself to an online implementation. In particular, since each node requires information from nodes no further than $K$ hops away, the signal at node $n$ at time $t$ can be reconstructed when the observed signal at time $t+K$ becomes available. 
+
+\newpage 
+
+One caveat worth noting is that the accuracy of the Chebyshev approximation depends not only on the order of the polynomial but also on the filter used and its parameter(s). \Cref{fig:cheb_approx} demonstrates how an order-3 approximation to $J(x)$, with $\gamma=0.05$, varies across several different filter types and parameter settings. For filter functions that exhibit slow variation, typically corresponding to smaller values of $\beta$, the fit is usually quite accurate. However, in certain other contexts, it deviates significantly from the true filter function. Another consideration is that the spectral radius of $\M^{-1}$ is no longer guaranteed to be less than one. For instance, in the case of the bandlimited filter, the function clearly reaches higher values. To ensure guaranteed convergence, the polynomial coefficients should be adjusted such that the approximation remains within the range of $[-1, 1]$. 
+
+\vspace{0.5cm}
+
+\begin{figure}[b]
+    \hspace{0.2cm}
+        \includegraphics[width=0.9\linewidth]{Figures/cheb_approx.pdf}
+    \caption[Chebyshev approximation accuracy visualisation]{\small{An order-3 Chebyshev polynomial approximation (orange) is compared to the true output of $J(x)$ (dashed blue) for several different filter types across various parameter settings. }}
+    \label{fig:cheb_approx}
+\end{figure}
+
 
 \subsection{A conjugate gradient method}
 
@@ -634,6 +702,8 @@ $$
 over $\x_0 + \mathcal{K}_k$ \citep{Kelley1995}. 
 
 The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PSI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PSI^\top$ and the left by $\PSI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
+
+\newpage
 
 In our case, where the coefficient matrix is given by $\Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-Laplacian frequency eigenvalues of the graph Laplacian, meaning elements of $\diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
 
@@ -761,7 +831,7 @@ The experiment was conducted as follows. First, we removed data from $\Y_0$ such
 \definecolor{best}{rgb}{0.6,0.99,0.58}
 
 
-
+ 
 \begin{table*}[t]
     \centering
     \footnotesize 
@@ -772,7 +842,7 @@ The experiment was conducted as follows. First, we removed data from $\Y_0$ such
     \cmidrule{2-5} \cmidrule{7-10} 
     $m$ & 0.1   & 0.3 & 0.5 & 0.7 &&  0.1   & 0.3  & 0.5 & 0.7  \\ \midrule \rule{0pt}{0.5cm}
     GSR & 0.037 & 0.040 & \colorbox{best!35}{0.048} & 0.081 && \colorbox{best!35}{0.230} &  \colorbox{best!35}{0.249} & \colorbox{best!35}{0.247} & \colorbox{best!35}{0.243} \\ \rule{0pt}{6ex} 
-    Linear interp & \colorbox{best!35}{0.034} & \colorbox{best!35}{0.039} &  0.049 & \colorbox{best!35}{0.070} && 0.540 & 0.531 & 0.520 & 0.526 \\ \rule{0pt}{6ex}
+    Linear interp & \colorbox{best!35}{0.034} & \colorbox{best!35}{0.039} &  \colorbox{best!35}{0.048} & \colorbox{best!35}{0.070} && 0.540 & 0.531 & 0.520 & 0.526 \\ \rule{0pt}{6ex}
     Longitudinal avrg & 0.350 & 0.348 &  0.347 & 0.348 && 0.341 & 0.350 & 0.356 & 0.347  \\[0.2cm] \midrule \rule{0pt}{4ex}
     & \multicolumn{4}{c}{Dates} & \phantom{a} & \multicolumn{4}{c}{Districts} \\
     \cmidrule{2-5} \cmidrule{7-10} 

@@ -16,12 +16,13 @@
 
 %----------------------------------------------------------------------------------------
 
-\section{Graphs and graph signals}
+% \section{Graphs and graph signals}
 
 In the field of discrete mathematics, the term ``graph" denotes a collection of distinct objects that may possess some form of pairwise connection or association. The discrete objects that make up the graph are referred to as nodes (or vertices), and their connections are known as edges (or arcs). This abstract definition can be applied to represent numerous real-world structures. For example, in an airline route map, nodes could symbolise airports, and edges could indicate the presence of a direct flight.
 
+\vspace{0.1cm}
 
-\begin{wrapfigure}{r}{0.4\linewidth}
+\begin{wrapfigure}{r}{0.42\linewidth}
 	\centering
 		\includegraphics[width=\linewidth]{Figures/graph_plot.pdf}
 	\caption[A visual representation of a simple graph]{A visual representation of a simple graph with 10 nodes and 20 edges.}
@@ -31,7 +32,11 @@ In the field of discrete mathematics, the term ``graph" denotes a collection of 
 
 Graphs and network models are employed in many actively researched areas of mathematics, including network processes such as epidemic modelling \citep{Pare2020}, graph neural networks \citep{Zhou2020}, graphical models \citep{Holmes2008}, and semi-supervised learning \citep{Chong2020}.
 
-In this thesis, we focus primarily on the area of Graph Signal Processing (GSP), a rapidly evolving field that sits at the intersection of spectral graph theory, statistics, and data science \citep{Ortega2018}. GSP is devoted to the mathematical analysis of signals that are defined over the nodes of a graph, simply referred to as \textit{graph signals}. \phantom{In this thesis we are  }
+\vspace{0.1cm}
+
+In this thesis, we focus primarily on the area of Graph Signal Processing (GSP), a rapidly evolving field that sits at the intersection of spectral graph theory, statistics, and data science \citep{Ortega2018}. GSP is an actively researched area devoted to the mathematical analysis of signals that are defined over the nodes of a graph, simply referred to as \textit{graph signals}. \phantom{In this thesis we are  }
+
+\newpage
 
 \begin{wrapfigure}{l}{0.4\linewidth}
 	\centering
@@ -43,9 +48,35 @@ In this thesis, we focus primarily on the area of Graph Signal Processing (GSP),
 
 A graph signal represents a value that is measured simultaneously at every node in a graph. For example, consider a social media network, where each node represents an individual, and presence of an edge indicates that the two individuals have connected. An example of a graph signal in this context could be the age of each person in the network, or a score indicating their propensity to engage with certain content. In either case, this is a value that could theoretically be measured or estimated across the network, though it may be subject to missing data or noise. 
 
-GSP typically uses tools that stem from classical signal processing. There, the focus is on manipulating data that resides on a regular domain, such as audio, images and digital communication. GSP utilises spectral graph theory to generalise these classical techniques, leading to graph-based counterparts of algorithms such as filtering, sampling, and reconstruction \citep{Sandryhaila2013}. Applications of GSP are numerous, ranging from social networks \citep{Dong2015} and brain connectivity modelling \citep{Huang2016} to sensor networks \citep{Zhu2012}, and molecular structures \citep{Kearnes2016}. As an emerging field, there are many opportunities for the development of theory, and new use-cases to explore, making it an exciting and dynamic area of research. 
+\vspace{0.2cm}
 
-The primary focus of this thesis is on statistical models for the estimation of noisy, partially observed multivariate graph signals. In particular, we formulate several Bayesian regression and reconstruction models designed for multivariate data, and investigate scalable approaches to solving them in practice. This begins, in \cref{chap:gsr_2d}, with the reconstruction of signals with two axes, such as network time series data. \Cref{chap:kgr_rnc_2d} introduces several regression techniques for two-dimensional graph signals, and \cref{chap:nd_gsp} generalises the techniques developed prior in the thesis to $d$-dimensional data, under the ``MultiWay" GSP (MWGSP) framework. This is followed, in \cref{chap:variance}, by an investigation into the posterior covariance of the models, and finally \cref{chap:binary} introduces generalisations for binary and categorical graph signals. Along the way, there are several methodological contributions as well as some detailed case studies. In this introductory chapter, we first establish some basic definitions and concepts from GSP, as well as highlighting some motivating use cases. In \cref{chap:lit_review}, we define the precise scope of this thesis, review the relevant literature, and present our core contributions. 
+GSP typically uses tools that stem from classical signal processing. There, the focus is on manipulating data that resides on a regular domain, such as audio, images and digital communication. GSP utilises spectral graph theory to generalise these classical techniques, leading to graph-based counterparts of algorithms such as filtering, sampling, and reconstruction \citep{Shuman2013}. Applications of GSP are numerous, ranging from social networks \citep{Dong2015} and brain connectivity modelling \citep{Huang2016} to sensor networks \citep{Zhu2012}, and molecular structures \citep{Kearnes2016}. As an emerging field, there are many opportunities for the development of theory, and new use-cases to explore, making it an exciting and dynamic area of research. 
+
+\section{Research goals}
+
+% multivariate
+
+The goal of this thesis is to provide contributions to the areas of multivariate graph signal reconstruction and regression. A single signal, measured over a network comprising $N$ nodes, is an example of a univariate structure, and can be described by a vector $\y \in \R^N$. Our methods, by contrast, are designed to be applicable to higher-dimensional objects. For example, $T$ samples of a graph signal measured across time can be described by a matrix $\Y \in \R^{N \times T}$. This kind of two-dimensional data can also be considered a single graph signal measured on the nodes of a Cartesian product graph \citep{Imrich2000}. More generally, a tensor-valued signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ can be understood as a signal on a $d$-dimensional Cartesian product graph \citep{Stanley2020}. 
+
+\newpage
+
+% GSR + regression
+
+Our aim is to expand the existing literature on multivariate GSP by presenting several novel Bayesian models for reconstructing partially observed graph signals, with and without additional explanatory variables. Graph signal reconstruction is a well-studied topic in GSP, however, the majority of published literature to date has focused on univariate, or time-varying signal models that provide point estimates for the missing values. We aim to generalise this in two ways. First, we present a rich Bayesian formulation, that outputs not only a point estimate, but a full probability distribution quantifying prediction uncertainty. Furthermore, our goal is to produce models applicable to graph signals defined on arbitrary Cartesian product graphs, which naturally generalise univariate and time-varying models. While the input to a graph signal reconstruction problem is typically only the partially observed graph signal and the topology of the underlying graph, we also consider the situation in which additional explanatory variables are available to aid in the estimation process. Therefore another key goal of ours is to produce graph signal regression models, applicable to a range of different data scenarios, that are robust to missing data. 
+
+% sampling 
+
+As mentioned, a key aspect of our models is the Bayesian formulation, which produces a full posterior probability distribution over the unknown reconstructed signal, rather than a single point estimate. Given the high-dimensional nature of the data, the posterior covariance, which contains information regarding the corelation between every element in the multivariate signal $\Yt$, is often too large to process with consumer-grade computer hardware. Therefore, another goal of ours is to develop efficient methods for extracting information regarding the prediction uncertainty. In particular, we consider two related but separate tasks: estimating the marginal posterior variance (node-level uncertainty) and drawing samples directly from the posterior. 
+
+% binary
+
+While the majority of GSP models focus on real-valued graph signals, a further aim of ours is to develop models for binary-valued and categorical data. Related tasks have been considered in the machine learning community in the study of semi-supervised learning, however, the GSP community is largely yet to apply the tools and insights from its field to this area. We aim to bridge this gap by presenting novel reconstruction and regression algorithms suitable for node classification tasks. 
+
+% complexity 
+
+The high-dimensional nature of these models comes with a unique set of challenges concerning computational robustness and efficiency. As such, we provide detailed analysis of the time and memory complexity of our methods, and seek to maximise the efficiency of our proposed algorithms, to reduce the computational cost wherever possible. Our methods are designed to be applicable to a wide range of application areas, and as such, throughout this thesis we also provide illustrative examples and case-studies to demonstrate their applicability. 
+
+\newpage 
 
 
 \section{GSP fundamentals}
@@ -189,7 +220,7 @@ If the Laplacian is sparse, or has special structure, repeated multiplications o
 
 \section{Example applications}
 
-Graph signal processing methods have proven effective in many real world applications. In this short section, we highlight some recent use-cases from the literature, as motivation for the content of this thesis. 
+Graph signal processing methods have proven effective in many real world applications. In this short section, we highlight some use-cases from the literature, as motivation for the content of this thesis. Many of these areas are utilised within illustrative examples for the methods developed in this thesis. 
 
 \subsection{Biology}
 
@@ -219,3 +250,6 @@ Sensor networks are a classic application for GSP methods, since a graph is gene
 
 Some of the earliest work that can be classified as GSP involved applications with sensor data, for example \cite{Guestrin2004}. Here, the authors used a local basis functions to design a regression algorithm capable of fast convergence with only local communication. In \cite{Wagner2005}, the authors develop a distributed wavelet transform, and applied it to a signal compression task over a network of sensors. 
 
+\section{Thesis organisation}
+
+The core content of this thesis begins in \cref{chap:gsr_2d}, with the reconstruction of signals with two axes, such as network time series data. \Cref{chap:kgr_rnc_2d} introduces several regression techniques for two-dimensional graph signals, and \cref{chap:nd_gsp} generalises the techniques developed prior in the thesis to $d$-dimensional data, under the ``MultiWay" GSP (MWGSP) framework. This is followed, in \cref{chap:variance}, by an investigation into the posterior covariance of the models, and finally \cref{chap:binary} introduces generalisations for binary and categorical graph signals. Along the way, there are several methodological contributions as well as some detailed case studies. In \cref{chap:lit_review}, we define the precise scope of this thesis, review the relevant literature, and present our core contributions. 

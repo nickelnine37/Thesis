@@ -68,10 +68,12 @@ In a similar manner, \citep{Perraudin2017} suggest a flexible class of Laplacian
 
 \subsection{Approximating graph filters with Chebyshev polynomials}
 
+\label{sec:Chebyshev}
+
 A popular and longstanding technique, which can be traced back to some of the earliest work on Laplacian-based GSP \citep{Hammond2011}, involves computing the action of a graph filter using Chebyshev polynomials. These functions, which form an orthonormal basis on the space $L^2 \left([-1, 1], \frac{dx}{\sqrt{1 - x^2}}\right)$ \citep{Mason2002}, can be used to approximate an arbitrary graph filter function $h(\lambda)$. Since the domain of the filter is $[0, \lambda_{\text{max}}]$, first consider the change of variables $\lambda = \frac{1}{2}\lambda_{\text{max}}(x + 1)$ to define the shifted Chebyshev polynomials as follows. 
 
 \begin{equation}
-    \bar{\T}_k(\lambda) := \T_{k}\left(\frac{2\lambda - \lambda_{\text{max}}}{\lambda_{\text{max}}}\right)
+    \bar{T}_k(\lambda) := T_{k}\left(\frac{2\lambda - \lambda_{\text{max}}}{\lambda_{\text{max}}}\right)
 \end{equation}
 
 The target filter function is then expanded using $K$ terms as follows. 
@@ -85,25 +87,31 @@ The target filter function is then expanded using $K$ terms as follows.
 
 
 \begin{equation}
-    h(\lambda) \approx \frac{1}{2} c_0 + \sum_{k=1}^K c_k \bar{\T}_k(\lambda)
+    h(\lambda) \approx \sum_{k=0}^K c_k \bar{T}_k(\lambda)
 \end{equation}
 
 The coefficients, $c_k$, are given by the solution to the following integral and can be quickly computed numerically. 
 
 \begin{equation}
-    c_k = \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) d\theta
+    \label{eq:Cheb_int}
+    c_k = \begin{cases}
+        \displaystyle   
+        \; \frac{1}{\pi} \int_{0}^{\pi} h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta & \text{if} \quad k = 0, \\[0.8cm]
+        \displaystyle   
+        \; \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) \; h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta & \text{otherwise.}
+    \end{cases}
 \end{equation}
 
 The benefit of this approach is that Chebyshev polynomials can be defined recursively as follows. 
 
 \begin{equation}
-    \bar{\T}_k(\lambda) = \left(\frac{4 \lambda }{\lambda_{\text{max}}}  - 2\right) \bar{\T}_{k-1}(\lambda) - \bar{\T}_{k-2}(\lambda)
+    \bar{T}_k(\lambda) = \left(\frac{4 \lambda }{\lambda_{\text{max}}}  - 2\right) \bar{T}_{k-1}(\lambda) - \bar{T}_{k-2}(\lambda)
 \end{equation}
 
 with the initial values
 
 \begin{equation}
-    \bar{\T}_0 = 1, \quad \bar{\T}_1 = \frac{2 \lambda }{\lambda_{\text{max}}} - 1
+    \bar{T}_0 = 1, \quad \bar{T}_1 = \frac{2 \lambda }{\lambda_{\text{max}}} - 1
 \end{equation}
 
 This means that the computation can be applied in a distributed manner using message passing, or simply that computationally expensive eigenvalue decomposition of the Laplacian can be avoided \citep{Shuman2018}. In particular, if the Laplacian is sparse (which is often the case), its action onto a vector can be computed with complexity proportional to the number of edges. 
@@ -122,33 +130,106 @@ Recently, some methods have also been proposed for distributed reconstruction of
 In this thesis, we take inspiration from space-time kernels developed in \cite{Ioannidis2016}, as well as the graph spectral priors of \cite{Venkitaraman2020}, to develop a flexible Bayesian formulation of the reconstruction problem. In addition, while the problem of time-varying graph signal reconstruction has been examined by several papers, in \cref{chap:gsr_2d} we propose reconstruction on two-dimensional Cartesian products graphs, of which time varying graph signals can be considered a special case. Furthermore, we offer two alternative optimisation algorithms, one a Stationary Iterative Method (SIM) using matrix splitting, and the other based on the Conjugate Gradient Method (CGM) with a specialised graph-spectral preconditioner. By conducting a detailed asymptotic analysis, we compare and contrast the convergence behaviour of these two algorithms. Whilst convergence is discussed in many of the aforementioned papers, we provide fresh insight into the effect of the model hyperparameters, and present synthetic data studies to confirm our theoretical findings. Furthermore, we show how the SIM can be conducted in a distributed manner, and how the fraction of missing data in the original graph signal affects which of these two methods is preferable. In \cref{chap:nd_gsp}, we extend our methods to encompass GSR on Cartesian products graphs with an arbitrary number of dimensions, under the multiway GSP paradigm. To the best of our knowledge, these all represent novel contributions to the field. 
 
 
-
 \section{Graph Signal Regression}
 
-\cite{Guestrin2004} Regression
+Another key topic that runs through this thesis is graph signal regression. One of the earliest papers to reference regression in the context of GSP is \cite{Guestrin2004}. Here, the authors propose a distributed algorithm for computing a function that approximates a time-varying graph signal, with applications aimed specifically at sensor networks. This paper, which predates much of the work on Laplacian-based GSP, is primarily focused on efficient algorithms for communication between sensors, and in modern parlance is more akin to graph signal compression, as the authors seek a low-dimensional representation of the original signal. In can also be considered a particular class of distributed spatial regression, as they consider the $x$-$y$ coordinates of each sensor, rather than modelling the network in terms of nodes and edges. 
 
-\cite{Takeda2007}
-
-\cite{Elias2022}
-
-\cite{Venkitaraman2019}
+In this thesis, the definition of graph signal regression we use differs somewhat from this formulation. For our purposes, we consider graph signal regression to be the task of estimating a graph signal as a function of additional explanatory variables. In particular, we highlight two different scenarios which we term exogenous (global) and endogenous (local) regression. For the exogenous case, we examine work on Kernel Graph Regression (KGR) \citep{Venkitaraman2019} and related variants such as Gaussian Process on Graphs (GPoG) \cite{Venkitaraman2020}. For the endogenous case, we examine work on Regression with Network Cohesion (RNC) \citep{Li2019}. 
 
 
-\subsection{Kernel Graph Regression}
+\subsection{Exogenous case: Kernel Graph Regression and Gaussian Processes on Graphs}
 
-\cite{Venkitaraman2020}
+The task of graph regression with endogenous explanatory variables can be stated as follows. Consider a series of $T$ real-valued graph signals, each measured on a graph comprising $N$ nodes, $\{\y_t \in \R^N\}_{t=1}^T$. Each of these signals has a corresponding associated length-$M$ vector of explanatory variables $\{\x_t\}_{t=1}^T$. The goal is to learn a function that maps the explanatory variables to the graph signals, such that if a new explanatory vector $\x'$ is supplied, we should be able to make an estimate for the corresponding graph signal $\y'$. By penalising predictions that are not smooth with respect to the topology of the graph, the intention is to produce an estimator that outperforms non graph-aware alternatives. Note that, while we use the index $t$ to denote each sample, the set $\{\x_t, \y_t\}$ can simply be regarded as training pairs and need not represent time-series data (although they often may). 
 
-\cite{Miao2022}: GPoG + graph learning
 
-\cite{Zhi2023}: GPoG + kernel learning
+In this context, the variables are `exogenous' or global in the sense that they are not associated with any node in particular, and the signal at each node in the graph can learn a unique functional response. For example, consider a time-varying graph signal consisting of net profits for a network of businesses connected based on industry or supply chain. In this case, the explanatory variables could be factors in the broader economy such as GDP growth, inflation or unemployment which may affect each company differently. 
 
-\cite{Elias2022}
+In \cite{Venkitaraman2019}, the authors propose Kernel Graph Regression (KGR) for this purpose. Here, each node in the observed graph signal $\y_t$ is modelled as a unique linear combination of a basis function representation of the explanatory variables $\boldsymbol{\phi}(\x_t) \in \R^P$, such that $\y_t = \W^\top \boldsymbol{\phi}(\x_t)$, where $\W \in \R^{P \times N}$ is a matrix of coefficients. To find the optimal value of $\W$, they propose the following cost function. 
 
-\subsection{Regression with Network Cohesion}
+\begin{equation}
+    C(\W) = \sum_{t=1}^T ||\y_t - \W^\top \boldsymbol{\phi}(\x_t) ||_2^2 + \alpha \tr{\W^\top \W} + \beta \sum_{t=1}^T \text{TV}_2\big(\W^\top \boldsymbol{\phi}(\x_t)\big)
+\end{equation}
+
+The first term in this objective seeks to minimise the square prediction error, the second provides regularisation for the coefficient matrix, and the third utilises  the total square variation, of \cref{eq:TSV2}, to promote signal smoothness. Next, the authors leverage the so-called `kernel trick' to transform this to a non-parametric regression problem. This is achieved by introducing a $T \times T$ kernel matrix $\K$, where $\K_{ij} = \kappa(\x_i, \x_j)$ \citep{Rasmussen2005}, which results in the following in-sample prediction. 
+
+\begin{equation}
+    \mat{\big(\I_N \otimes \K\big)\big(\I_N \otimes (\K + \alpha \I_T) + \beta \LL \otimes \K \big)^{-1} \vecc{\Y}}
+\end{equation}
+
+where $\Y \in \R^{T \times N}$ is the matrix formed by stacking each observed signals $\{\y_t\}$, $\vecc{\cdot}$ represents column-major vectorisation mapping $\R^{T \times N} \mapsto \R^{TN}$, and $\mat{\cdot}$ is the reverse operation $\R^{TN}\mapsto  \R^{T \times N}$. The result is the prediction made over the training samples $\{\x_t\}_{t=1}^T$. This can also be adjusted to make a prediction for an unseen explanatory variable $\x'$. Some recent extensions have been proposed to KGR such as \cite{Elias2022}, where the authors use an algorithm based on random Fourier features to improve computational robustness. 
+
+In \cite{Venkitaraman2020}, the same authors propose a new model which takes a Bayesian perspective to define Gaussian Processes over Graphs (GPG). Here, a modified approach is used, where a graph-spectral prior is placed over the coefficient matrix to induce smoothness in the output signal. This results in not only a point estimate for the signal, but a multivariate Gaussian probability distribution with a mean and covariance. In particular, the authors define an online algorithm where the distribution over a signal at time $T+1$, given $\x_{T+1}$ is given by 
+
+\begin{equation}
+     \Norm{\muu = \D^\top \C_T^{-1}\,\vecc{\Y}}{\; \SIG = \F - \D^\top \C_T^{-1} \D}
+\end{equation}
+
+with
+
+\begin{align}
+    \C_T &= \HH^2 \otimes \K + \beta^{-1} \I_N \otimes \I_T \\[0.1cm]
+    \D &= \HH^2 \otimes \big[\kappa(\x_1, \x_{T+1}), \, \kappa(\x_2, \x_{T+1}), \, ... \, ,\, \kappa(\x_N, \x_{T+1})\big]^\top \\[0.1cm]
+    \F &= \kappa(\x_{T+1}, \x_{T+1}) \HH^2 + \beta^{-1} \I_N
+\end{align}
+
+Several papers have also proposed extensions to this model. For example, in \cite{Miao2022}, the authors present a modified algorithm that simultaneously learns the underlying graph structure. In \cite{Zhi2023}, the authors propose parametrising the filter function as a finite polynomial of the graph Laplacian, and simultaneously learn the polynomial coefficients, extending their earlier work in \cite{Pu2021}. 
+
+In \cref{chap:kgr_rnc_2d}, we present a hybrid model that incorporates aspects of graph signal reconstruction, as well as Gaussian processes over graphs. In particular, we are interested in reconstructing time-varying partially observed graph signals when additional exogenous explanatory variables exist. Notably, all the models discussed in this subsection assume that readings across all vertices are available as inputs into the model. However, in many real-world applications, node-level data may be corrupted by equipment failure or difficult/expensive to reliably collect. Whilst one option may be to simply remove problematic nodes from the problem entirely, this can waste valuable data that may help in the estimation problem. In \cref{chap:nd_gsp}, we take this further by developing a model that is capable of reconstructing $d$-dimensional multiway graph signals with exogenous variables. To the best of our knowledge, none of these issues have been addressed in the available literature. 
+
+
+\subsection{Endogenous case: Regression with Network Cohesion}
+
+The second graph regression setting we wish to highlight is the case when endogenous variables exist to aid with the estimation process. Consider a single graph signal $\y \in \R^N$, with elements existing on the nodes of a known graph. In this scenario, each node, $n$, has an associated vector of explanatory variables $\x_n \in \R^M$. The goal is to build a predictive model which utilised these local explanatory variables, whilst also incorporating the underlying structure of the network. 
+
+In \cite{Li2019}, the authors propose Regression with Network Cohesion (RNC). Here, they propose modelling each element of the observed graph signal $\y_n$ as a linear combination of an intercept term and the explanatory variables at node $n$. This is summarised by the following statistical model. 
+
+\begin{equation}
+    \y = \cc + \X \w + \boldsymbol{\epsilon}
+\end{equation}
+
+$\X \in \R^{N \times M}$ is the matrix formed by stacking each vector of explanatory variables, $\w \in \R^M$ is a coefficient vector, and $\cc \in \R^N$ is a flexible intercept term of individual node effects. The model error $\boldsymbol{\epsilon} \in \R^N$ is assumed to have a zero mean and a variance of $\sigma^2 \I_N$. The model seeks to learn an optimal value for $\cc$ and $\w$ by minimising the following objective function. 
+
+\begin{equation}
+    \label{eq:RNC_objective}
+    C(\cc, \w) = ||\y - \X \w - \cc ||^2_2 + \lambda \text{TV}_2(\cc)
+\end{equation}
+
+The addition of the total square variation term, which the authors name the cohesion penalty, is intended to promote smoothness over the flexible intercept with respect to the topology of the graph. The justification for this is that closely connected nodes are likely to have similar baseline effects, meaning the model simultaneously learns a shared coefficient vector $\w$, and a unique but smooth intercept. The optimal values can be computed by introducing a combined parameter vector $\thetaa = \begin{bmatrix} \cc \\ \w  \end{bmatrix}$, with an estimator given by 
+
+\begin{equation}
+    \label{eq:theta_RNC_OG}
+    \hat{\thetaa} = \begin{bmatrix}
+        \I_N + \lambda \LL & \X \\ \X^\top & \X^\top \X
+    \end{bmatrix}^{-1} \begin{bmatrix}
+        \I_N & \X
+    \end{bmatrix} \y
+\end{equation}
+
+In order to make a prediction on a test set, where the new explanatory variables $\X' \in \R^{N' \times M}$ are available, the authors use the following. 
+
+\begin{equation}
+    \hat{\y}' = \hat{\cc}' + \X' \hat{\w}
+\end{equation}
+
+where $\hat{\w}$ is the optimal value found by minimising \cref{eq:RNC_objective}, and $\hat{\cc}'$ is found by minimising the following objective. 
+
+\begin{equation}
+    \hat{\cc}' = \underset{\cc'}{\text{argmin}} \quad \begin{bmatrix}
+        \hat{\cc} \\ \cc' 
+    \end{bmatrix}^\top \begin{bmatrix}
+        \LL_{11} & \LL_{12} \\ \LL_{12}^\top & \LL_{22}
+    \end{bmatrix} \begin{bmatrix}
+        \hat{\cc} \\ \cc' 
+    \end{bmatrix} = - \LL_{22}^{-1} \LL_{12}^\top \hat{\cc}
+\end{equation}
+
+where the new Laplacian characterising the full graph containing all train and test nodes has been broken into blocks as shown. Note that as long as the two parts of the graph are mutually connected, the inverse of $\LL_{22}$ will exist. As noted by the authors, there may be some issues surrounding computational robustness within this model. In particular, the system matrix found in \cref{eq:theta_RNC_OG} may in general be singular. To overcome this the authors propose adding a small term $\gamma \I_N$ to the graph Laplacian, which fixes this issue. 
+
+One limitation of the RNC model is that the total variation penalty, while simple and easy to interpret, lacks the flexibility to specify more generic expectations about the spectral profile of the observed graph signal. 
 
 \cite{Le2022}
 
-\cite{Li2019}
+
 
 \section{GSP on higher order graphs}
 
