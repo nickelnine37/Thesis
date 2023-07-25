@@ -309,7 +309,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 
 \begin{figure}[t]
     \begin{center}
-        \includegraphics[width=0.8\linewidth]{Figures/TV.pdf}
+        \includegraphics[width=0.75\linewidth]{Figures/TV.pdf}
     \end{center}
     \caption[A time-vertex Cartesian product graph]{A graphical depiction of a time-vertex Cartesian product graph. }
     \label{fig:TV}
@@ -663,7 +663,7 @@ In the context of a graph time series problem, this method also lends itself to 
 
 \newpage 
 
-One caveat worth noting is that the accuracy of the Chebyshev approximation depends not only on the order of the polynomial but also on the filter used and its parameter(s). \Cref{fig:cheb_approx} demonstrates how an order-3 approximation to $J(x)$, with $\gamma=0.05$, varies across several different filter types and parameter settings. For filter functions that exhibit slow variation, typically corresponding to smaller values of $\beta$, the fit is usually quite accurate. However, in certain other contexts, it deviates significantly from the true filter function. Another consideration is that the spectral radius of $\M^{-1}$ is no longer guaranteed to be less than one. For instance, in the case of the bandlimited filter, the function clearly reaches higher values. To ensure guaranteed convergence, the polynomial coefficients should be adjusted such that the approximation remains within the range of $[-1, 1]$. 
+One caveat worth noting is that the accuracy of the Chebyshev approximation depends not only on the order of the polynomial but also on the filter used and its parameter(s). \Cref{fig:cheb_approx} demonstrates how an order-3 approximation to $J(x)$, with $\gamma=0.05$, varies across several different filter types and parameter settings. For filter functions that exhibit slow variation, typically corresponding to smaller values of $\beta$, the fit is usually quite accurate. However, in certain other contexts, it deviates significantly from the true filter function. Another consideration is that the spectral radius of $\M^{-1}$ is no longer guaranteed to be less than one. For instance, in the case of the bandlimited filter, the function clearly reaches higher values. To guarantee convergence, the polynomial coefficients should be adjusted such that the approximation remains within the range of $[-1, 1]$. 
 
 \vspace{0.5cm}
 

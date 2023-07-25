@@ -4,7 +4,7 @@
 
 \lhead{Chapter 2. \emph{Literature Review, Contributions and Scope}} 
 
-The aim of this literature review is to provide an overview of the field of Graph Signal Processing (GSP) with a particular emphasis on multivariate reconstruction and regression models. First, we will give some historical context for the subject, highlighting the key theoretical advancements and canonical examples, before moving towards the contemporary developments relevant to this thesis. This begins with a discussion of graph filters and kernels, which are a fundamental building block of the methods presented in this thesis. Next, we discuss the topic of graph signal reconstruction, before covering different approaches to regression with graph signals. This is followed by a survey the emerging field of multiway graph signal processing, and finally we discuss node classification methods. For each of this topics we explain how the methods presented in this thesis contribute to the field. 
+The aim of this literature review is to provide an overview of the field of Graph Signal Processing (GSP) with a particular emphasis on multivariate reconstruction and regression models. First, we will give some historical context for the subject, highlighting the key theoretical advancements and canonical examples, before moving towards the contemporary developments relevant to this thesis. This begins with a basic review of graph filters and kernels, which are foundational building blocks of the methods presented in this thesis. Next, we discuss the topic of graph signal reconstruction, before covering different approaches to regression with graph signals. This is followed by a survey the emerging field of multiway graph signal processing, and finally we discuss node classification methods. For each of this topics we explain how the methods presented in this thesis contribute to the field. 
 
 By presenting a holistic view of the existing literature, this review aims to set a firm foundation upon which we can build the discussion for our ensuing research questions. In addition, this chapter will also hone in on the specific scope of this thesis and define the boundaries of our research. In particular, we aim to identify the areas of interest that remain under-explored or incomplete in the current state of research, as well as clearly demarcate the topics which are not directly relevant to our research focus. 
 
@@ -13,7 +13,7 @@ By presenting a holistic view of the existing literature, this review aims to se
 
 Though GSP as a field in its own right is generally understood to have been established in the early 2000s, its underlying conceptual framework draws upon the well-established fields of Spectral Graph Theory (SGT), and Digital Signal Processing (DSP), which both date back several decades. SGT is a branch of mathematics that studies the eigenvalues and eigenvectors associated with a graph's adjacency or Laplacian matrix to gain insight into its structural properties \citep{Chung1997}. Early work on SGT can be traced back to the 1950s and '60s \citep{Collatz1957,Hoffman1969}, although many of the concepts had already been studied in parallel within quantum chemistry \citep{Huckel1931}. One of the foundational results in SGT is the multiplicity of the Laplacian's zero eigenvalue gives the number of connected components in the graph \citep{Cvetkovic1980}. Another key result is Cheeger's inequality, which relates the second smallest eigenvalue of the Laplacian (also known as the algebraic connectivity) to the isoperimetric number of the graph (a measure of a graph's bottleneck) \citep{Cheeger1971}. 
 
-Digital Signal Processing (DSP), sometimes considered a branch of engineering, utilises digital computation to analyse, transform, or filter signals, which can be in forms such as sound, images, and sensor data \citep{Rabiner1975}. The core principles of DSP are grounded in linear algebra, calculus, differential equations, and statistics. This theoretical underpinning has led to a plethora of practical applications across varied fields, such as telecommunications, audio processing, image and video processing, astronomy, and seismology, to name a few. Within DSP, the Discrete Fourier Transform (DFT) and its fast algorithmic implementation, the Fast Fourier Transform (FFT), play a central role, with many tasks such as reconstruction, denoising, compression, and filtering requiring analysis and manipulation of the frequency content of signals \citep{Duhamel1990}.
+Digital Signal Processing (DSP), sometimes considered a branch of electrical engineering, utilises digital computation to analyse, transform, or filter signals, which can be in forms such as sound, images, and sensor data \citep{Rabiner1975}. The core principles of DSP are grounded in linear algebra, calculus, differential equations, and statistics. This theoretical underpinning has led to a plethora of practical applications across varied fields, such as telecommunications, audio processing, image and video processing, astronomy, and seismology, to name a few. Within DSP, the Discrete Fourier Transform (DFT) and its fast algorithmic implementation, the Fast Fourier Transform (FFT), play a central role, with many tasks such as reconstruction, denoising, compression, and filtering requiring analysis and manipulation of the frequency content of signals \citep{Duhamel1990}.
 
 GSP began to take shape as a separate discipline around the start of the 21st century, as the proliferation of data and advancements in computer technology gave rise to more complex, irregular, and high-dimensional data structures. The theoretical framework underpinning GSP emerged from work on Algebraic Signal Processing (ASP), with several papers published by Puschel and Moura from 2003 to 2008 establishing an axiomatic approach to discrete time signal processing \citep{Puschel2003,Puschel2006,Puschel2008}. This mathematical formalism, based on the concept of shift operators, established a unifying framework for several concepts from classical signal processing. For example, under the ASP paradigm, the Discrete Cosine Transform (DCT) and DFT are understood as generated from different discrete shift operators (a chain and cycle respectively) \citep{Isufi2022}. 
 
@@ -29,92 +29,144 @@ In the early 2010s, two distinct yet complementary approaches to GSP emerged, as
 
 \label{sec:graph_kernels}
 
-In GSP, two distinct but closely-related concepts are graph filters and graph kernels. In the Laplacian-based GSP paradigm, both can understood as a function $g(\lambda)$ applied to the frequency profile of a graph signal or, equivalently, a power series applied to the Laplacian itself. Note that, in this context, graph kernel should not be confused with another concept that bares the same name which refers to distance measures between pairs of graphs \citep{Kriege2020}. Graph filters and graph kernels provide a map $\R^N \mapsto \R^N$, and can be represented as a matrix operator $\HH \in \R^{N \times N}$.
+In GSP, two distinct but closely-related concepts are graph filters and graph kernels. In the Laplacian-based GSP paradigm, both can understood as spectral operators which modify the frequency profile of a graph signal, providing a direct generalisation of conventional filters in classical signal processing. (It is worth noting that, in this context, `graph kernel' should not be confused with another concept, bearing the same name, which refers to distance measures between pairs of graphs \citep{Kriege2020}.) Graph filters/kernels play a fundamental role in GSP, and are at the heart of numerous algorithms including reconstruction \citep{Romero2017b}, anomaly detection \citep{Xiao2021}, GNNs \citep{Gama2020} and graph learning \citep{Mateos2019}. 
+
+A graph filter or kernel is characterised by a function $g(\lambda)$, which is applied to the frequency profile of a signal $\y$. This is performed by initially transforming $\y$ into the frequency domain via the GFT, then subsequently applying $g(\cdot)$ to each frequency component independently, and finally transforming back to the node domain via the IGFT. Consequently, it can be represented by a matrix operator $\HH \in \R^{N \times N}$ as follows.
 
 \begin{equation}
-    \HH = g(\LL) = \U g(\LAM) \U^\top
+    \HH  = \U g(\LAM) \U^\top 
 \end{equation}
 
- $g(\cdot)$ can be set such that it promotes certain properties in the output signal, for example, a low-pass filter (such as those specified in \cref{tab:filters}) is monotonically decreasing function which attenuates the high frequency content of a signal. In the GSP community, typically the terms `filter' is preferred to refer to this class of operator \citep{Shuman2013}, however, there are those who prefer the term `kernel' \citep{Ioannidis2016,Romero2017}. Often the difference is simply that a kernel is an increasing function, used to construct penalty terms, whereas a filter is a decreasing one, used to operate on graph signals. In the machine learning community, the term kernel is typically preferred \cite{Kondor2002,Smola2003}. Either convention can be used, and in this thesis we use filters for the most part. 
+\begin{table}[t]
+    \vspace*{1cm}
+    \centering
+    \def\arraystretch{1.7}
+    \begin{tabular}{@{}l c@{}}
+        \toprule
+        \textbf{Filter}   & $g(\lambda; \,\beta)$   \\
+        \midrule
+        1-hop random walk & $(1 + \beta \lambda)^{-1}$ \\
+        Diffusion         & $\exp(-\beta \lambda)$\\
+        ReLu              & $\max (1 - \beta \lambda, 0)$\\
+        Sigmoid           & $2 \big( 1 + \exp(\beta \lambda)\big)^{-1}$\\
+        Gaussian          & $\exp \big(-(\beta \lambda)^2\big)$\\
+        Bandlimited       & $1, \,\text{if} \; \beta \lambda \leq 1 \; \text{else} \; 0$ \\
+        \bottomrule
+    \end{tabular}
+    \caption[Example graph filter functions]{Some example low-pass graph filter functions}
+    \label{tab:filters}
+    \vspace*{1cm}
+\end{table}
+
+
+Equivalently, $\HH$ can be understood as originating from the direct application of the function $g(\cdot)$ to the Laplacian, represented as $\HH = g(\LL)$. Here, this operation should be interpreted as an analytic function of a matrix, that is, a series sum of matrix powers \citep{Bhatia1997}. The function $g(\cdot)$ can be set such that it promotes certain properties in the output signal. For example, a low-pass filter (as those specified in \cref{tab:filters}) is a monotonically decreasing function, attenuating the high-frequency content of a signal. The choice of filter will depend on the application of interest, and may rely on expert domain knowledge about the spectral profile of the graph signals. 
+
+In the GSP community, the term `filter' is typically preferred when referring to this class of operator \citep{Shuman2013}, although some favour the term `kernel' \citep{Ioannidis2016,Romero2017}. Often, the primary practical distinction is that a kernel is an increasing function, used to construct penalty terms in regularised problems, whereas a filter is a decreasing one, interpreted as providing spectral transformations on graph signals. In \cite{Romero2017b}, the authors advocate for the preferential use of the term kernel, arguing that many GSP methods have an elegant interpretation in terms of Reproducing Kernel Hilbert Spaces (RKHSs). Within the machine learning community, where kernel methods and RKHSs are common, the kernel interpretation is typically favoured \citep{Kondor2002,Smola2003}. Regardless, either convention can be used, and in this thesis, we predominantly describe our methods in terms of filters since they provide a more direct correlation with conventional signal processing techniques, offering an intuitive way to manipulate and reason about the spectral content of graph signals.
 
 
 \subsection{Probability distributions over graph signals}
 
-Spectral operators can be used to define probability distributions over smooth graph signals. An early example of this is found in \cite{Gadde2015}, where the authors propose a Gaussian Random Field (GRF) model for the generation of graph signals. In particular, they build a model for vertex sampling that assumes signals are random variables drawn from the following underlying multivariate Gaussian distribution. 
-
+Spectral operators can be used to define probability distributions over smooth graph signals. An early example of this approach can be found in \cite{Gadde2015}, where the authors propose a Gaussian Random Field (GRF) model for generating graph signals. In particular, they propose a method for vertex sampling that treats signals as random variables drawn from the following underlying multivariate Gaussian distribution.
 
 \begin{equation}
-    \y \sim \Norm{\zero}{(\LL + \delta \I)^{-1}}
+\y \sim \Norm{\zero}{(\LL + \delta \I)^{-1}}
 \end{equation}
 
-
-This probabilistic interpretation offers a principled way of reasoning about graph signals, making the relationship between GSP and certain methods from semi-supervised learning more apparent \citep{Zhu2003}. More recently, in \cite{Venkitaraman2020}, the authors propose using graph filters to specify a probability distribution. In particular, they advocate using the following Gaussian distribution. 
+This probabilistic interpretation offers a principled way of reasoning about graph signals, making the connection between GSP and specific methods from semi-supervised learning more apparent \citep{Zhu2003}. A more general probabilistic framework for graph signal processing is proposed in \cite{Zhang2015}, where distributions are parametrised by graph filters, offering increased flexibility. Once again, graph signals are interpreted as Gaussian Random Fields, however, the covariance structure is expanded to encompass a greater variety of spectral profiles. In particular, the distribution is given by 
 
 \begin{equation}
     \label{eq:gaussian_filter}
     \y \sim \Norm{\zero}{\gamma^{-1} \HH^2}
 \end{equation}
 
-\begin{wrapfigure}{r}{0.4\linewidth}
+
+where $\HH$ is a generic graph filter. Since $\HH^2 = \U g^2(\LAM) \U^\top$, this distribution can be interpreted as an independent multivariate Gaussian in the Laplacian eigenbasis, where the covariance of each basis vector is given by $g^2(\lambda_i)$. Since, for a low pass filter, $g(\cdot)$ is monotonically decreasing, this naturally results in higher probability density placed on smoothly varying graph signals. 
+
+
+Further insight into this model can be gained from the following consideration. First, start with an independent multivariate normally distributed random variable, denoted as $\y \sim \Norm{\zero}{\I_N}$. Applying a graph filter yields a new signal, $\HH \y$, which has its high frequency content attenuated in accordance with the properties of the filter. This filtered signal will also be normally distributed, according to $\HH \x \sim \Norm{\zero}{\HH^2}$. Therefore the process of filtering white Gaussian noise is equivelent to drawing from a distribution with mean zero and covariance $\HH^2$, meaning $\HH^2$ can be interpreted as a covariance matrix for generating smooth, normally distributed graph signals. This flexible approach permits the encoding of various beliefs regarding the frequency profile of graph signals. \Cref{fig:random_smooth_uk} displays an example of a random signal drawn from the distribution of \cref{eq:gaussian_filter} using a bandlimited filter.
+
+% \begin{wrapfigure}{r}{0.4\linewidth}
+    \begin{figure}[t]
+        \vspace*{0.6cm}
 	\centering
-		\includegraphics[width=0.7\linewidth]{Figures/uk_smooth.pdf}
+		\includegraphics[width=0.4\linewidth]{Figures/uk_smooth.pdf}
 	\caption[An example of a random smooth graph signal]{An example of a random smooth signal on the UK district graph, sampled from $\Norm{\zero}{\HH^2}$ using a bandlimited filter. }
 	\label{fig:random_smooth_uk}
-\end{wrapfigure}
+    \vspace*{0.6cm}
+    \end{figure}
+% \end{wrapfigure}
 
-where $\HH$ is a generic graph filter. The justification for this is as follows. Consider an independent multivariate normal random variable $\y \sim \Norm{\zero}{\I_N}$. Applying a graph filter to a random signal $\x$ will result in a new signal, $\HH \x$, which is smoother with respect to the graph topology. This will be distributed according to $\HH \x \sim \Norm{\zero}{\HH^2}$, meaning $\HH^2$ can be interpreted as a covariance matrix with which to generate smooth, normally distributed graph signals. This more flexible approach allows for various beliefs about the frequency profile of graph signals to be encoded. \Cref{fig:random_smooth_uk} shows an example of a random signal drawn from the distribution of \cref{eq:gaussian_filter}. 
+This approach is also embraced in \cite{Venkitaraman2020}, where the authors use graph filters to construct a Gaussian process regression model over graphs. In particular, they use a GRF to specify the prior distribution over their weight matrix, resulting in predictions which are smooth with respect to the graph topology. The filter-based GRF model also provides interpretation for the work of \cite{Gadde2015}, which can be seen as a special case of this more general formulation. In particular, their chosen covariance matrix can be written in the form $(\LL + \delta \I)^{-1} = \U g^2(\LAM) \U^\top$, where the filter function is given by $g(\lambda) = 1 / \sqrt{\lambda + \delta}$. In a similar manner, \citep{Perraudin2017} suggest a flexible class of Laplacian-based covariance matrices, however, their focus is on stationary signals with potentially non-Gaussian distributions. In other work such as \cite{Dong2016}, the authors take a Bayesian approach to the problem of graph learning, using similar graph-spectral priors. 
 
-In a similar manner, \citep{Perraudin2017} suggest a flexible class of Laplacian-based covariance matrices, although this approach lacks the interpretability of the aforementioned filter-based formulation. In this thesis, we follow the example of \cite{Venkitaraman2020}, extending their method to describe distributions over multidimensional graph signals (two-dimensional matrix signals in \cref{chap:gsr_2d}, and $d$-dimensional tensor signals in \cref{chap:nd_gsp}). This allows us to build a rich class of Bayesian models for tasks such as reconstruction and regression. 
+In general, many types of GSP models utilising some form of quadratic Laplacian-based regularisation can be interpreted in Bayesian terms, although this often goes unnoted. In this thesis, we follow the example of \cite{Zhang2015} in describing signal distributions with GRFs. However, unlike any of the aforementioned work, we extend this to multidimensional graph signals (two-dimensional matrix signals in \cref{chap:gsr_2d}, and $d$-dimensional tensor signals in \cref{chap:nd_gsp}). This allows us to build a rich class of Bayesian models for tasks such as multivariate reconstruction and regression. 
 
 \subsection{Approximating graph filters with Chebyshev polynomials}
 
 \label{sec:Chebyshev}
 
-A popular and longstanding technique, which can be traced back to some of the earliest work on Laplacian-based GSP \citep{Hammond2011}, involves computing the action of a graph filter using Chebyshev polynomials. These functions, which form an orthonormal basis on the space $L^2 \left([-1, 1], \frac{dx}{\sqrt{1 - x^2}}\right)$ \citep{Mason2002}, can be used to approximate an arbitrary graph filter function $h(\lambda)$. Since the domain of the filter is $[0, \lambda_{\text{max}}]$, first consider the change of variables $\lambda = \frac{1}{2}\lambda_{\text{max}}(x + 1)$ to define the shifted Chebyshev polynomials as follows. 
+So far, we have presented graph filters as spectral operators which are constructed by applying a function to the eigenvalues of the graph Laplacian. However, this formulation is predicated on the notion that it is practical to compute and store the eigendecomposition of $\LL$. Since the time-complexity of this operation scales as $O(N^3)$, this can quickly become infeasible for large-scale graphs with a high number of nodes. In addition, applying the matrix $\HH$ to a graph signal has complexity $O(N^2)$, in general requiring information from all nodes to compute the filtered signal value at each node. 
+
+On the other hand, a typical feature of graphs is sparsity, since the degree of each node is often independent of the size of the graph. This means that multiplication of a graph signal $\y$ by the Laplacian can often be achieved with complexity $O(N|\mathcal{E}|) \ll O(N^2)$. Furthermore, in the context of a physically realised graph such as a sensor network, computation of $\LL \y$ can be executed `locally', in the sense that the result at any particular node depends only on the  signal value at the direct neighbours of that node. 
+
+One popular and longstanding technique that takes advantage of both these ideas involves approximating a graph filter using Chebyshev polynomials \citep{Shuman2018}. In general, if a graph filter can be approximated as a polynomial of the graph Laplacian, then we can take advantage of the sparsity of $\LL$ to efficiently filter signals without performing eigendecomposition. Consider the following standard polynomial approximation to a graph filter. 
 
 \begin{equation}
-    \bar{T}_k(\lambda) := T_{k}\left(\frac{2\lambda - \lambda_{\text{max}}}{\lambda_{\text{max}}}\right)
+    \label{eq:poly_lap}
+    g(\lambda) \approx \sum_{k=1}^K c_k \lambda^k \;\; \iff \;\; \HH \approx \sum_{k=1}^K c_k \LL^k
 \end{equation}
 
-The target filter function is then expanded using $K$ terms as follows. 
-
-\begin{figure}[t]
-	\centering
-		\includegraphics[width=0.7\linewidth]{Figures/cheb.pdf}
-	\caption[Successive approximations of a filter function using Chebyshev polynomials.]{Successive approximations of the filter function $g(\lambda) = \exp(-3\lambda)$ using Chebyshev polynomials. }
-	\label{fig:Chebyshev}
-\end{figure}
-
+The Chebyshev polynomial approximation is analogous, but rather than summing powers of $\LL$ directly, we sum order-$K$ polynomials, $\bar{T}_k(\LL)$. 
 
 \begin{equation}
-    h(\lambda) \approx \sum_{k=0}^K c_k \bar{T}_k(\lambda)
+    \label{eq:cheb_lap}
+    g(\lambda) \approx \sum_{k=1}^K c_k \bar{T}_k(\lambda) \;\; \iff \;\; \HH \approx \sum_{k=1}^K c_k \bar{T}_k(\LL)
 \end{equation}
 
-The coefficients, $c_k$, are given by the solution to the following integral and can be quickly computed numerically. 
+Standard Chebyshev polynomials form an orthonormal basis with respect to the product
+
+\begin{equation}
+    \langle f, g \rangle = \int_{-1}^1 f(x) g(x) \frac{dx}{\sqrt{1 - x^2}}
+\end{equation}
+
+and can be used to approximate arbitrary functions within this domain. They also have a number well-documented advantages in terms of computational robustness and error over standard polynomial approximations that arise from a Taylor series expansion \citep{Rivlin2020}. While the standard Chebyshev polynomials $\{T_k\}$ are valid on the domain $[-1, 1]$, in the context of graph filters, they must be applicable over the range $[0, \lambda_{\text{max}}]$, leading to the transformed variant $\{\bar{T}_k\}$ appearing in \cref{eq:cheb_lap}. These can be defined recursively as follows. 
+
+\begin{equation}
+    \bar{T}_k(\LL) = \left(\frac{4 \LL }{\lambda_{\text{max}}}  - 2\right) \bar{T}_{k-1}(\LL) - \bar{T}_{k-2}(\LL)
+\end{equation}
+
+subject to the initial conditions
+
+\begin{equation}
+    \bar{T}_0(\LL) = \I_N, \quad \bar{T}_1(\LL) = \frac{2 \LL }{\lambda_{\text{max}}} - \I_N
+\end{equation}
+
+Note that this definition ensures only repeated multiplications by $\LL$ when applying $\bar{T}_k(\LL)$ to a graph signal. To approximate an arbitrary filter function $g(\lambda)$, the coefficients $c_k$ are given by 
 
 \begin{equation}
     \label{eq:Cheb_int}
     c_k = \begin{cases}
         \displaystyle   
-        \; \frac{1}{\pi} \int_{0}^{\pi} h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta & \text{if} \quad k = 0, \\[0.8cm]
+        \; \frac{1}{\pi} \int_{0}^{\pi} g\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta  & \quad \text{if} \quad k = 0, \\[0.8cm]
         \displaystyle   
-        \; \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) \; h\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta & \text{otherwise.}
+        \; \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) \; g\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta  & \quad \text{otherwise.}
     \end{cases}
 \end{equation}
 
-The benefit of this approach is that Chebyshev polynomials can be defined recursively as follows. 
+and can be quickly evaluated numerically. 
 
-\begin{equation}
-    \bar{T}_k(\lambda) = \left(\frac{4 \lambda }{\lambda_{\text{max}}}  - 2\right) \bar{T}_{k-1}(\lambda) - \bar{T}_{k-2}(\lambda)
-\end{equation}
+\begin{figure}[t]
+	\centering
+		\includegraphics[width=0.55\linewidth]{Figures/cheb.pdf}
+	\caption[Successive approximations of a filter function using Chebyshev polynomials.]{Successive approximations of the filter function $g(\lambda) = \exp(-3\lambda)$ using Chebyshev polynomials. }
+	\label{fig:Chebyshev}
+\end{figure}
 
-with the initial values
 
-\begin{equation}
-    \bar{T}_0 = 1, \quad \bar{T}_1 = \frac{2 \lambda }{\lambda_{\text{max}}} - 1
-\end{equation}
+Chebyshev polynomials appeared in early papers on GSP, such as \citep{Hammond2011}, in which the authors were concerned with defining wavelet transforms on graphs, also defined in terms of Laplacian-based spectral operators $g(\LL)$. Since then, they have been widely used in distributed applications \citep{Shuman2018}, and have also been extensively employed in Graph Neural Networks \citep{Gama2020}. In \cite{Defferrard2017}, Chebyshev polynomials form the basis of convolutional filters with learned parameters, in direct analogy with traditional Convolutional Neural Networks (CNNs). This approach was further simplified in \cite{Kipf2017} by reducing the number of terms in the polynomial to mitigate overfitting.
 
-This means that the computation can be applied in a distributed manner using message passing, or simply that computationally expensive eigenvalue decomposition of the Laplacian can be avoided \citep{Shuman2018}. In particular, if the Laplacian is sparse (which is often the case), its action onto a vector can be computed with complexity proportional to the number of edges. 
+In \cite{Rimleanscaia2020,Tseng2020}, the authors propose an extension to polynomial filters, which considers a more general class of rational filters, i.e. the ratio between two polynomials. As they describe, in certain circumstances, rational designs can approximate a given frequency response using lower-order polynomials. Notably, when the response is band-limited, rational filters were found to have significantly lower error than standard Chebyshev polynomials, which tend to struggle when approximating the sharp cut-off. In general, rational filtering requires solving a linear system $\y' = P(\LL)^{-1} Q(\LL) \y$, where $P$ and $Q$ are the polynomials occurring in the numerator and denominator, respectively. This incurs an additional computational cost. Furthermore, solving for the coefficients of each polynomial no longer has a closed-form solution and requires addressing a more challenging non-convex constrained problem.
+
+As noted, polynomial approximations are primarily useful because multiplications of a graph signal by the Laplacian can be executed efficiently. In all the papers discussed so far, efficiency has been achieved through distributed execution and/or leveraging Laplacian sparsity. However, another way to exploit the Laplacian structure is if it has a representation in terms of a tensor factorisation. This is one of the approaches we take in the subsequent sections, focusing on how tensor factorisation can further optimise the computation time and resource usage, especially in cases with high-dimensional data or large-scale product graphs.
 
 
 \section{Graph Signal Reconstruction}
@@ -231,27 +283,31 @@ One limitation of the RNC model is that the total variation penalty, while simpl
 
 
 
-\section{GSP on higher order graphs}
+% \section{GSP on higher order graphs}
 
-Multiway data processing 
+% Multiway data processing 
 
-\cite{Smilde2004}
-\cite{Kroonenberg2008}
-
-
-\cite{Ji2019}
-
-\cite{Cammoun2009}
+% \cite{Smilde2004}
+% \cite{Kroonenberg2008}
 
 
-\subsection{Multi-Layer Graph Signal Processing}
+% \cite{Ji2019}
 
-\cite{Zhang2022} describe M-GSP 
+% \cite{Cammoun2009}
 
-\cite{Zhang2018} extend M-GSP to multiple layers with different number of nodes by adding fake nodes in where they are missing from layers. 
+
+% \subsection{Multi-Layer Graph Signal Processing}
+
+% \cite{Zhang2022} describe M-GSP 
+
+% \cite{Zhang2018} extend M-GSP to multiple layers with different number of nodes by adding fake nodes in where they are missing from layers. 
  
 
-\subsection{Multi-Way Graph Signal Processing}
+\section{Multiway Graph Signal Processing}
+
+Multiway Graph Signal Processing (MWGSP) is an emerging subfield that extends Graph Signal Processing to analyse multiway data represented by multidimensional arrays and tensors \citep{Stanley2020}. In most GSP applications, a graph signal is represented by a vector $\y \in \R^N$, which is interpreted as existing on the nodes of a single graph. MWGSP extends this by considering tensor-valued signals $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, where each axis is described by an independent graph. As a whole, the tensor can be understood as existing on the nodes of a single product graph. 
+
+By incorporating underlying graphs in each data axis, MWGSP handles higher dimensional data sets, which are typically unaddressed by classical GSP. This new approach offers promising applications in real-world situations, such as climate modelling, epidemic spread, and complex biological systems.             
 
 
 \cite{Zhao2023}

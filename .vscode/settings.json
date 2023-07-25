@@ -3,6 +3,7 @@
         "alsogirhtm",
         "bandlimited",
         "Chebyshev",
+        "eigenbasis",
         "IGFT",
         "multiway"
     ],
