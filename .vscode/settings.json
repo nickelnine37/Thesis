@@ -1,11 +1,22 @@
 {
     "cSpell.words": [
         "alsogirhtm",
+        "ARMA",
         "bandlimited",
         "Chebyshev",
+        "colourmap",
+        "denoised",
         "eigenbasis",
+        "hypergrid",
         "IGFT",
-        "multiway"
+        "interactome",
+        "isoperimetric",
+        "missingness",
+        "multiway",
+        "Sandryhaila",
+        "spatiotemporally",
+        "strided",
+        "voxels"
     ],
     "cSpell.language": "en-GB,en"
 }

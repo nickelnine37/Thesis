@@ -2,21 +2,16 @@
 
 \addtocontents{toc}{\vspace{2em}} % Add a gap in the contents, for aesthetics
 
-% Begin numeric (1,2,3...) page numbering
 
-\pagestyle{fancy} % Return the page headers back to the "fancy" style
+\pagestyle{fancy} 
 
-% Chapter 1
 
-\chapter{Introduction} % Main chapter title
+\chapter{Introduction} 
 
-\label{chap:ntroduction} % For referencing the chapter elsewhere, use \ref{Chapter1} 
+\label{chap:ntroduction} 
 
-\lhead{Chapter 1. \emph{Introduction}} % This is for the header on each page - perhaps a shortened title
+\lhead{Chapter 1. \emph{Introduction}} 
 
-%----------------------------------------------------------------------------------------
-
-% \section{Graphs and graph signals}
 
 In the field of discrete mathematics, the term ``graph" denotes a collection of distinct objects that may possess some form of pairwise connection or association. The discrete objects that make up the graph are referred to as nodes (or vertices), and their connections are known as edges (or arcs). This abstract structure can be employed to represent numerous real-world phenomena. For example, in an airline route map, nodes could symbolise airports, and edges could indicate the presence of a direct flight.
 
@@ -41,30 +36,30 @@ In this thesis, the subject of focus is Graph Signal Processing (GSP), a rapidly
 \begin{wrapfigure}{l}{0.4\linewidth}
 	\centering
 		\includegraphics[width=\linewidth]{Figures/graph_signal_plot.pdf}
-	\caption[A graphical depiction of a graph signal]{A graphical depiction of a graph signal. Here, the value of the signal at each node is represented by its color.}
+	\caption[A graphical depiction of a graph signal]{A graphical depiction of a graph signal. Here, the value of the signal at each node is represented by its colour.}
 	\label{fig:graph_signal}
 \end{wrapfigure}
  
 
-A graph signal represents a value that is measured simultaneously at every node in a graph. For example, consider a social media network, where each node represents an individual, and presence of an edge indicates that the two individuals have connected. An example of a graph signal in this context could be the age of each person in the network, or a score indicating their propensity to engage with certain content. In either case, this is a value that could theoretically be measured or estimated across the network, though it may be subject to missing data or noise. 
+A graph signal represents a value that is measured simultaneously at every node in a graph. For example, consider a social media network, where each node represents an individual, and the presence of an edge indicates that the two individuals have connected. An example of a graph signal in this context could be the age of each person in the network, or a score indicating their propensity to engage with certain content. In either case, this is a value that could theoretically be measured or estimated across the network, though it may be subject to missing data or noise. 
 
 \vspace{0.2cm}
 
-GSP typically uses tools that stem from classical signal processing, where the goal is to manipulate data that resides on a regular domain such as audio, images or radio. GSP utilises spectral graph theory to generalise these classical techniques, leading to graph-based counterparts of algorithms such as filtering, sampling, and reconstruction \citep{Shuman2013}. Applications of GSP are numerous, ranging from social networks \citep{Dong2015} and brain connectivity modelling \citep{Huang2016} to sensor networks \citep{Zhu2012}, and molecular structures \citep{Kearnes2016}. As an emerging field, there are many opportunities for the development of theory, and new use-cases to explore, making it an exciting and dynamic area of research. 
+GSP typically uses tools that stem from classical signal processing, where the goal is to manipulate data that resides on a regular domain such as audio, images or radio. GSP utilises spectral graph theory to generalise these classical techniques, leading to graph-based counterparts of algorithms such as filtering, sampling, and reconstruction \citep{Shuman2013}. Applications of GSP are numerous, ranging from social networks \citep{Dong2015} and brain connectivity modelling \citep{Huang2016} to sensor networks \citep{Zhu2012}, and molecular structures \citep{Kearnes2016}. As an emerging field, there are many opportunities for the development of theory, and new use cases to explore, making it an exciting and dynamic area of research. 
 
 \section{Research goals}
 
 % multivariate
 
-The goal of this thesis is to provide contributions to the areas of multivariate graph signal reconstruction and regression. A single signal, measured over a network comprising $N$ nodes, is an example of a univariate structure, and can be described by a vector $\y \in \R^N$. Our methods, by contrast, are designed to be applicable to higher-dimensional objects. For example, $T$ samples of a graph signal measured across time can be described by a matrix $\Y \in \R^{N \times T}$. This kind of two-dimensional data can also be viewed as a single graph signal measured on the nodes of a Cartesian product graph \citep{Imrich2000}. More generally, a tensor-valued signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ can be understood as a signal on a $d$-dimensional Cartesian product graph \citep{Stanley2020}. 
+The goal of this thesis is to provide contributions to the areas of multivariate graph signal reconstruction and regression. A single signal, measured over a network comprising $N$ nodes, is an example of a univariate structure and can be described by a vector $\y \in \R^N$. Our methods, by contrast, are designed to be applicable to higher-dimensional objects. For example, $T$ samples of a graph signal measured across time can be described by a matrix $\Y \in \R^{N \times T}$. This kind of two-dimensional data can also be viewed as a single graph signal measured on the nodes of a Cartesian product graph \citep{Imrich2000}. More generally, a tensor-valued signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ can be understood as a signal on a $d$-dimensional Cartesian product graph \citep{Stanley2020}. 
 
 % GSR + regression
 
-Our aim is to expand the existing literature on multivariate GSP by presenting several novel Bayesian models for reconstructing partially observed graph signals, with and without additional explanatory variables. Graph signal reconstruction is a well-studied topic in GSP, however, the majority of published literature to date has focused on univariate, or time-varying signal models that provide point estimates for the missing values. We aim to generalise this in two ways. First, we present a rich Bayesian formulation, that outputs not only a point estimate, but a full probability distribution quantifying prediction uncertainty. Furthermore, our goal is to produce models applicable to graph signals defined on arbitrary Cartesian product graphs, which naturally extend univariate and time-varying models. While the input to a graph signal reconstruction problem is typically only the partially observed graph signal and the topology of the underlying graph, we also consider the situation in which additional explanatory variables are available to aid in the estimation process. Therefore another key objective of ours is to produce graph signal regression models, applicable to a range of different data scenarios, that are robust to missing data. 
+Our aim is to expand the existing literature on multivariate GSP by presenting several novel Bayesian models for reconstructing partially observed graph signals, with and without additional explanatory variables. Graph signal reconstruction is a well-studied topic in GSP, however, the majority of published literature to date has focused on univariate, or time-varying signal models that provide point estimates for the missing values. We aim to generalise this in two ways. First, we present a rich Bayesian formulation, that outputs not only a point estimate but a full probability distribution quantifying prediction uncertainty. Furthermore, our goal is to produce models applicable to graph signals defined on arbitrary Cartesian product graphs, which naturally extend univariate and time-varying models. While the input to a graph signal reconstruction problem is typically only the partially observed graph signal and the topology of the underlying graph, we also consider the situation in which additional explanatory variables are available to aid in the estimation process. Therefore another key objective of ours is to produce graph signal regression models, applicable to a range of different data scenarios, that are robust to missing data. 
 
 % sampling 
 
-As mentioned, a key aspect of our models is the Bayesian formulation, which produces a full posterior probability distribution over the unknown reconstructed signal, rather than a single point estimate. Given the high-dimensional nature of the data, the posterior covariance, which contains information regarding the corelation between every element in the multivariate signal $\Yt$, is often too large to process with consumer-grade computer hardware. Therefore, another objective of ours is to develop efficient methods for extracting information regarding the prediction uncertainty. In particular, we consider two related but separate tasks: estimating the marginal posterior variance (node-level uncertainty) and drawing samples directly from the posterior. 
+As mentioned, a key aspect of our models is the Bayesian formulation, which produces a full posterior probability distribution over the unknown reconstructed signal, rather than a single point estimate. Given the high-dimensional nature of the data, the posterior covariance, which contains information regarding the correlation between every element in the multivariate signal $\Yt$, is often too large to process with consumer-grade computer hardware. Therefore, another objective of ours is to develop efficient methods for extracting information regarding the prediction uncertainty. In particular, we consider two related but separate tasks: estimating the marginal posterior variance (node-level uncertainty) and drawing samples directly from the posterior. 
 
 % binary
 
@@ -72,7 +67,7 @@ The majority of GSP models tend to focus on real-valued graph signals, leaving s
 
 % complexity 
 
-The high-dimensional nature of the models explore in this thesis comes with a unique set of challenges concerning computational robustness and efficiency. As such, a core objective is to reduce the computational cost of our algorithms wherever possible and to provide a detailed and transparent analysis of their time and memory complexity. The models we present are designed to be applicable to a wide range of application areas, and as such, throughout this thesis we also provide illustrative examples and case-studies to demonstrate their applicability. 
+The high-dimensional nature of the models explored in this thesis comes with a unique set of challenges concerning computational robustness and efficiency. As such, a core objective is to reduce the computational cost of our algorithms wherever possible and to provide a detailed and transparent analysis of their time and memory complexity. The models we present are designed to be applicable to a wide range of application areas, and as such, throughout this thesis, we also provide illustrative examples and case studies to demonstrate their applicability. 
 
 \newpage 
 
@@ -81,7 +76,7 @@ The high-dimensional nature of the models explore in this thesis comes with a un
 
 \label{sec:fundamentals}
 
-A graph, $\mathcal{G}$, with $N$ vertices is described by a node set $\mathcal{V}$, and an edge set $\mathcal{E}$. In this thesis, we will be primarily concerned with undirected graphs without self-loops, meaning the edges have no preferential direction and nodes do not connect to themselves. By imposing some arbitrary but consistent ordering on the nodes, this graph can also be described by an $N \times N$ adjacency matrix $\A$, where the entry $\A_{ij} = \A_{ji} \geq 0$ holds the strength of connection between nodes $i$ and $j$. In the basic case of a non-weighted graph, $\A_{ij}$ is simply one if the corresponding edge exists and zero otherwise. Using the same ordering, a graph signal can be represented by a vector, $\y$, of length $N$, where $\y_i$ holds the value of the graph signal at node $i$. 
+A graph, $\mathcal{G}$, with $N$ vertices is described by a node-set $\mathcal{V}$, and an edge set $\mathcal{E}$. In this thesis, we will be primarily concerned with undirected graphs without self-loops, meaning the edges have no preferential direction and nodes do not connect to themselves. By imposing some arbitrary but consistent ordering on the nodes, this graph can also be described by an $N \times N$ adjacency matrix $\A$, where the entry $\A_{ij} = \A_{ji} \geq 0$ holds the strength of connection between nodes $i$ and $j$. In the basic case of a non-weighted graph, $\A_{ij}$ is simply one if the corresponding edge exists and zero otherwise. Using the same ordering, a graph signal can be represented by a vector, $\y$, of length $N$, where $\y_i$ holds the value of the graph signal at node $i$. 
 
 One key property of a graph signal is its \textit{smoothness}. Intuitively speaking, a smooth graph signal should exhibit gentle variation between closely connected nodes, as illustrated in \cref{fig:graph_signal}. Conversely, a rough graph signal might see large jumps in signal value between neighbouring nodes. Mathematically, the smoothness of a signal, $\y$, defined over the nodes of an undirected graph, can be measured in several ways. One simple option is the total square variation ($\text{TV}_2$), which is defined as follows. 
 
@@ -97,7 +92,7 @@ This metric, also known as Dirichlet energy, sums up the square difference in si
     \text{TV}_2(\y) = \y^\top \LL \y
 \end{equation}
 
-The Laplacian, like the adjacency matrix $\A$, is another symmetric $N \times N$ matrix, and is defined as $\LL = \D - \A$, where $\D$ is the degree matrix. $\D$ is a diagonal operator, where entry $\D_{ii}$ holds the sum of all the edge weights linked to node $i$, or in other words, the vector along the diagonal of $\D$ is the column (or row) sum of $\A$. The Laplacian, which can be interpreted as a generalisation of the discrete second order derivative operator for an irregular topology, is of central importance to many aspects of GSP \citep{Shuman2013}. 
+The Laplacian, like the adjacency matrix $\A$, is another symmetric $N \times N$ matrix and is defined as $\LL = \D - \A$, where $\D$ is the degree matrix. $\D$ is a diagonal operator, where entry $\D_{ii}$ holds the sum of all the edge weights linked to node $i$, or in other words, the vector along the diagonal of $\D$ is the column (or row) sum of $\A$. The Laplacian, which can be interpreted as a generalisation of the discrete second-order derivative operator for an irregular topology, is of central importance to many aspects of GSP \citep{Shuman2013}. 
 
 \newpage
 
@@ -105,7 +100,7 @@ It is straightforward to show that the two expressions for the total square vari
 
 \begin{enumerate}
     \item $\y^\top \LL \y \geq 0$ for any $\y$. Since $\text{TV}_2(\y)$ sums the square difference between the signal at each pair of nodes, weighted by the non-negative entries of the adjacency matrix, the Laplacian quadratic form must be strictly non-negative. By definition, this implies that the matrix $\LL$ is positive semi-definite (PSD). 
-    \item $\one^\top \LL \one = 0$, where $\one$ is a length-$N$ vector of ones. If the signal of interest is constant over the whole graph, the total square variation must be zero. Moreover, if the graph contains two or more isolated sub-graphs, with edges connecting nodes within a each clique but not between cliques, then any signal that is constant over each sub-graph will have a Laplacian quadratic form of zero. 
+    \item $\one^\top \LL \one = 0$, where $\one$ is a length-$N$ vector of ones. If the signal of interest is constant over the whole graph, the total square variation must be zero. Moreover, if the graph contains two or more isolated sub-graphs, with edges connecting nodes within each clique but not between cliques, then any signal that is constant over each sub-graph will have a Laplacian quadratic form of zero. 
 \end{enumerate}
 
 Since $\LL$ is positive semi-definite, its eigenvalues are all real and non-negative, and its eigenvectors can be chosen to be real and orthonormal. Thus, $\LL$ can be decomposed as follows. 
@@ -146,7 +141,7 @@ Since ${\uu_i}$ span the total space of $\R^N$, any graph signal, $\y$, can be d
     \y &= \text{IGFT}(\z)  = \U \z
 \end{align}
 
-For some simple graphs, the GFT is equivalent to a well-known transform in classical signal processing. For example, the Laplacian of the cycle graph (i.e. a set of nodes connected in a loop) has eigenvectors that can be expressed as sines and cosines (or, in full generality, complex exponentials) as visualised in \cref{fig:cycle_eighs}. This helps establish a rigorous connection between GSP and classical signal processing, through the study of Algebraic Signal Processing (ASP) \citep{Puschel2003,Sandryhaila2013}. With the GFT and IGFT defined, a wide range of potential models are opened up, many of which can be understood as direct generalisations of methods from conventional signal processing. Classical tasks such as filtering, denoising, reconstruction, sampling, compression etc. can all be translated into the GSP paradigm, setting the stage for a new era of signal processing that leverages graph structures for more complex and rich data analysis, and opening the door to a wealth of novel applications.
+For some simple graphs, the GFT is equivalent to a well-known transform in classical signal processing. For example, the Laplacian of the cycle graph (i.e. a set of nodes connected in a loop) has eigenvectors that can be expressed as sines and cosines (or, in full generality, complex exponentials) as visualised in \cref{fig:cycle_eighs}. This helps establish a rigorous connection between GSP and classical signal processing, through the study of Algebraic Signal Processing (ASP) \citep{Puschel2003, Sandryhaila2013}. With the GFT and IGFT defined, a wide range of potential models is opened up, many of which can be understood as direct generalisations of methods from conventional signal processing. Classical tasks such as filtering, denoising, reconstruction, sampling, compression etc. can all be translated into the GSP paradigm, setting the stage for a new era of signal processing that leverages graph structures for more complex and rich data analysis, and opening the door to a wealth of novel applications.
 
 \begin{figure}[t]
 	\centering
@@ -156,77 +151,28 @@ For some simple graphs, the GFT is equivalent to a well-known transform in class
 \end{figure}
 
 
-
-
-% Given that any graph signal can be decomposed into its Laplacian frequency components, filters and other spectral operators can be defined quite naturally. First, take a signal $\y$ and transform it into the frequency domain via the GFT. Next, scale each frequency component according to some predetermined function. Finally, transform back into the node domain via the IGFT. 
-
-
-% \begin{wraptable}{l}{0.5\linewidth}
-%     \centering
-%     \def\arraystretch{1.7}
-%     \begin{tabular}{@{}l c@{}}
-%         \toprule
-%         \textbf{Filter}   & $g(\lambda; \,\beta)$   \\
-%         \midrule
-%         1-hop random walk & $(1 + \beta \lambda)^{-1}$ \\
-%         Diffusion         & $\exp(-\beta \lambda)$\\
-%         ReLu              & $\max (1 - \beta \lambda, 0)$\\
-%         Sigmoid           & $2 \big( 1 + \exp(\beta \lambda)\big)^{-1}$\\
-%         Bandlimited       & $1, \,\text{if} \; \beta \lambda \leq 1 \; \text{else} \; 0$ \\
-%         \bottomrule
-%        \end{tabular}
-%        \caption[Example graph filter functions]{Some example graph filter functions}
-%         \label{tab:filters}
-% \end{wraptable}
-
-% A low-pass filter is a spectral operator that attenuates high-frequency components from a graph signal \citep{Ricaud2019}. It can be described by a monotonically decreasing filter function, $g(\lambda)$, which maps a Laplacian frequency, $\lambda$, to a number ranging between one and zero. The filtered signal, $\y'$, can then be computed as follows. 
-
-
-% \begin{equation}
-%     \y' \, =\U \mkern 2mu g(\LAM) \mkern 2mu \U^\top = \, \HH \y
-% \end{equation}
-
-
-% Here, $g(\LAM)$ is the diagonal matrix obtained by applying the function $g(\cdot)$ to each entry along the diagonal of $\LAM$, and $\HH = \U g(\LAM) \U^\top$ is the resultant positive semi-definite graph filter operator \citep{Isufi2022}. \Cref{tab:filters} provides some example filter functions, which also depend on a positive scalar parameter $\beta$ controlling the intensity of the filtering operation. Larger values of $\beta$ correspond to more aggressive attenuation of the high-frequency content. In the limit as $\beta \rightarrow \infty$, these filters retain only the constant component, and as $\beta \rightarrow 0$, all frequency components pass through the filter unaffected.
-
-% Graph filters can also be constructed in other ways. One notable example is using finite order polynomials. The advantage of polynomial filters is that their action on a graph signal can be computed by repeated application of the Laplacian, meaning $O(N^3)$ eigendecomposition can be avoided. An order-$P$ polynomial filter $g(\lambda) = \sum^P a_p \lambda^p$ can be applied to a graph signal as follows \citep{Susnjara2015}. 
-
-% \begin{equation}
-%     \U \mkern 2mu g(\LAM) \mkern 2mu \U^\top \y = \big(a_0 \I_N + a_1 \LL + a_2 \LL^2 + ... + a_P \LL^P \mkern 2mu \big) \, \y
-% \end{equation}
-
-% If the Laplacian is sparse, or has special structure, repeated multiplications of $\y$ by $\LL$ can computed with complexity $ < O(N^2)$. Furthermore, the computation is ``local'' in the sense that element $i$ of the filtered signal can be computed using data no more than $P$ hops away via graph edges. For this reason, polynomial filters lend themselves well to distributed GSP applications, such as a network of sensors that communicate locally in the vertex domain. \Cref{fig:filters_plot} gives a visualisation of the filter functions given in \cref{tab:filters}, and a polynomial filter. 
-
-% \begin{figure}[t]
-% 	\centering
-% 		\includegraphics[width=0.7\linewidth]{Figures/filters_plot.pdf}
-%         \caption[The frequency response of some simple graphs filters]{The frequency response of several simple graph filters is shown. }
-% 	\label{fig:filters_plot}
-% \end{figure}
-
-
 \newpage
 
 \section{Example applications}
 
-Graph signal processing methods have proven effective in many real-world applications. In this short section, we highlight some use-cases from the literature, serving as motivation for the content of this thesis. Many of these areas are utilised within illustrative examples for the methods developed in this thesis. 
+Graph signal processing methods have proven effective in many real-world applications. In this short section, we highlight some use cases from the literature, serving as motivation for the content of this thesis. Many of these areas are utilised within illustrative examples for the methods developed in this thesis. 
 
 \subsection{Biology}
 
-The world of biology provides numerous interesting use cases for graph signal processing methods \citep{Li2023}. One area which has garnered significant interest is in analysing protein-protein interactions. Here, the concept is to model a set of proteins as nodes in an ``interactome'', which is the network of physical molecular interactions in a particular cell. Recent work such as \cite{Colonnese2021} used GSP methods to predict new interactions between proteins, while work such as \cite{Jha2022} used graph neural networks for the same task. These models aim to automate the prediction of protein interactions, reducing the time and cost associated with experimental methods. Other work has modelled an individual protein molecule as network of residues connected to each other based on their physical distance in 3D space, with the aim of predicting its biophysical properties \citep{Srivastava2023}. 
+The world of biology provides numerous interesting use cases for graph signal processing methods \citep{Li2023}. One area which has garnered significant interest is in analysing protein-protein interactions. Here, the concept is to model a set of proteins as nodes in an ``interactome'', which is the network of physical molecular interactions in a particular cell. Recent work such as \cite{Colonnese2021} used GSP methods to predict new interactions between proteins, while work such as \cite{Jha2022} used graph neural networks for the same task. These models aim to automate the prediction of protein interactions, reducing the time and cost associated with experimental methods. Other work has modelled an individual protein molecule as a network of residues connected based on their physical distance in 3D space, to predict its biophysical properties \citep{Srivastava2023}. 
 
-Another domain in biology that has benefited from GSP methods is brain connectivity modelling. Studies such as \cite{Goldsberry2017,Atasoy2016,Menoret2017,Itani2021} have found that the graph-spectral frequency profile of signals derived from fMRI imaging can provide valuable insight into brain activity. Specifically, these and related works have identified specific Laplacian spectral profiles associated with different emotional states, task familiarity, and neurological diseases.
+Another domain in biology that has benefited from GSP methods is brain connectivity modelling. Studies such as \cite{Goldsberry2017, Atasoy2016, Menoret2017, Itani2021} have found that the graph-spectral frequency profile of signals derived from fMRI imaging can provide valuable insight into brain activity. Specifically, these and related works have identified specific Laplacian spectral profiles associated with different emotional states, task familiarity, and neurological diseases.
 
 \subsection{Transportation and infrastructure}
 
-Another domain in which GSP methods have been extensively applied is transportation and infrastructure. In \cite{Hasanzadeh2017}, the authors propose an adaptive ARMA model in the graph frequency domain for real-time traffic prediction, achieving a substantial performance increase over non-graph-aware alternatives. Traffic prediction was also addressed using GSP methods in \cite{Chakraborty2017} with a technique known as trend filtering \citep{Wang2016}. Automatic incident detection using spatio-temporally denoised thresholds was applied in \citep{Chakraborty2019}. In \cite{Xiu2022}, the authors used a spatial-temporal multi-graph convolutional wavelet network to predict passenger numbers on a metro system.
+Another domain in which GSP methods have been extensively applied is transportation and infrastructure. In \cite{Hasanzadeh2017}, the authors propose an adaptive ARMA model in the graph frequency domain for real-time traffic prediction, achieving a substantial performance increase over non-graph-aware alternatives. Traffic prediction was also addressed using GSP methods in \cite{Chakraborty2017} with a technique known as trend filtering \citep{Wang2016}. Automatic incident detection using spatiotemporally denoised thresholds was applied in \citep{Chakraborty2019}. In \cite{Xiu2022}, the authors used a spatial-temporal multi-graph convolutional wavelet network to predict passenger numbers on a metro system.
 
 GSP has also been employed to analyse patterns of power consumption in electricity grids \citep{Ramakrishna2021} and pressure in hydraulic networks \citep{Zhou2022}. In \cite{He2018} and \cite{Zheng2022}, the authors utilised GSP to address non-intrusive load disaggregation—an active area of research in the field of smart grids and energy conservation where the goal is to estimate each appliance's contribution to total consumption. In \cite{Ying2022}, the authors tackle the recovery of harmonic data lost during power transmission, based on spectral graph theory, and in \cite{Wang2022b}, the authors use GSP to identify abnormal batteries from cell-level voltage signals in a network of electric bicycle charging stations.
 
 
 \subsection{Finance and economics}
 
-Networks have been used in financial and economic models for many years \citep{Marti2021}, yet recently GSP has found some interesting use-cases. In \cite{Vinicius2020}, the authors employ a spectral model to learn an underlying graph structure from financial time-series data, showing that meaningful physical interpretations related to the market index factor can be extracted from this representation. In \citep{Zhang2023}, the authors consider how GSP can be incorporated into momentum-based financial forecasting models, demonstrating that the additional topological information can enhance the accuracy of such models.
+Networks have been used in financial and economic models for many years \citep{Marti2021}, yet recently GSP has found some interesting use cases. In \cite{Vinicius2020}, the authors employ a spectral model to learn an underlying graph structure from financial time-series data, showing that meaningful physical interpretations related to the market index factor can be extracted from this representation. In \citep{Zhang2023}, the authors consider how GSP can be incorporated into momentum-based financial forecasting models, demonstrating that the additional topological information can enhance the accuracy of such models.
 
 GSP has also been used recently in the context of asset allocation and portfolio theory. The portfolio cut paradigm, introduced in \citep{Dees2020}, is a graph-theoretic portfolio partitioning technique that enables investors to group economically meaningful clusters of assets. In \citep{Arroyo2022}, this concept is extended to include a dynamic portfolio, with time-evolving clusters.
 
@@ -241,4 +187,4 @@ Some of the earliest work classified as GSP involved applications with sensor da
 
 \section{Thesis organisation}
 
-The core content of this thesis begins in \cref{chap:gsr_2d}, with the reconstruction of signals with two axes, such as network time series data. \Cref{chap:kgr_rnc_2d} introduces several regression techniques for two-dimensional graph signals, and \cref{chap:nd_gsp} generalises the techniques developed prior in the thesis to $d$-dimensional data, under the ``MultiWay" GSP (MWGSP) framework. This is followed, in \cref{chap:variance}, by an investigation into the posterior covariance of the models, and finally \cref{chap:binary} introduces generalisations for binary and categorical graph signals. Along the way, there are several methodological contributions as well as some detailed case studies. In \cref{chap:lit_review}, we define the precise scope of this thesis, review the relevant literature, and present our core contributions. 
+The core content of this thesis begins in \cref{chap:gsr_2d}, with the reconstruction of signals on general two-dimensional Cartesian product graphs. Here, we introduce our Bayesian model formulation and present two iterative algorithms for computing the posterior mean. In \cref{chap:kgr_rnc_2d}, we consider how the reconstruction problem can be modified by introducing additional explanatory variables, leading to three novel multivariate regression models applicable to different data scenarios. In \cref{chap:nd_gsp}, we generalise all of the reconstruction and regression techniques developed prior to $d$-dimensional tensor-valued data, under the ``Multiway" GSP (MWGSP) framework. This is followed, in \cref{chap:variance}, by an investigation into the posterior covariance of the models, where we develop scalable techniques for estimating the marginal variance and direct sampling. Finally, in \cref{chap:binary}, we modify the reconstruction and regression algorithms to handle binary and categorical graph signals. Along the way, there are several methodological contributions as well as some detailed case studies. In \cref{chap:lit_review}, we define the precise scope of this thesis, review the relevant literature, and present our core contributions. 

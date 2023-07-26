@@ -4,24 +4,31 @@
 
 \lhead{Chapter 3. \emph{Regression and Reconstruction on Cartesian Product Graphs}}
 
-In this chapter, we are concerned with the reconstruction of signals defined over the nodes of a Cartesian product graph. In particular, we are pose the reconstruction problem in terms of Bayesian inference, where a smooth underlying signal must be inferred given a noisy partial observation. The key goal of this chapter is formulate a Bayesian model for this purpose, and to examine scalable techniques for obtaining the posterior mean. 
+% What are we doing? 
 
-Whilst the topic of Graph Signal Reconstruction (GSR) on one-dimensional graphs has been studied fairly extensively, work on time-varying graph signals and general Cartesian product graphs is less complete. Furthermore, the problem is usually not framed in Bayesian terms and a thorough complexity analysis is often missing, which is particularly important in the context of product graphs, where the number of nodes under consideration can grow rapidly. In this chapter, we devote substantial attention to the computational complexity of our GSR model. Since our solution involves iterative methods, we center much of the discussion around how to reduce the number of iterations required for convergence and how each iteration can be completed in a maximally efficient fashion. 
+In this chapter, we address the topic of signal reconstruction over general two-dimensional Cartesian product graphs, where an arbitrary set of signal elements is missing. The first key objective is to present a novel Bayesian model for this purpose, based on our formulation of multivariate graph filters, where a smooth underlying signal must be inferred given a noisy partial observation. The second is to produce two scalable iterative algorithms for computing the posterior mean and investigate their respective convergence properties both theoretically and empirically. 
 
-We begin in \cref{sec:reg_and_rec_intro} by revisiting the concept of a graph product, and explaining our rationale for focusing on the Cartesian product in particular. Moreover, we provide a review of how concepts from conventional one-dimensional graph signal processing, such as the Graph Fourier Transform (GFT) and spectral filtering, can be extended to encompass the two-dimensional case. In \cref{sec:gsr_cpg}, we present our statistical model for graph signal reconstruction on a Cartesian product graph, and derive two alternative algorithms for solving the posterior mean. These encompass a Stationary Iterative Method (SIM) and a Conjugate Gradient Method (CGM). In both instances, we demonstrate how graph-spectral considerations can be employed to improve their convergence rate, and utilise the properties of the Kronecker product to facilitate the efficient execution of each iteration. Finally, in \cref{sec:convergence}, we engage in an in-depth analysis of the convergence properties of each method, and deduce how the rate of convergence is influenced by the hyperparameters. Specifically, we establish how the optimal selection of a method is contingent upon the value of these hyperparameters and propose practical guidelines for method selection.
+% why is this useful?
+
+As discussed in \cref{sec:GSR_review}, Graph Signal Reconstruction (GSR) is a topic that has received substantial attention in the last decade. Whilst the majority of past models have focused on the reconstruction of a single one-dimensional signal, with some recent models extending this to time-varying signals, our approach can be seen as a natural generalisation that encompasses two-dimensional matrix signals with arbitrary undirected graphs underlying each axis. Furthermore, we believe our Bayesian approach can offer new insight into multivariate correlation structure over irregular topologies. Since efficient computation is a critical factor in real-world applications of GSR, we devote substantial attention to a careful analysis of computational complexity. In doing so, we show how the two iterative algorithms we present possess different convergence behaviour and implementation details, making the optimal choice dependent on the hyperparameters, data composition, and graph sparsity. 
+
+
+% chapter layout
+
+We begin in \cref{sec:reg_and_rec_intro} by reviewing the concept of a graph product, explaining our rationale for focusing on the Cartesian product in particular, and introducing our model for two-dimensional anisotropic filters. In \cref{sec:gsr_cpg}, we present our statistical model for graph signal reconstruction on a Cartesian product graph and derive the two algorithms for solving the posterior mean. These encompass a Stationary Iterative Method (SIM) based on matrix splitting and a Conjugate Gradient Method (CGM) using a graph-spectral preconditioner. In addition, we show how the SIM can be implemented using Chebyshev polynomials to avoid Laplacian eigendecomposition. To end this section, we demonstrate the utility of these models using a dataset comprising daily SARS-CoV-19 case rates across the UK. Finally, in \cref{sec:convergence}, we engage in an in-depth analysis of the convergence properties of each method and propose practical guidelines for method selection. 
 
 
 \section{Graph Products}
 
 \label{sec:reg_and_rec_intro}
 
-In this chapter, we will be primarily concerned with signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to consistently define a product between two graphs. In this section we formally introduce the concept of a graph product, examine  some prominent examples, and explain why we choose to look specifically at the Cartesian graph product.
+In this chapter, we will be primarily concerned with signal processing on \textit{Cartesian product graphs}. This special class of graph finds applications in numerous areas, such as video, hyper-spectral image processing and network time series problems. However, the Cartesian product is not the only way to consistently define a product between two graphs. In this section, we formally introduce the concept of a graph product, examine several prominent examples, and explain why we choose to look specifically at the Cartesian graph product.
 
 \subsection{Basic definitions}
 
 \label{sec:graph_products_defined}
 
-In the general case, consider two undirected graphs $\mathcal{G}_A = (\mathcal{V}_A, \mathcal{E}_A)$ and $\mathcal{G}_B = (\mathcal{V}_B, \mathcal{E}_B)$ with vertex sets given by $\mathcal{V}_A = \{a \in \mathbb{N} \, | \, a \leq A \}$ and $\mathcal{V}_B = \{b \in \mathbb{N} \, | \, b \leq B \}$ respectively. (In this context we do not regard zero to be an element of the natural numbers). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_A$ and $\mathcal{G}_B$. This can be generically written as follows.
+In the general case, consider two undirected graphs $\mathcal{G}_A = (\mathcal{V}_A, \mathcal{E}_A)$ and $\mathcal{G}_B = (\mathcal{V}_B, \mathcal{E}_B)$ with vertex sets given by $\mathcal{V}_A = \{a \in \mathbb{N} \, | \, a \leq N_A \}$ and $\mathcal{V}_B = \{b \in \mathbb{N} \, | \, b \leq N_B \}$ respectively. (In this context we do not regard zero to be an element of the natural numbers). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_A$ and $\mathcal{G}_B$. This can be generically written as follows.
 
 \begin{equation}
     \mathcal{G} = \mathcal{G}_A \, \diamond \, \mathcal{G}_B = (\mathcal{V}, \, \mathcal{E})
@@ -30,11 +37,11 @@ In the general case, consider two undirected graphs $\mathcal{G}_A = (\mathcal{V
 For all definitions of a graph product, the new vertex set $\mathcal{V}$ is given by the Cartesian product of the vertex sets of the factor graphs, that is
 
 \begin{equation}
-    \mathcal{V} = \mathcal{V}_A \times \mathcal{V}_B = \{(a, \, b) \in \mathbb{N}^2 \, | \, a \leq A \; \text{and} \; b \leq B \}
+    \mathcal{V} = \mathcal{V}_A \times \mathcal{V}_B = \{(a, \, b) \in \mathbb{N}^2 \, | \, a \leq N_A \; \text{and} \; b \leq N_B \}
 \end{equation}
 
 
-Typically, vertices are are arranged in lexicographic order, in the sense that $(a, \, b) \leq (a',\, b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(a, \, b)$ and $(a',\,  b')$ are to be connected in the new graph.
+Typically, vertices are arranged in lexicographic order, in the sense that $(a, \, b) \leq (a',\, b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(a, \, b)$ and $(a',\,  b')$ are to be connected in the new graph.
 
 
 \begin{table}[h]
@@ -57,17 +64,17 @@ Typically, vertices are are arranged in lexicographic order, in the sense that $
 Each definition of a graph product corresponds to the union of a specific subset of these conditions, thus, there exist 256 different types of graph product \citep{Barik2015}. Of these, the Cartesian product (conditions 1 or 7), the direct product (condition 3), the strong product (conditions 1, 3 or 7) and the lexicographic product (conditions 1, 3, 5 or 7) are referred to as the standard products and are well-studied \citep{Imrich2000}. A graphical depiction of the standard graph products is shown in figure \ref{fig:graph_products}. In each of these four cases, the adjacency and Laplacian matrices of the product graph can be described in terms of matrices relating to the factor graphs \citep{Fiedler1973, Barik2018}. This is shown in table \ref{tab:grap_product_matrices}.
 
 \begin{table}[b]
-    \def\arraystretch{1.8}
+    \def\arraystretch{1.9}
     \centering
     \small
     \vspace{0.5cm}
-    \begin{tabular}{|l|cc|}
-        \hline
+    \setlength{\tabcolsep}{10pt}
+    \begin{tabular}{l c c}
+        \toprule
 
-         & Adjacency matrix
-         & Laplacian                                                                              \\
+         & Adjacency matrix & Laplacian \\
 
-        \hline
+        \midrule
 
         Cartesian
          & $\A_A \oplus \A_B$
@@ -83,15 +90,17 @@ Each definition of a graph product corresponds to the union of a specific subset
 
         Lexicographic
          & $\I_A \otimes \A_B + \A_A \otimes \OO_A$
-         & $\I_A \otimes \LL_B + \LL_A \otimes \OO_B + \D_A \otimes (|\mathcal{V}_B| \I_B - \OO_B)$ \\
+         & $\I_A \otimes \LL_B + \LL_A \otimes \OO_B + \D_A \otimes (N_B \I_B - \OO_B)$ \\
 
-        \hline
+        \bottomrule
     \end{tabular}
     \vspace{0.2cm}
-    \caption[The adjacency and Laplacian matrices for the standard graph products]{The adjacency and Laplacian matrices for the standard graph products. Here, $\D_A$ and $\D_B$ are the diagonal degree matrices, i.e $\D_A = \diag{\A_A \mathbf{1}}$. $\I_A$ and $\OO_A$ are the $(A \times A)$ identity matrix and matrix of ones respectively. }
+    \caption[The adjacency and Laplacian matrices for the standard graph products]{The adjacency and Laplacian matrices for the standard graph products. Here, $\D_A$ and $\D_B$ are the diagonal degree matrices, i.e $\D_A = \diag{\A_A \mathbf{1}}$. $\I_A$ and $\OO_A$ are the $(N_A \times N_A)$ identity matrix and matrix of ones respectively. }
     \vspace{0.3cm}
     \label{tab:grap_product_matrices}
 \end{table}
+
+
 
 \begin{figure}[t]
     \begin{center}
@@ -111,7 +120,7 @@ Given these definitions, it may seem that all the standard graph products are no
 
 \subsection{The spectral properties of graph products}
 
-In the field of graph signal processing, we are often concerned with analysing the properties of graphs via eigendecomposition of the graph Laplacian \citep{Mieghem2010}. In the case of product graphs, it is greatly preferable if we are able to fully describe the spectrum of $\mathcal{G}_A \diamond \mathcal{G}_B$ in terms of the spectra of $\mathcal{G}_A$ and $\mathcal{G}_B$ alone. This is because direct decomposition of a dense $\LL$ has time-complexity $O(A^3B^3)$, whereas decomposition of the factor Laplacians individually has complexity $O(A^3 + B^3)$. As the graphs under considerations become medium to large, this fact quickly makes direct decomposition of the product graph Laplacian intractable. However, in the general case, only the spectra of the Cartesian and lexicographic graph products can be described in this way \citep{Barik2018}. In the case of the direct and strong product, it is possible to estimate the spectra without performing the full decomposition (see \citep{Sayama2016}). However, in general, the full eigendecomposition of the product graph Laplacian can only be described in terms of the factor eigendecompositions when both factor graphs are regular.
+In the field of graph signal processing, we are often concerned with analysing the properties of graphs via eigendecomposition of the graph Laplacian \citep{Mieghem2010}. In the case of product graphs, it is greatly preferable if we can fully describe the spectrum of $\mathcal{G}_A \diamond \mathcal{G}_B$ in terms of the spectra of $\mathcal{G}_A$ and $\mathcal{G}_B$ alone. This is because the direct decomposition of a dense $\LL$ has time-complexity $O(N_A^3N_B^3)$, whereas decomposition of the factor Laplacians individually has complexity $O(N_A^3 + N_B^3)$. As the graphs under consideration become medium to large, this fact quickly makes direct decomposition of the product graph Laplacian intractable. However, in the general case, only the spectra of the Cartesian and lexicographic graph products can be described in this way \citep{Barik2018}. In the case of the direct and strong product, it is possible to estimate the spectra without performing the full decomposition (see \citep{Sayama2016}). However, in general, the full eigendecomposition of the product graph Laplacian can only be described in terms of the factor eigendecompositions when both factor graphs are regular.
 
 
 Consider the eigendecompositions of $\LL_A$ and $\LL_B$.
@@ -123,27 +132,25 @@ Consider the eigendecompositions of $\LL_A$ and $\LL_B$.
 where $\U_A$ and $\U_B$ are the respective orthonormal eigenvector matrices, and $\LAM_A$ and $\LAM_B$ are the diagonal eigenvalue matrices given by
 
 \begin{equation*}
-    \LAM_A = \diag{\begin{bmatrix} \lambda_1^{(A)} & \lambda_2^{(A)} & \dots & \lambda_A^{(A)} \end{bmatrix}},
+    \LAM_A = \diag{\begin{bmatrix} \lambda_1^{(A)}, & \lambda_2^{(A)}, & \dots & \lambda_A^{(A)} \end{bmatrix}},
     \aand
-    \LAM_B = \diag{\begin{bmatrix} \lambda_1^{(B)} & \lambda_2^{(B)} & \dots & \lambda_B^{(B)} \end{bmatrix}}
+    \LAM_B = \diag{\begin{bmatrix} \lambda_1^{(B)}, & \lambda_2^{(B)}, & \dots & \lambda_B^{(B)} \end{bmatrix}}
 \end{equation*}
 
 Given these definitions, table \ref{tab:product_graph_spectra} gives information about the spectral decomposition of the standard graph products.
 
-% see the effect of preconditioning matrix on different graph products 
-
 \begin{table}[t]
-    \def\arraystretch{1.8}
+    \def\arraystretch{2}
     \centering
     \small
     \vspace{0.5cm}
-    \begin{tabular}{|l|cc|}
-        \hline
+    \begin{tabular}{l c c}
+        \toprule
 
          & Eigenvalues
          & Eigenvectors                                                                          \\
 
-        \hline
+        \midrule
 
         Cartesian
          & $\lambda_a^{(A)} + \lambda_b^{(B)}$
@@ -158,16 +165,16 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
          & $(\U_A)_a \otimes (\U_B)_b$                                                           \\
 
         \multirow{2}{7em}{Lexicographic$^\dagger$}
-         & $B \lambda_a^{(A)}$
+         & $N_B \lambda_a^{(A)}$
          & $(\U_A)_a \otimes \mathbf{1}_B$                                                       \\
 
-         & $\lambda_b^{(B)} + B \text{deg}(a)$
+         & $\lambda_b^{(B)} + N_B \text{deg}(a)$
          & $\mathbf{e}_a \otimes (\U_B)_b$                                                       \\
 
-        \hline
+        \bottomrule
     \end{tabular}
     \vspace{0.2cm}
-    \caption[Spectral decomposition of product graphs]{Eigendecomposition of the Laplacian of the standard graph products. Here, $a$ and $b$ are understood to run from 1 to $A$ and 1 to $B$ respectively. $\star$ only for $r_A$ and $r_B$-regular factor graphs. $\dagger$ note that the $b$ runs from 2 to $B$ in the lower row. }
+    \caption[Spectral decomposition of product graphs]{Eigendecomposition of the Laplacian of the standard graph products. Here, $a$ and $b$ are understood to run from 1 to $N_A$ and 1 to $N_B$ respectively. $\star$ only for $r_A$ and $r_B$-regular factor graphs. $\dagger$ note that the $b$ runs from 2 to $N_B$ in the lower row. }
     \vspace{0.3cm}
     \label{tab:product_graph_spectra}
 \end{table}
@@ -180,7 +187,7 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
 
 \label{sec:gsp_cpg}
 
-While both the direct and strong products do find uses in certain applications (for example, see \citep{Kaveh2011}), they are both less common and more challenging to work with in a graph signal processing context due to their spectral properties described in the previous subsection. In practice, being limited to regular factor graphs means the majority of practical GSP applications are ruled out. The lexicographic product does not share this drawback, however it is also significantly less common than the Cartesian product in real-world applications. For this reason, in the following, we focus primarily on the Cartesian product.
+While both the direct and strong products do find uses in certain applications (for example, see \citep{Kaveh2011}), they are both less common and more challenging to work with in a graph signal processing context due to their spectral properties described in the previous subsection. In practice, being limited to regular factor graphs means the majority of practical GSP applications are ruled out. The lexicographic product does not share this drawback, however, it is also significantly less common than the Cartesian product in real-world applications. For this reason, in the following, we focus primarily on the Cartesian product.
 
 Given the spectral decomposition of the Cartesian graph product stated in table \ref{tab:product_graph_spectra}, we can write the Laplacian eigendecomposition in matrix form as follows.
 
@@ -188,12 +195,7 @@ Given the spectral decomposition of the Cartesian graph product stated in table 
     \LL = \U \LAM \U^\top, \where \U = \U_A \otimes \U_B \aand \LAM = \LAM_A \oplus \LAM_B
 \end{equation}
 
-This motivates the following definitions for the Graph Fourier Transform (GFT) and its inverse (IGFT). Consider a signal defined over the nodes of a Cartesian product graph expressed as a matrix $\Y \in \R^{B \times A}$. We can perform the GFT as follows.
-
-% when is this well-defined? 
-% FFT version?
-% impose statements on the properties of Y
-% stationarity? 
+This motivates the following definitions for the Graph Fourier Transform (GFT) and its inverse (IGFT). Consider a signal defined over the nodes of a Cartesian product graph expressed as a matrix $\Y \in \R^{N_B \times N_A}$. We can perform the GFT as follows.
 
 
 \begin{equation}
@@ -201,7 +203,7 @@ This motivates the following definitions for the Graph Fourier Transform (GFT) a
     \text{GFT}(\Y) = \mat{\big( \U_A^\top \otimes \U_B^\top \big) \, \vecc{\Y}} = \U_B^\top \Y \U_A
 \end{equation}
 
-Correspondingly, we can define the IGFT acting on a matrix of spectral components $\Z \in \R^{B \times A}$ as follows.
+Correspondingly, we can define the IGFT acting on a matrix of spectral components $\Z \in \R^{N_B \times N_A}$ as follows.
 
 \begin{equation}
     \label{eq:IGFT_2d}
@@ -209,24 +211,24 @@ Correspondingly, we can define the IGFT acting on a matrix of spectral component
 \end{equation}
 
 
-\note{Product graph signals: repseprentation and vectorisation}{
+\note{Product graph signals: representation and vectorisation}{
 
-    It is natural to assume that signals defined on the nodes of a Cartesian product graph $\mathcal{G}_A \, \square \; \mathcal{G}_B$ could be represented by matrices (order two tensors) of shape $(A \times B)$. Since product graph operators, such as the Laplacian $\LL_A \oplus \LL_B$, act on vectors of length $AB$, we must define a consistent function to map matrix graph signals $\in \R^{A \times B}$ to vector graph signals $\in \R^{AB}$. The standard mathematical operator for this purpose is the $\vecc{\cdot}$ function, along with its reverse operator $\mat{\cdot}$. However, this is somewhat problematic since $\vecc{\cdot}$ is defined to act in \textit{column-major} order, that is
+    It is natural to assume that signals defined on the nodes of a Cartesian product graph $\mathcal{G}_A \, \square \; \mathcal{G}_B$ could be represented by matrices (order two tensors) of shape $(N_A \times N_B)$. Since product graph operators, such as the Laplacian $\LL_A \oplus \LL_B$, act on vectors of length $N_A N_B$, we must define a consistent function to map matrix graph signals $\in \R^{N_A \times N_B}$ to vector graph signals $\in \R^{N_A N_B}$. The standard mathematical operator for this purpose is the $\vecc{\cdot}$ function, along with its reverse operator $\mat{\cdot}$. However, this is somewhat problematic since $\vecc{\cdot}$ is defined to act in \textit{column-major} order, that is
 
     $$
         \text{vec} \left( \begin{bmatrix}
-                \Y_{(1, 1)} & \Y_{(1, 2)} & \dots  & \Y_{(1, B)} \\
-                \Y_{(2, 1)} & \Y_{(2, 2)} & \dots  & \Y_{(2, B)} \\
+                \Y_{(1, 1)} & \Y_{(1, 2)} & \dots  & \Y_{(1, N_B)} \\
+                \Y_{(2, 1)} & \Y_{(2, 2)} & \dots  & \Y_{(2, N_B)} \\
                 \vdots      & \vdots      & \ddots & \vdots      \\
-                \Y_{(A, 1)} & \Y_{(A, 2)} & \dots  & \Y_{(A, B)} \\
+                \Y_{(N_A, 1)} & \Y_{(N_A, 2)} & \dots  & \Y_{(N_A, N_B)} \\
             \end{bmatrix} \right)
         =
         \begin{bmatrix}
-            \Y_{(1, 1)} \\ \Y_{(2, 1)} \\ \vdots \\ \Y_{(A-1, B)} \\ \Y_{(A, B)}
+            \Y_{(1, 1)} \\ \Y_{(2, 1)} \\ \vdots \\ \Y_{(N_A-1, N_B)} \\ \Y_{(N_A, N_B)}
         \end{bmatrix}
     $$
 
-    As is visible, this does not result in a lexicographic ordering of the matrix elements when the graph signal has shape $(A \times B)$. Therefore, to avoid this issue and to be consistent with standard mathematical notation, we will assume that graph signals are represented by matrices  of shape $(B \times A)$ when considering the product between two graphs $\mathcal{G}_A \, \square \, \mathcal{G}_B$. For graph signals of this shape, the first index represents traversal of the nodes in $\mathcal{G}_B$, and the second index represents traversal of the nodes in $\mathcal{G}_A$. This ensures that matrix elements are correctly mapped to vector elements when using the column-major $\vecc{\cdot}$ function.
+    As is visible, this does not result in a lexicographic ordering of the matrix elements when the graph signal has shape $(N_A \times N_B)$. Therefore, to avoid this issue and to be consistent with standard mathematical notation, we will assume that graph signals are represented by matrices of shape $(N_B \times N_A)$ when considering the product between two graphs $\mathcal{G}_A \, \square \, \mathcal{G}_B$. For graph signals of this shape, the first index represents traversal of the nodes in $\mathcal{G}_B$, and the second index represents traversal of the nodes in $\mathcal{G}_A$. This ensures that matrix elements are correctly mapped to vector elements when using the column-major $\vecc{\cdot}$ function.
 
 }
 
@@ -242,7 +244,7 @@ Given these definitions, we can define a spectral operator (usually a low-pass f
 
 % remark which section of the thesis the properties of G are explained
 
-The matrix $\G \in \R^{B \times A}$, which we refer to as the spectral scaling matrix, holds the value of the scaling function applied to the sum of
+The matrix $\G \in \R^{N_B \times N_A}$, which we refer to as the spectral scaling matrix, holds the value of the scaling function applied to the sum of
 pairs of eigenvalues, such that
 
 \begin{equation}
@@ -260,31 +262,29 @@ We observe that defining the filtering operation in this manner implies that the
     \G_{ba} =  g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)
 \end{equation}
 
-where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. Filters of this kind appear often in image processing literature \citep{Aubert2006}, however, their use in graph signal processing is so far limited. \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
+where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. Filters of this kind appear often in image processing literature \citep{Aubert2006}, however, their use in graph signal processing is so far limited. In \cite{Romero2017}, the authors propose `space-time kernels', which are related but specific to T-V problems. Our formulation, by contrast, is applicable to general two-dimensional Cartesian product graphs.  \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
 
 
 \begin{table}[t]
-    \def\arraystretch{1.7}
-    \small
+    \vspace*{1cm}
+    \def\arraystretch{1.8}
     \begin{center}
-        \begin{tabular}{|l|c|}
-            \hline
-            \textbf{Filter}   & $g(\lambda_a, \lambda_b; \,\beta_a, \beta_b)$                                            \\
-            \hline
-            1-hop random walk & $(1 + \beta_a \lambda_a + \beta_b \lambda_b)^{-1}$                                   \\
-            \hline
-            Diffusion         & $\exp(-\beta_a \lambda_a - \beta_b \lambda_b)$                                       \\
-            \hline
-            ReLu              & $\max (1 - \beta_a \lambda_a - \beta_b \lambda_b, 0)$                                \\
-            \hline
-            Sigmoid           & $2 \big( 1 + \exp(\beta_a \lambda_a + \beta_b \lambda_b)\big)^{-1}$                  \\
-            \hline
-            Bandlimited       & $1, \,\text{if} \; \beta_a \lambda_a + \beta_b \lambda_b\leq 1 \; \text{else} \; 0$ \\
-            \hline
+        \begin{tabular}{lc}
+        \toprule
+        \textbf{Filter}   & $g(\lambda_a, \lambda_b; \,\beta_a, \beta_b)$  \\
+        \midrule
+        1-hop random walk & $(1 + \beta_a \lambda_a + \beta_b \lambda_b)^{-1}$\\
+        Diffusion         & $\exp(-\beta_a \lambda_a - \beta_b \lambda_b)$\\
+        ReLu              & $\max (1 - \beta_a \lambda_a - \beta_b \lambda_b, 0)$ \\
+        Sigmoid           & $2 \big( 1 + \exp(\beta_a \lambda_a + \beta_b \lambda_b)\big)^{-1}$\\
+        Gaussian          & $\exp \big(-(\beta_a \lambda_a + \beta_b \lambda_b)^2\big)$\\
+        Bandlimited       & $1, \,\text{if} \; \beta_a \lambda_a + \beta_b \lambda_b\leq 1 \; \text{else} \; 0$ \\
+        \bottomrule
         \end{tabular}
     \end{center}
     \caption{Anisotropic graph filter functions in two dimensions}
     \label{tab:anis_filters_2d}
+    \vspace*{1cm}
 \end{table}
 
 
@@ -302,7 +302,7 @@ where now $g$ is chosen to be an anisotropic graph filter such as one of those l
 
 \label{sec:gsr_cpg}
 
-We now turn our attention to the task of signal reconstruction on Cartesian product graphs. In the following, we will replace the factor graph labels $A$ and $B$ with $T$ and $N$ respectively. The reason for this is that one application of particular interest is graph time-series problems, where we seek to model a network of $N$ nodes across a series of $T$ discrete time points. These so called ``time-vertex'' (T-V) problems have garnered significant interest recently in the context of GSP \citep{Grassi2018, Isufi2017, Loukas2016}. T-V signals can be understood as existing on the nodes of a Cartesian product graph $\mathcal{G}_T \, \square \, \mathcal{G}_N$. In particular, we can conceptualise $T$ repeated measurements of a signal defined across the nodes of a $N$-node graph as a single measurement of a signal defined on the nodes of $\mathcal{G}_T \, \square \, \mathcal{G}_N$, where $\mathcal{G}_T$ is a simple path graph.
+We now turn our attention to the task of signal reconstruction on Cartesian product graphs. In the following, we will replace the factor graph labels $A$ and $B$ with $T$ and $N$ respectively. The reason for this is that one application of particular interest is graph time-series problems, where we seek to model a network of $N$ nodes across a series of $T$ discrete time points. These so-called ``time-vertex'' (T-V) problems have garnered significant interest recently in the context of GSP \citep{Grassi2018, Isufi2017, Loukas2016}. T-V signals can be understood as existing on the nodes of a Cartesian product graph $\mathcal{G}_T \, \square \, \mathcal{G}_N$. In particular, we can conceptualise $T$ repeated measurements of a signal defined across the nodes of a $N$-node graph as a single measurement of a signal defined on the nodes of $\mathcal{G}_T \, \square \, \mathcal{G}_N$, where $\mathcal{G}_T$ is a simple path graph.
 
 \vspace{1cm}
 
@@ -353,7 +353,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
         \text{GFT}(\y) = \U_T^\top \y \aand \text{IGFT}(\y) = \U_T \y
     \end{equation*}
 
-    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. In particular, we varied $T$ from 10 to 15,000 in 20 equally spaced increments, and measured the mean time to compute $\U_T^\top \y$ across five independent trials using both the standard matrix multiplication and the Fast Cosine Transform method. As is visible, the difference becomes extremely pronounced as $T$ grows large.
+    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. In particular, we varied $T$ from 10 to 15,000 in 20 equally spaced increments and measured the mean time to compute $\U_T^\top \y$ across five independent trials using both the standard matrix multiplication and the Fast Cosine Transform method. As is visible, the difference becomes extremely pronounced as $T$ grows large.
 
     \begin{center}
         \includegraphics[width=0.9\linewidth]{Figures/DCT.pdf}
@@ -446,7 +446,7 @@ We return to the question of sampling from the posterior and estimating the post
 Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this paper aim to overcome these problems.
 
 
-Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each are part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
+Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each is part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
 
 
 \subsection{A stationary iterative method}
@@ -475,10 +475,10 @@ we devise an iterative scheme given by
 \end{equation}
 
 
-When $\M$ is a simple matrix that is easy to invert, this update function can be vastly more efficient to compute. Common approaches to finding a suitable value for $\M$ and $\N$ include the Jacobi, Gauss-Seidel and successive over-relaxation methods, each of which represent a different strategy for splitting the coefficient matrix \citep{Saad2003}. However, whilst these techniques are well-studied, they are not appropriate for use in the case of graph signal reconstruction. This is because, for each of these methods, the coefficient matrix is split according to its diagonal and off-diagonal elements in some way. Consequently, this would require the evaluation of $\HH^{-2}$ directly which, as we have discussed, may be large, severely ill-conditioned and possibly ill-defined. 
+When $\M$ is a simple matrix that is easy to invert, this update function can be vastly more efficient to compute. Common approaches to finding a suitable value for $\M$ and $\N$ include the Jacobi, Gauss-Seidel and successive over-relaxation methods, each of which represents a different strategy for splitting the coefficient matrix \citep{Saad2003}. However, whilst these techniques are well-studied, they are not appropriate for use in the case of graph signal reconstruction. This is because, for each of these methods, the coefficient matrix is split according to its diagonal and off-diagonal elements in some way. Consequently, this would require the evaluation of $\HH^{-2}$ directly which, as we have discussed, may be large, severely ill-conditioned and possibly ill-defined. 
 
 
-Instead, we require a custom splitting that avoids direct evaluation of $\HH^{-2}$, and allows the right hand side of \cref{eq:sim_update} to be computed efficiently. The main contribution of this subsection is the identification of appropriate values for $\M$ and $\N$, and an investigation of the consequences of that choice. 
+Instead, we require a custom splitting that avoids direct evaluation of $\HH^{-2}$, and allows the right-hand side of \cref{eq:sim_update} to be computed efficiently. The main contribution of this subsection is the identification of appropriate values for $\M$ and $\N$, and an investigation of the consequences of that choice. 
 
 In the following, we set 
 
@@ -536,7 +536,7 @@ Note that the update formula can be computed with $O(N^2T + NT^2)$ complexity at
 Furthermore, this is reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
 
 
-It is well-know that a given splitting will be convergent if the largest eigenvalue $\lambda_{\text{max}}$ of the matrix $\M^{-1}\N$ has an absolute value of less than one. This attribute, $\rho = |\lambda_{\text{max}}|$, is known as the spectral radius. 
+It is well-known that a given splitting will be convergent if the largest eigenvalue $\lambda_{\text{max}}$ of the matrix $\M^{-1}\N$ has an absolute value of less than one. This attribute, $\rho = |\lambda_{\text{max}}|$, is known as the spectral radius. 
 
 Whilst the spectral radius of $\M^{-1}\N$ cannot be computed directly, we can derive an upper bound based on the properties of $\M$ and $\N$ individually. 
 
@@ -546,7 +546,7 @@ Consider the spectral radius of $\M^{-1}$. By directly inspecting \cref{eq:M_inv
     \rho(\M^{-1}) = \frac{1}{1 + \gamma}
 \end{equation}
 
-Next, consider the spectral radius of $\N$. This can be extracted directly as 1, since it is a diagonal binary matrix. Since both $\M^{-1}$ and $\N$ are positive semi-definite, we can apply the theorem
+Next, consider the spectral radius of $\N$. This can be extracted directly as one since it is a diagonal binary matrix. Since both $\M^{-1}$ and $\N$ are positive semi-definite, we can apply the theorem
 
 \begin{equation}
     \label{eq:psd}
@@ -609,11 +609,11 @@ In this form, the iterations can be easily terminated when $|\Delta \F_{k}|$ is 
 
 \subsubsection{An eigendecomposition-free distributed implementation}
 
-In the previous section, we introduced the SIM algorithm, premised on the assumption that the matrices $\LL_T$ and $\LL_N$ could be decomposed into $\U_T \LAM_T \U_T^\top$ and $\U_N \LAM_N \U_N^\top$ respectively. However, it is also feasible to implement the SIM in a manner that avoids the eigendecomposition of both Laplacians, and instead only requires the repeated multiplication of vectors by $\LL_T \oplus \LL_N$ in the node domain. If, as is often the case, the original graphs are sparse, this can be achieved with complexity $O(T|\mathcal{E}_N| + N |\mathcal{E}_T|)$. This alternative is particularly beneficial when working with large factor graphs, since the complexity involved in decomposition generally scales at $O(N^3 + T^3)$. 
+In the previous section, we introduced the SIM algorithm, premised on the assumption that the matrices $\LL_T$ and $\LL_N$ could be decomposed into $\U_T \LAM_T \U_T^\top$ and $\U_N \LAM_N \U_N^\top$ respectively. However, it is also feasible to implement the SIM in a manner that avoids the eigendecomposition of both Laplacians and instead only requires the repeated multiplication of vectors by $\LL_T \oplus \LL_N$ in the node domain. If, as is often the case, the original graphs are sparse, this can be achieved with complexity $O(T|\mathcal{E}_N| + N |\mathcal{E}_T|)$. This alternative is particularly beneficial when working with large factor graphs since the complexity involved in decomposition generally scales at $O(N^3 + T^3)$. 
 
-Moreover, in certain contexts like sensor or IoT networks, nodes may possess the capability to communicate and compute locally. In such instances, a distributed approach to the signal reconstruction problem, employing a message-passing algorithm, may be more desirable. In this section, we will discuss on how these two objectives can be realised by utilising Chebyshev polynomials \citep{Rivlin2020}.
+Moreover, in certain contexts like sensor or IoT networks, nodes may possess the capability to communicate and compute locally. In such instances, a distributed approach to the signal reconstruction problem, employing a message-passing algorithm, may be more desirable. In this section, we will discuss how these two objectives can be realised by utilising Chebyshev polynomials \citep{Rivlin2020}.
 
-First, note that each iteration of the SIM algorithm is computed by multiplying some vector, $\vecc{\Z}$, by the matrix $\M^{-1}$, which is given by \cref{eq:M_inv}. Crucially, since $\M^{-1}$ has eigenvectors $\U_T \otimes \U_N$, it can be understood as function applied to a weighted Kronecker sum of the factor graph Laplacians. In particular, 
+First, note that each iteration of the SIM algorithm is computed by multiplying some vector, $\vecc{\Z}$, by the matrix $\M^{-1}$, which is given by \cref{eq:M_inv}. Crucially, since $\M^{-1}$ has eigenvectors $\U_T \otimes \U_N$, it can be understood as a function applied to a weighted Kronecker sum of the factor graph Laplacians. In particular, 
 
 \begin{equation}
     \M^{-1} = J(\beta_T \LL_T \oplus \beta_N \LL_N)
@@ -657,17 +657,15 @@ In addition, the action of $\bar{\LL}$ on $\vecc{\Z}$ can be efficiently compute
     \mat{\bar{\LL} \vecc{\Z}} = \beta_N \LL_N \Z + \beta_T \Z \LL_T 
 \end{equation}
 
-with complexity $O(T|\mathcal{E}_N| + N |\mathcal{E}_T|)$. When performed in a distributed manner, this operation can be executed at each node utilising information about the value of $\vecc{\Z}$ at its direct neighbours only. This implies that, to compute an order $K$ polynomial, information will need to be gatherer from nodes that are a maximum of $K$ hops away via graph edges. 
+with complexity $O\big(NT(|\mathcal{E_T}| + |\mathcal{E}_N|)\big)$. When performed in a distributed manner, this operation can be executed at each node utilising information about the value of $\vecc{\Z}$ at its direct neighbours only. This implies that to compute an order $K$ polynomial, information will need to be gathered from nodes that are a maximum of $K$ hops away via graph edges. 
 
 In the context of a graph time series problem, this method also lends itself to an online implementation. In particular, since each node requires information from nodes no further than $K$ hops away, the signal at node $n$ at time $t$ can be reconstructed when the observed signal at time $t+K$ becomes available. 
-
-\newpage 
 
 One caveat worth noting is that the accuracy of the Chebyshev approximation depends not only on the order of the polynomial but also on the filter used and its parameter(s). \Cref{fig:cheb_approx} demonstrates how an order-3 approximation to $J(x)$, with $\gamma=0.05$, varies across several different filter types and parameter settings. For filter functions that exhibit slow variation, typically corresponding to smaller values of $\beta$, the fit is usually quite accurate. However, in certain other contexts, it deviates significantly from the true filter function. Another consideration is that the spectral radius of $\M^{-1}$ is no longer guaranteed to be less than one. For instance, in the case of the bandlimited filter, the function clearly reaches higher values. To guarantee convergence, the polynomial coefficients should be adjusted such that the approximation remains within the range of $[-1, 1]$. 
 
 \vspace{0.5cm}
 
-\begin{figure}[b]
+\begin{figure}[t]
     \hspace{0.2cm}
         \includegraphics[width=0.9\linewidth]{Figures/cheb_approx.pdf}
     \caption[Chebyshev approximation accuracy visualisation]{\small{An order-3 Chebyshev polynomial approximation (orange) is compared to the true output of $J(x)$ (dashed blue) for several different filter types across various parameter settings. }}
@@ -679,7 +677,7 @@ One caveat worth noting is that the accuracy of the Chebyshev approximation depe
 
 \label{sec:CGM}
 
-The second approach we consider for computing the posterior mean is to use the Conjugate Gradient Method (CGM). First proposed in 1952, the CGM is part of the Krylov subspace family, and is perhaps the most prominent iterative algorithm for solving linear systems \citep{Hestenes1952}. In computational terms, the method only requires repeated forward multiplication of vectors by the coefficient matrix which, in the standard CGM, bust be PSD. It is therefore effective in applications where this process can be performed efficiently. 
+The second approach we consider for computing the posterior mean is to use the Conjugate Gradient Method (CGM). First proposed in 1952, the CGM is part of the Krylov subspace family and is perhaps the most prominent iterative algorithm for solving linear systems \citep{Hestenes1952}. In computational terms, the method only requires repeated forward multiplication of vectors by the coefficient matrix which, in the standard CGM, bust be PSD. It is therefore effective in applications where this process can be performed efficiently. 
 
 In brief, the CGM seeks to solve the linear system $\A \x = \bb$ by minimising, at the $k$-th iteration, some measure of error in the affine space $\x_0 + \mathcal{K}_k$ where $\mathcal{K}_k$ is the $k$-th Krylov subspace given by  
 
@@ -701,11 +699,9 @@ $$
 
 over $\x_0 + \mathcal{K}_k$ \citep{Kelley1995}. 
 
-The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PSI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exists, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PSI^\top$ and the left by $\PSI$. This preserves the symmetry meaning we can can continued to use the regular CGM. 
+The CGM works best when the coefficient matrix $\A$ has a low condition number $\kappa$ (that is, the ratio between the largest and smallest eigenvalue is small) and, as such, a preconditioning step is often necessary. The purpose of a preconditioner is to reduce $\kappa$ by solving an equivalent transformed problem. This can be achieved by right or left multiplying the linear system by a preconditioning matrix $\PSI$. However, this likely means the coefficient matrix is no longer PSD, meaning the CGM cannot be used in its basic form. (Other approaches modified for non-PSD matrices exist, e.g. the CGNE or GIMRES \citep{Elman1982, Saad1986}). A preconditioner can also multiply the coefficient matrix on the right by a preconditioner $\PSI^\top$ and on the left by $\PSI$. This preserves the symmetry meaning we can continue to use the regular CGM. 
 
-\newpage
-
-In our case, where the coefficient matrix is given by $\Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the  high-Laplacian frequency eigenvalues of the graph Laplacian, meaning elements of $\diag{\vecc{\G}}^{-2}$ may be very high. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
+In our case, where the coefficient matrix is given by $\Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the high-frequency eigenvalues of the graph Laplacian, meaning elements of $\diag{\vecc{\G}}^{-2}$ may be very large. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
 
 References such as \citep{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard examples include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
 
@@ -716,7 +712,7 @@ In the following, we derive an effective symmetric preconditioner that allows fo
     \F = \U_N \, (\G \circ \Z) \, \U_T^\top
 \end{equation}
 
-Here, $\Z$ can be interpreted as set of Laplacian frequency coefficients, which are subsequently scaled according to the graph filter function, and then reverse Fourier transformed back into the node domain. Matrices $\Z$ which are distributed according to a spherically symmetric distribution, result in signals $\F$ which are smooth with respect to the graph topology. Since this transform filters out the problematic high-Laplacian frequency Fourier components, the system defined by this transformed variable $\Z$ is naturally far better conditioned.
+Here, $\Z$ can be interpreted as a set of Laplacian frequency coefficients, which are subsequently scaled according to the graph filter function, and then reverse Fourier transformed back into the node domain. Matrices $\Z$ which are distributed according to a spherically symmetric distribution, result in signals $\F$ which are smooth with respect to the graph topology. Since this transform filters out the problematic high-Laplacian frequency Fourier components, the system defined by this transformed variable $\Z$ is naturally far better conditioned.
 
 By substituting this expression for $\F$ back into the likelihood in equation (\ref{eq:Y_given_F}), and the prior of equation (\ref{eq:F_prior}), one can derive a new expression for the posterior mean of $\Z$. This is done explicitly in \cref{the:Z_transform_bayes}. The end result is that the new linear system for the transformed variable $\Z$ is given by
 
@@ -726,7 +722,7 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
     \vecc{\Z} = \Big( \D_{\G} \big( \U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G} + \gamma \I_{NT} \Big)^{-1} \vecc{\G \circ \big(\U_N^\top \Y \U_T\big)}
 \end{equation}
 
-\noindent where we have abbreviated $\diag{\vecc{\G}}$ and $\diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
+\noindent where we have abbreviated $\diag{\vecc{\G}}$ and $\diag{\vecc{\Ss}}$ as $\D_{\G}$ and $\D_{\Ss}$ respectively. Note that the conditioning of the coefficient matrix is greatly improved from the untransformed problem, as we will discuss in greater detail in \cref{sec:convergence}. Note also that the multiplication of a vector $\vecc{\RR}$ by the coefficient matrix can be computed efficiently as 
 
 \begin{multline}
     \mat{\Big( \D_{\G} \big( \U_T^\top \otimes \U_N^\top \big)\, \D_{\Ss} \, \big(\U_T \otimes \U_N \big) \,\D_{\G} + \gamma \I_{NT} \Big) \, \vecc{\RR}} \\ = \gamma \RR + \G \circ \left(\U_N^\top \Big( \Ss \circ \big(\U_N (\G \circ \RR) \U_T^\top \big) \Big) \U_T\right) 
@@ -734,7 +730,7 @@ By substituting this expression for $\F$ back into the likelihood in equation (\
 
 
 
-This has $O(N^2T + NT^2)$ complexity at each step which may be  reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
+This has $O(N^2T + NT^2)$ complexity at each step which may be reduced to $O(N^2T + NT \log T)$ in the case of T-V problems, and to $O\big(NT \log NT \big)$ for data residing on a grid (see \cref{box}). 
 
 The linear system defined \cref{eq:Z_post} can be understood as a two-sided symmetrically preconditioned version of the original linear system given in \cref{eq:lin_system}. In particular, the new expression can be constructed by modifying the original system in the following way.
 
@@ -808,14 +804,14 @@ In this subsection, we evaluate our GSR method using a dataset consisting of dai
     \begin{center}
         \includegraphics[width=0.6\linewidth]{Figures/UK_covid.pdf}
     \end{center}
-    \caption[Snapshot of the Covid-19 case rate in the UK]{\small{The seven day rolling rate of new covid cases reported per 100,000 residents in each lower tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in gray.}}
+    \caption[Snapshot of the Covid-19 case rate in the UK]{\small{The seven-day rolling rate of new covid cases reported per 100,000 residents in each lower-tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in grey.}}
     \label{fig:covid}
 \end{figure}
 
 
 Before beginning the experiments, we performed two preprocessing steps on the raw signal data. First, we took the logarithm of 10 plus the original case rate. This was to eliminate the long tail in the case rate histogram, transforming it to be closer to a Gaussian. We then normalised by subtracting the overall mean and dividing by the standard deviation. The resultant signal, of shape $372 \times 1138$, we refer to as $\Y_0$. Note that 4.8\% of the entries in $\Y_0$ were already missing from the original dataset (mostly occurring in the earlier stages of the pandemic).
 
-The experiment was conducted as follows. First, we removed data from $\Y_0$ such that a total fraction $m$ was no longer present. This created two matrices: $\Y$, the partially observed signal with missing values filled with zeros; and $\Ss$, the corresponding binary sensing matrix. Data was removed in four distinct ways. First, node/times were selected uniformly at random for removal (`uniform'). Second, strings of 100 days, beginning at a random date, were removed for individual randomly selected districts (`strings'). Third, the entire time series for randomly chosen districts was removed (`districts'). Finally, the signal across every node at randomly selected dates was removed (`dates'). These four techniques for data removal are depicted for clarity in \cref{fig:missing_data}. For each technique, we solved the signal reconstruction problem using the GSR model described in this chapter and compared its performance to other baseline reconstruction strategies. In particular, for uniform and string removal, we compared it to linear interpolation in time and longitudinal averaging across all districts. For date removal, we compared it to interpolation in time only, since longitudinal averaging is not possible in this case. Finally, for district removal, we compared it to longitudinal averaging, since linear interpolation in time is not possible in this case. For each model, for each method of data removal, we measured the Root Mean Square Error (RMSE) across the reconstructed entries, over four increasing values of $m$. The results are shown in \cref{tab:gsr_real_data_experiemnts}. 
+The experiment was conducted as follows. First, we removed data from $\Y_0$ such that a total fraction $m$ was no longer present. This created two matrices: $\Y$, the partially observed signal with missing values filled with zeros; and $\Ss$, the corresponding binary sensing matrix. Data was removed in four distinct ways. First, individual elements of $\Y$ were selected uniformly at random for removal (`uniform'). Second, strings of 100 days, beginning at a random date, were removed for individual randomly selected districts (`strings'). Third, the entire time series for randomly chosen districts were removed (`districts'). Finally, the signal across every node at randomly selected dates was removed (`dates'). These four techniques for data removal are depicted for clarity in \cref{fig:missing_data}. For each technique, we solved the signal reconstruction problem using the GSR model described in this chapter and compared its performance to other baseline reconstruction strategies. In particular, for uniform and string removal, we compared it to linear interpolation in time and longitudinal averaging across all districts. For date removal, we compared it to interpolation in time only, since longitudinal averaging is not possible in this case. Finally, for district removal, we compared it to longitudinal averaging, since linear interpolation in time is not possible in this case. For each model, for each method of data removal, we measured the Root Mean Square Error (RMSE) across the reconstructed entries, over four increasing values of $m$. The results are shown in \cref{tab:gsr_real_data_experiemnts}. 
 
 
 
@@ -851,7 +847,7 @@ The experiment was conducted as follows. First, we removed data from $\Y_0$ such
     Linear interp & \colorbox{best!35}{0.035} & \colorbox{best!35}{0.038} & \colorbox{best!35}{0.046} & \colorbox{best!35}{0.066} && NA & NA & NA & NA \\ \rule{0pt}{6ex}
     Longitudinal avrg & NA & NA & NA & NA && 0.318 & 0.333 & 0.347 & 0.345 \\[0.2cm] \bottomrule
     \end{tabular}
-    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each value of $m$, the best performing model is highlighted in green. Entries where the model is not applicable is indicated by NA. }
+    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each value of $m$, the best-performing model is highlighted in green. Entries where the model is not applicable are indicated by NA. }
     \label{tab:gsr_real_data_experiemnts} 
 \end{table*}
 
@@ -864,7 +860,7 @@ The findings reveal that the GSR method demonstrates superior performance by a n
 
 \label{sec:convergence}
 
-In this section, we conduct a thorough theoretical analysis of the convergence properties of both the SIM and the CGM. As we will demonstrate, their respective convergence rates are heavily influenced by the values of the hyperparameters $\beta$, which describes the strength of the graph filter, $\gamma$, which determines the regularization strength, and $m=|\mathcal{S}'|/NT$, which represents the fraction of values missing from the original graph signal. This helps provide an explanation for the empirical convergence behaviour, and offers insight into trade-offs when it comes to hyperparameter selection. Furthermore, it allows users to make an informed decision with regard to selecting an appropriate method, considering the inherent characteristics of their specific problem. 
+In this section, we conduct a thorough theoretical analysis of the convergence properties of both the SIM and the CGM. As we will demonstrate, their respective convergence rates are heavily influenced by the values of the hyperparameters $\beta$, which describes the strength of the graph filter, $\gamma$, which determines the regularization strength, and $m=|\mathcal{S}'|/NT$, which represents the fraction of values missing from the original graph signal. This helps explain the empirical convergence behaviour and offers insight into trade-offs when it comes to hyperparameter selection. Furthermore, it allows users to make an informed decision about selecting an appropriate method, considering the inherent characteristics of their specific problem. 
 
 It is well-known that the worst-case number of iterations required to reduce the error below some specific tolerance level for matrix splitting methods is inversely proportional to $-\log \rho(\M^{-1}\N)$, where $\rho(\cdot)$ denotes the spectral radius (absolute value of the maximum eigenvalue) of a matrix \citep{Demmel1997}. For completeness, we provide a brief proof of this in \cref{the:SIM_convergence}. In the specific context of our graph signal reconstruction algorithm as outlined in \cref{sec:SIM}, $\M$ and $\N$ have the following values.  
 
@@ -881,7 +877,7 @@ where  $\U = \U_T \otimes \U_N$, $\D_\J = \diag{\vecc{\J}}$, and $\D_{\Ss'} = \d
     n_\text{SIM} \propto  -\frac{1}{\log\rho\left(\U \D_\J \U^\top \D_{\Ss'} \right)}
 \end{equation}
 
-Note that the matrix $\J$ [see \cref{eq:Jnt} for its definition] has entries that depend on both the the regularisation parameter $\gamma$ and the spectral scaling matrix $\G$, which is itself a function of the graph filter parameter(s) $\beta$ [see \cref{eq:Gba,eq:Gba2}]. The matrix $\D_{\Ss'}$ has entries that depend on the structure of the missing data in the graph signal. Therefore should we expect that the spectral radius, $\rho$, and consequently the number of steps required for convergence, $n_\text{SIM}$, can be affected by all three.  
+Note that the matrix $\J$ [see \cref{eq:Jnt} for its definition] has entries that depend on both the regularisation parameter $\gamma$ and the spectral scaling matrix $\G$, which is itself a function of the graph filter parameter(s) $\beta$ [see \cref{eq:Gba,eq:Gba2}]. The matrix $\D_{\Ss'}$ has entries that depend on the structure of the missing data in the graph signal. Therefore should we expect that the spectral radius, $\rho$, and consequently the number of steps required for convergence, $n_\text{SIM}$, can be affected by all three.  
 
 Similarly, in the conjugate gradient method, the worst-case number of steps required to achieve a specific termination criterion is well-known to be proportional to $\sqrt{\kappa}$, where $\kappa$ represents the condition number of the coefficient matrix, i.e. the ratio between the largest and smallest eigenvalue \cite{Kelley1995}. In our particular scenario, the coefficient matrix is provided in \cref{eq:Z_post}. Therefore, we should expect that the number of iterations required for convergence of the CGM will scale as
 
@@ -906,12 +902,6 @@ $$
 
 Now consider the spectral radius $\rho$ of the update matrix in the SIM. Given this limiting value of $\D_\J$, it can be directly evaluated as
 
-% \begin{align}
-%     \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big) &= \frac{1}{1 + \gamma} \rho\Big(\U \U^\top \D_{\Ss'} \Big) \notag \\
-%     &= \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big) \notag \\
-%     &= \frac{1}{1 + \gamma} \label{eq:beta_lim_0} 
-% \end{align}
-
 \begin{equation}
     \lim_{\beta \rightarrow 0} \; \rho\Big(\U \D_\J \U^\top \D_{\Ss'} \Big)
     = \frac{1}{1 + \gamma} \rho\Big(\D_{\Ss'} \Big)
@@ -920,13 +910,6 @@ Now consider the spectral radius $\rho$ of the update matrix in the SIM. Given t
 
 
 Next, consider the condition number $\kappa$ of the coefficient matrix in the CGM. Again, since in this limit $\D_\G = \I$, it can be directly evaluated as 
-
-
-% \begin{align}
-%     \lim_{\beta \rightarrow 0} \; \kappa \left(  \, \D_\G \U^\top \D_{\Ss} \U \D_\G + \gamma \I \; \right) &= \kappa  \left(  \, \U^\top \D_{\Ss} \U + \gamma \I \; \right) \notag \\[0.2cm]
-%     &= \kappa  \left(  \, \U^\top \left( \D_{\Ss} + \gamma \I \right) \U \; \right) \notag \\[0.3cm]
-%     &= \frac{1 + \gamma}{\gamma}
-% \end{align}
 
 
 \begin{equation}
@@ -997,7 +980,7 @@ where $ \OO_{NT}$ is an $NT \times NT$ matrix of ones. Therefore the spectral ra
     \end{bmatrix} \right)
 \end{align*}
 
-Since the matrix in brackets is just the vector $\vecc{\Ss'}^\top$ repeated in every row it is surely of rank one, and therefore must have an eigenvalue of 0 with multiplicity $NT - 1$. This implies the the only non-zero eigenvalue (and therefore the spectral radius $\rho$) is given by its trace, which is $\sum_{n, t}\Ss'_{nt} = |\mathcal{S}'|$. Denoting  $m=|\mathcal{S}'|/NT$, this can be expressed as 
+Since the matrix in brackets is just the vector $\vecc{\Ss'}^\top$ repeated in every row it is surely of rank one and therefore must have an eigenvalue of 0 with multiplicity $NT - 1$. This implies that the only non-zero eigenvalue (and therefore the spectral radius $\rho$) is given by its trace, which is $\sum_{n, t}\Ss'_{nt} = |\mathcal{S}'|$. Denoting  $m=|\mathcal{S}'|/NT$, this can be expressed as 
 
 \begin{equation}
     \label{eq:beta_lim_inf}
@@ -1032,7 +1015,7 @@ Given \cref{eq:n_SIM,eq:n_CGM}, we can write the scaling rate for the number of 
 \end{equation}
 
 
-A key feature of these expressions is that increasing the fraction of missing data $m$ will increase $n_\text{SIM}$, whereas decrease $n_\text{CGM}$ Note also that, in the case of a strong filter, the number of iterations required for convergence of the CGM, $n_\text{CGM}$, still goes to infinity as $\gamma \rightarrow 0$. However, this behaviour is no longer present for $n_\text{SIM}$, which tends towards a constant value of $-1/\log m$. Taking a Taylor series expansion of both expressions about $\gamma=0$ demonstrates the asymptotic behaviour in terms of $\gamma$ more clearly. 
+A key feature of these expressions is that increasing the fraction of missing data $m$ will increase $n_\text{SIM}$, but decrease $n_\text{CGM}$. Note also that, in the case of a strong filter, the number of iterations required for convergence of the CGM, $n_\text{CGM}$, still goes to infinity as $\gamma \rightarrow 0$. However, this behaviour is no longer present for $n_\text{SIM}$, which tends towards a constant value of $-1/\log m$. Taking a Taylor series expansion of both expressions about $\gamma=0$ demonstrates the asymptotic behaviour in terms of $\gamma$ more clearly. 
 
 \begin{equation*}
     \lim_{\beta \rightarrow \infty} \;  n_\text{SIM} \, \propto \;\;  -\frac{1}{\log m} + O\left(\gamma\right), \;\; \aand \;\; \lim_{\beta \rightarrow \infty} \;  n_\text{CGM} \, \propto \, \left(\frac{\gamma}{1 - m} \right)^{-1/2} \, + O\left(\gamma^{1/2}\right) 
@@ -1046,7 +1029,7 @@ In particular, at small $\gamma$, the CGM still runs with complexity proportiona
 
 \label{sec:GSR_convergence_implications}
 
-In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we examine these expressions more closely and distil out the key features that are relevant for implementing these methods in practice.
+In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we examine these expressions more closely and distil the key features that are relevant for implementing these methods in practice.
 
 
 \begin{table*}[t]
@@ -1060,7 +1043,7 @@ In the preceding two sections, we have derived several formulae that characteris
     $\beta \rightarrow 0$      & $ \displaystyle \frac{1}{\log(1 + \gamma)}$   & $\displaystyle \gamma^{-1}$    &&    $\displaystyle \sqrt{\frac{1 + \gamma}{\gamma}}$ & $\displaystyle \gamma^{-1/2}$    \\ \rule{0pt}{6ex}
     $\beta \rightarrow \infty$ & $\displaystyle \frac{1}{\log(1 + \gamma) - \log m}$ & $\displaystyle -\frac{1}{\log m}$    &&  $\displaystyle \sqrt{\frac{1 - m + \gamma}{\gamma}}$ & $\displaystyle \left(\frac{\gamma}{1 - m} \right)^{-1/2}$ \\[0.5cm] \bottomrule 
     \end{tabular}
-    \caption{The scaling behaviour of the number of steps required for convergence is shown as a function of $\gamma$ and $m$. The upper row gives the behaviour in the limit of a weak filter, and the lower row gives the behaviour in the limit of a strong filter. We also show the dominant term in the taylor expansion about $\gamma=0$ (``small $\gamma$" columns) which give a clearer picture of the asymptotic behaviour as $\gamma \rightarrow 0$. }
+    \caption{The scaling behaviour of the number of steps required for convergence is shown as a function of $\gamma$ and $m$. The upper row gives the behaviour in the limit of a weak filter, and the lower row gives the behaviour in the limit of a strong filter. We also show the dominant term in the Taylor expansion about $\gamma=0$ (``small $\gamma$" columns) which gives a clearer picture of the asymptotic behaviour as $\gamma \rightarrow 0$. }
     \label{tab:conv_SIM_CGM} 
 \end{table*}
 
@@ -1072,29 +1055,29 @@ Whilst the convergence rates of both the SIM and CGM have the same directional r
 
 \subsection{Experimental validation}
 
-In order to verify aspects of this theoretically predicted behaviour, we ran several experiments using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance, and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in \{0, 1\}^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. In the following experiments, we completed this procedure for various values of $m$, $\beta$ and $\gamma$, and compared the empirical number of iterations required for convergence against the theoretical predictions determined in \cref{sec:convergence}. 
+In order to verify aspects of this theoretically predicted behaviour, we ran several experiments using synthetic data. In particular, we generated two random fully connected graphs, each with 50 nodes, and take their Cartesian product to create a product graph with 2500 nodes. Next, we generated a random $50 \times 50$ matrix of i.i.d. Gaussian noise with unit variance and chose a fraction $m$ to be removed uniformly at random to generate an observed graph signal $\Y \in \R^{50 \times 50}$ and corresponding binary sensing matrix $\Ss \in \{0, 1\}^{50 \times 50}$. Next, we set a prior for the underlying smooth signal $\F$ with precision $\gamma$ using an isotropic diffusion filter (see \cref{tab:iso_filters}) with parameter $\beta$. We then solved the graph signal reconstruction problem using both the SIM and CGM and counted the number of iterations required to reach a termination condition. Specifically, for the SIM, we terminate when $\Delta\F$ has a root mean square value of $10^{-8}$, and, for the CGM, when the residual has a root mean square value of $10^{-5}$, which we empirically determined resulted in similar final precision. In the following experiments, we completed this procedure for various values of $m$, $\beta$ and $\gamma$, and compared the empirical number of iterations required for convergence against the theoretical predictions determined in \cref{sec:convergence}. 
  
 \subsubsection{Experiment 1: testing the strong and weak filter limits}
 
-In the first experiment, we fix $\beta$ at zero and $\infty$, and measure the number of iterations required for convergence over a range of values of $m$ and $\gamma$. Since these correspond to the weak and strong filter limits respectively, we expect that the convergence rate should be bounded by a function proportional to those given in \cref{tab:conv_SIM_CGM}. First, we set $\beta=0$. Note that, in this case, $m$ has no effect on the convergence rate of the SIM or CGM (which we also find empirically to be the case). We therefore varied $\gamma$ alone in 50 logarithmically spaced increments from $10^{-4}$ to $10^2$. The results are shown in \cref{fig:gamma_2d_plot}. As is visible, the functions broadly follow the expected convergence rate given by the theoretical prediction, performing slightly better in practice in both cases. Note that this is the expected behaviour, since the limits give a \textit{worst case} scaling rate. In both cases, we also scaled the theoretical prediction (corresponding to a vertical shift in the log-log plot) to fit the experimental data. This is also valid, since the theoretical predictions give a function proportional to the number of iterations rather than the number of iterations itself. For the SIM, this factor was approximately 10, and for the CGM this factor was approximately 4.5. 
+In the first experiment, we fix $\beta$ at zero and $\infty$, and measure the number of iterations required for convergence over a range of values of $m$ and $\gamma$. Since these correspond to the weak and strong filter limits respectively, we expect that the convergence rate should be bounded by a function proportional to those given in \cref{tab:conv_SIM_CGM}. First, we set $\beta=0$. Note that, in this case, $m$ has no effect on the convergence rate of the SIM or CGM (which we also find empirically to be the case). We therefore varied $\gamma$ alone in 50 logarithmically spaced increments from $10^{-4}$ to $10^2$. The results are shown in \cref{fig:gamma_2d_plot}. As is visible, the functions broadly follow the expected convergence rate given by the theoretical prediction, performing slightly better in practice in both cases. Note that this is the expected behaviour since the limits give a \textit{worst case} scaling rate. In both cases, we also scaled the theoretical prediction (corresponding to a vertical shift in the log-log plot) to fit the experimental data. This is also valid since the theoretical predictions give a function proportional to the number of iterations rather than the number of iterations itself. For the SIM, this factor was approximately 10, and for the CGM this factor was approximately 4.5. 
  
 
 \begin{figure}[t]
     \begin{center} 
     \includegraphics[width=0.7\linewidth]{Figures/gamma_plot_2d.pdf}
     \end{center}
-    \caption{\small{The number of iterations required for convergence in the weak filter limit for the SIM an CGM both theoretically and empirically, as a function of $\gamma$.}}
+    \caption{\small{The number of iterations required for convergence in the weak filter limit for the SIM and CGM both theoretically and empirically, as a function of $\gamma$.}}
     \label{fig:gamma_2d_plot}
 \end{figure}
 
 
-For the second part of experiment 1, we set $\beta = \infty$, corresponding to the strong filter limit. In this case, we expect the number of iterations to be a function of both $m$ and $\gamma$ as specified in \cref{tab:conv_SIM_CGM}. Therefore, we varied $\gamma$ in 50 logarithmically spaced increments from $10^{-6}$ to $10^2$ and $m$ in 50 linearly spaced increments from 0.01 to 0.99. For each unique pair of $m$ and $\gamma$, we then counted the number of iterations required for convergence and compared this to the theoretical predictions. The results are shown in \cref{fig:m_gamma_3d_plot}. Again, the empirical results broadly follow the theoretical functions which, as before, are scaled to fit the data. As with the weak filter limit, we again see that empirical scaling rate is slightly better than the worst case theoretical prediction. 
+For the second part of experiment 1, we set $\beta = \infty$, corresponding to the strong filter limit. In this case, we expect the number of iterations to be a function of both $m$ and $\gamma$ as specified in \cref{tab:conv_SIM_CGM}. Therefore, we varied $\gamma$ in 50 logarithmically spaced increments from $10^{-6}$ to $10^2$ and $m$ in 50 linearly spaced increments from 0.01 to 0.99. For each unique pair of $m$ and $\gamma$, we then counted the number of iterations required for convergence and compared this to the theoretical predictions. The results are shown in \cref{fig:m_gamma_3d_plot}. Again, the empirical results broadly follow the theoretical functions which, as before, are scaled to fit the data. As with the weak filter limit, we again see that the empirical scaling rate is slightly better than the worst-case theoretical prediction. 
 
 \begin{figure}[t]
     \begin{center} 
     \includegraphics[width=\linewidth]{Figures/m_gamma_3d_plot.pdf}
     \end{center}
-    \caption[Strog Filter Limit convergence experiments]{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colormap corresponds to vertical height and is nomalised across each plot to aid comparison. }}
+    \caption[Strog Filter Limit convergence experiments]{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colourmap corresponds to vertical height and is normalised across each plot to aid comparison. }}
     \label{fig:m_gamma_3d_plot}
 \end{figure}
 
@@ -1109,7 +1092,7 @@ In the second experiment, we test the number of iterations required for converge
     \begin{center} 
     \includegraphics[width=\linewidth]{Figures/3d_iterations.pdf}
     \end{center}
-    \caption[Convergence experiments]{\small{Six 3D surfaces are shown representing the number of iterations required for convergence for three values of $m$ for both the SIM and CGM algorithms. In each plot, the $x$-axis represents the filter parameter $\beta$, and the $y$-axis represents the regularisation parameter $\gamma$. The colormap, which is normalsied equally across all plots, tracks the vertical height. }}
+    \caption[Convergence experiments]{\small{Six 3D surfaces are shown representing the number of iterations required for convergence for three values of $m$ for both the SIM and CGM algorithms. In each plot, the $x$-axis represents the filter parameter $\beta$, and the $y$-axis represents the regularisation parameter $\gamma$. The colourmap, which is normalised equally across all plots, tracks the vertical height. }}
     \label{fig:3d_iteration_plots}
 \end{figure}
 
@@ -1120,33 +1103,9 @@ One key result of this experiment that aligns with the theoretical prediction is
 
 \section{Conclusions}
 
-In this chapter we have introduced a Bayesian model for the reconstruction of signals defined over the nodes of a Cartesian product graph. In particular, we show that the posterior mean of the smooth underlying signal, $\F$, is obtained by solving a linear system of size $NT \times NT$, given in \cref{eq:lin_system}. While a naive approach to computing this would have a time complexity of $O(N^3T^3)$, we can utilise the classic methods of matrix splitting and conjugate gradients, customised for the context of graph signal reconstruction, to compute a solution iteratively. When used in conjunction with the properties of the Kronecker product, the linear system can be solved with complexity $O(N^2T + NT^2)$ per iterative step. Furthermore, we show that this can be reduced to $O(N^2T + NT \log T)$ when considering time-vertex problems, and to $O(NT \log NT)$ when operating on a grid by making use of the Fast Cosine Transform (FCT). 
+The first key output of this chapter is a novel Bayesian model for the reconstruction of signals defined over the nodes of a Cartesian product graph. By introducing the concept of general anisotropic two-dimensional graph filters, we show that the posterior mean of the smooth underlying signal, $\F \in \R^{N \times T}$, is obtained by solving a linear system of size $NT \times NT$, given in \cref{eq:lin_system}. While a naive approach to computing this would have a time complexity of $O(N^3T^3)$, we propose two alternative algorithms, customised for the context of graph signal reconstruction, to compute a solution iteratively. When used in conjunction with the properties of the Kronecker product, the linear system can be solved with complexity $O(N^2T + NT^2)$ per iterative step. Furthermore, we show that this can be reduced to $O(N^2T + NT \log T)$ when considering time-vertex problems, and to $O(NT \log NT)$ when operating on a grid by making use of the Fast Cosine Transform (FCT). We demonstrated the utility of this model on a dataset comprising daily measurements of SARS-CoV-19 across local districts in the UK from February 2020 to March 2023. Our GSR model had the flexibility to reconstruct missing data in every scenario, outperforming linear interpolation and longitudinal averaging when strings of dates were removed at each district, or entire districts were removed. 
 
-The key output of this chapter is two algorithms, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM), tailored for the task of graph signal reconstruction. These were designed by making use of domain knowledge to produce a matrix splitting for the SIM and a preconditioner for the CGM that both guarantee bounded convergence. By analysing the spectral properties of the matrices involved in each algorithm, we provided a detailed analysis of the expected convergence rate in both cases. The important results are summarised in \cref{tab:conv_SIM_CGM}, which gives a factor proportional to the number of iterations required for convergence in terms of the hyperparameters $\beta$, $\gamma$ and $m$. Given these results, we have provided some rules-of-thumb for making a choice of iterative method in practice, which is summarised in \cref{tab:decision_SIM_CGM}. This decision is of less importance when $\gamma$ is large, as both methods converge quickly in this domain, however it is of particular significance when $\gamma$ is small. 
-
-
-\definecolor{sim}{rgb}{0.12,0.47,0.71}
-\definecolor{cgm}{rgb}{1,0.49,0.05}
-
-\begin{table*}[t]
-    \centering
-    \footnotesize
-    \def\arraystretch{1.4}
-    \begin{tabular}{@{}lcccccccccccc@{}}
-    \toprule
-    & \multicolumn{3}{c}{Small $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Medium $\gamma$} & \phantom{a} & \multicolumn{3}{c}{Large $\gamma$} \\
-    \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
-    & S $m$   & M $m$  & L $m$ &&  S $m$   & M $m$  & L $m$ && S $m$   & M $m$  & L $m$ & \\ \midrule \rule{0pt}{0.8cm}
-    S $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
-    M $\beta$ & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}    \\ \rule{0pt}{6ex}
-    L $\beta$  & \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} && \colorbox{sim!25}{SIM} & \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} &&  \colorbox{sim!25}{SIM} & \colorbox{cgm!25}{CGM} & \colorbox{cgm!25}{CGM}   \\[0.5cm] \bottomrule 
-    \end{tabular}
-    \caption[Rules of thumb for iterative method choice under different hyperparameter settings]{This table gives a rough rule of thumb for which iterative method should be chosen under various hyperparameter settings. S, M and L denotes small, medium and large. Note that small and large $m$ mean close to zero or one respectively, small and large $\gamma$ mean around $10^{-6}$ and around one respectively, and small and large $\beta$ mean values which cause the filter function to approach the weak and strong filter limits respectively. }
-    \label{tab:decision_SIM_CGM} 
-\end{table*}
-
-
-
+The second output of this chapter is a thorough analysis of the two iterative algorithms for obtaining the posterior mean, namely the Stationary Iterative Method (SIM) and the Conjugate Gradient Method (CGM). We show how the SIM can be implemented in an eigendecomposition free and/or distributed manner, which is of particular utility when the graph Laplacians comprising the product are large and sparse, in which case the cost per iterative step is $O\big(NT(|\mathcal{E_T}| + |\mathcal{E}_N|)\big)$. On the other hand, while both algorithms experience slower convergence when the regularisation parameter $\gamma$ is small, the CGM has superior asymptotic performance as $\gamma \rightarrow 0$, with the number of iterations scaling as $\gamma^{-1/2}$ as compared to $\gamma^{-1}$. Another interesting aspect of these two algorithms is that they have opposite behaviour in response to changes in the fraction of data, $m$, that is missing from the original graph signal. In particular, the CGM performs better when there is a high proportion of missingness, whereas the SIM performs better when there is low missingness. The precise convergence behaviour in terms of the hyperparameters $\beta$, $\gamma$ and $m$ is summarised in \cref{tab:conv_SIM_CGM}. 
 
 
 

@@ -30,13 +30,13 @@ Multiway Graph Signal Processing (MWGSP) is an emerging framework for analysing 
     \label{fig:coloured_tensor}
 \end{figure}   
 
-The goal of this chapter is to extend the methods developed in \cref{chap:gsr_2d,chap:kgr_rnc_2d} such that they can accommodate multiway graph signals. In particular, Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) can all be understood as a special two-dimensional case of their more general MWGSP counterpart. In this chapter, we translate all three models into a their $d$-dimensional form, and demonstrate how to solve efficiently for the posterior mean.  
+The goal of this chapter is to extend the methods developed in \cref{chap:gsr_2d,chap:kgr_rnc_2d} such that they can accommodate multiway graph signals. In particular, Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) can all be understood as a special two-dimensional case of their more general MWGSP counterpart. In this chapter, we translate all three models into their $d$-dimensional form and demonstrate how to solve efficiently for the posterior mean.  
 
 
 Multiway signals are described using tensors, which can be represented as $d$-dimensional arrays. Tensor algebra is well-established in fields such as physics and mechanics \citep{Renteln2013}, however it is less widespread in the graph signal processing community. As such, the first section of this chapter sets out some conceptual and notational standards regarding tensors, which are core to the present and proceeding chapters. 
 
 
-We begin \cref{sec:dd_gsp} by defining the Cartesian product of more than two graphs, and discuss the algebraic and spectral structure of the resultant objects. Next, we cover the tensor representation of multiway graph signals and give the general definition of a graph-spectral operators in $d$-dimensions. We also discuss issues surrounding computational efficiency and how the so called `vec-trick', utilised in prior chapters, can be generalised to the tensor setting. In \cref{sec:tensor_gsr}, we begin the core contributions of this chapter by generalising Bayesian GSR as defined in \cref{chap:gsr_2d} to the MWGSP setting. This necessitates an updated version of the SIM and CGM to accommodate tensor-valued data in arbitrary dimensions, which we give in \cref{sec:SIM_dd,sec:CGM_dd}. Next, in \cref{sec:kgr_dd}, we generalise KGR for the non-parametric prediction of multiway graph signals as a function of exogenous variables. Finally, in \cref{sec:rnc_dd}, we the generalise RNC as defined in \cref{sec:rnc_mdp} in much the same way.  
+We begin \cref{sec:dd_gsp} by defining the Cartesian product of more than two graphs, and discuss the algebraic and spectral structure of the resultant objects. Next, we cover the tensor representation of multiway graph signals and give the general definition of graph-spectral operators in $d$-dimensions. We also discuss issues surrounding computational efficiency and how the so-called `vec-trick', utilised in prior chapters, can be generalised to the tensor setting. In \cref{sec:tensor_gsr}, we begin the core contributions of this chapter by generalising Bayesian GSR as defined in \cref{chap:gsr_2d} to the MWGSP setting. This necessitates an updated version of the SIM and CGM to accommodate tensor-valued data in arbitrary dimensions, which we give in \cref{sec:SIM_dd,sec:CGM_dd}. Next, in \cref{sec:kgr_dd}, we generalise KGR for the non-parametric prediction of multiway graph signals as a function of exogenous variables. Finally, in \cref{sec:rnc_dd}, we generalise RNC as defined in \cref{sec:rnc_mdp} in much the same way.  
 
 
 
@@ -155,7 +155,7 @@ As with the Kronecker sum, here we have used the notation $\bigotimes_{i=1}^d  \
 
 Since each node in a $d$-dimensional product graph is specified by $d$ independent indices, a signal $\Yt$ existing over the nodes has a natural representation as a tensor of order $d$. One way to conceptualise a $d$-dimensional tensor signal is as a multi-dimensional array with $d$ independent axes. If the $i$-th factor graph has $N_i$ vertices, then $\Yt$ will be of shape $(N_1, \, N_2 , ... N_d)$. An individual element of this tensor signal can be specified via a vector index $\nn = [n_1,\, n_2,\, ...,\, n_d]$, where $1\leq n_i \leq N_i$.
 
-Alternatively, signals can be represented as a vector of length $N = \prod N_i$. This is essential if we are to interpret the $\otimes$ symbol strictly as a Kronecker product, rather than a tensor or outer product. Under the Kronecker interpretation, the chained use of $\otimes$ used in expressions such as \cref{eq:U_LAM_def} results in matrices of shape $N \times N$, providing a linear map from $\R^{N} \rightarrow \R^{N}$. Therefore, for an operator to act on a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, we need a method of mapping tensors with shape $(N_1, \, N_2 , ... N_d)$ to vectors of length $N$. In order for this vectorisation process to be consistent with the operators, it should result in a vectors whose elements are arranged in lexicographic order. In some fields, this is referred to as \textit{row-major} vectorisation since, in the case of an order-2 tensor, the index representing the row varies before the column index. In the following, we symbolise this operation mathematically as $\vecrm{\cdot}: \R^{N_1 \times N_2 \times ... \times N_d} \rightarrow \R^N$, and its reverse operation as $\tenrm{\cdot}: \R^N \rightarrow \R^{N_1 \times N_2 \times ... \times N_d}$. We use the `RM' subscript to indicate explicitly that this process is occurring in row-major order, since the standard $\vecc{\cdot}$ function defined for matrices is most commonly assumed to act in column-major order.  
+Alternatively, signals can be represented as a vector of length $N = \prod N_i$. This is essential if we are to interpret the $\otimes$ symbol strictly as a Kronecker product, rather than a tensor or outer product. Under the Kronecker interpretation, the chained use of $\otimes$ used in expressions such as \cref{eq:U_LAM_def} results in matrices of shape $N \times N$, providing a linear map from $\R^{N} \rightarrow \R^{N}$. Therefore, for an operator to act on a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, we need a method of mapping tensors with shape $(N_1, \, N_2 , ... N_d)$ to vectors of length $N$. In order for this vectorisation process to be consistent with the operators, it should result in a vector with elements arranged in lexicographic order. In some fields, this is referred to as \textit{row-major} vectorisation since, in the case of an order-2 tensor, the index representing the row varies before the column index. In the following, we symbolise this operation mathematically as $\vecrm{\cdot}: \R^{N_1 \times N_2 \times ... \times N_d} \rightarrow \R^N$, and its reverse operation as $\tenrm{\cdot}: \R^N \rightarrow \R^{N_1 \times N_2 \times ... \times N_d}$. We use the `RM' subscript to indicate explicitly that this process is occurring in row-major order, since the standard $\vecc{\cdot}$ function defined for matrices is most commonly assumed to act in column-major order.  
 
 In the following, we use bold lower-case symbols (e.g. $\y$) to indicate graph signals existing in their vector form, and bold upper-case calligraphic symbols (e.g. $\Yt$) to indicate graph signals in their multi-dimensional array form. That is, 
 
@@ -188,7 +188,7 @@ To calculate the vector index $k$ which a tensor element with index $\nn = [n_1,
 \begin{algorithm}[b]
     \hypertarget{vectoten}{}
     \label{al:vectoten}
-    \caption{Mapping a vector element to a tensor element in row major order}
+    \caption{Mapping a vector element to a tensor element in row-major order}
     \begin{algorithmic}
     \vspace{0.15cm}
     \Require{The target vector element $k$} 
@@ -219,7 +219,7 @@ Given these two operations, two arrays of any consistent shape can be mapped bet
 
 \label{sec:GSP_dd}
 
-Consider a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ represented in its multi-dimensional array form. In direct analogy to the two dimensional case given in \cref{eq:GFT_2d,eq:IGFT_2d}, we can define the Graph Fourier Transform (GFT) and its corresponding inverse (IGFT) of this signal as follows. 
+Consider a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$ represented in its multi-dimensional array form. In direct analogy to the two-dimensional case given in \cref{eq:GFT_2d,eq:IGFT_2d}, we can define the Graph Fourier Transform (GFT) and its corresponding inverse (IGFT) of this signal as follows. 
 
 \begin{alignat}{2}
 \label{eq:gft_nd}
@@ -228,7 +228,7 @@ Consider a tensor graph signal $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d
     \text{IGFT}(\Yt) & = \tenrm{\U \y} && = \tenrm{\left(  \bigotimes_{i=1}^d  \U^{\,(i)} \right) \vecrm{\Yt} }
 \end{alignat}
 
-The concept of a graph filter for signals defined on a Cartesian product graph follows naturally from this definition. Just as in the one and two-dimensional case, a graph filter is constructed by first taking the GFT of a signal, then applying some scaling function to each spectral component, then transforming back into the vertex domain via the IGFT. In the simplest case, we can consider an isotropic graph filter function $g(\lambda, \beta)$, such as one of those defined in \cref{tab:iso_filters}. A filter $\HH$, defined to act on a vectorised graph signal, can be represented as an $N \times N$ matrix, constructed as follows. 
+The concept of a graph filter for signals defined on a Cartesian product graph follows naturally from this definition. Just as in the one and two-dimensional case, a graph filter is constructed by first taking the GFT of a signal, then applying some scaling function to each spectral component, and finally transforming back into the vertex domain via the IGFT. In the simplest case, we can consider an isotropic graph filter function $g(\lambda, \beta)$, such as one of those defined in \cref{tab:iso_filters}. A filter $\HH$, defined to act on a vectorised graph signal, can be represented as an $N \times N$ matrix, constructed as follows. 
 
 
 \begin{align}
@@ -313,9 +313,9 @@ In general, we can define any spectral transformation in tensor terms as follows
 
 \label{sec:fast_kron_dd}
 
-Consider the definition of the GFT and IGFT of a $d$-dimensional graph signal given in \cref{eq:gft_nd,eq:igft_nd}. In both cases, we are required to compute the result of a chained Kronecker product matrix acting on a length-$N$ vector. Whilst the obvious approach to computing this product would have time and memory complexity of $O(N^2)$, a much more efficient implementation can be achieved by taking advantage of the Kronecker structure of the matrix. Specifically, the memory and time complexity of this operation can be reduced to $O(N)$ and $O(N\sum N_i)$ respectively. The importance of this fact cannot be understated, as it enables scaling to much larger product graphs that would otherwise be possible. 
+Consider the definition of the GFT and IGFT of a $d$-dimensional graph signal given in \cref{eq:gft_nd,eq:igft_nd}. In both cases, we are required to compute the result of a chained Kronecker product matrix acting on a length-$N$ vector. Whilst the obvious approach to computing this product would have time and memory complexity of $O(N^2)$, a much more efficient implementation can be achieved by taking advantage of the Kronecker structure of the matrix. Specifically, the memory and time complexity of this operation can be reduced to $O(N)$ and $O(N\sum N_i)$ respectively. The importance of this fact cannot be understated, as it enables scaling to much larger product graphs than would otherwise be possible. 
 
-This general algorithm for achieving this is well-known, and can be summarised as follows. Consider the application of a chained Kronecker product matrix acting on a vector $\y$. 
+This general algorithm for achieving this is well-known and can be summarised as follows. Consider the application of a chained Kronecker product matrix acting on a vector $\y$. 
 
 $$
 \y = \left( \U^{(1)} \otimes \U^{(2)} \otimes ... \otimes \U^{(d)}\right) \z
@@ -327,13 +327,13 @@ $$
 \y = \left( \U^{(1)} \otimes \I \otimes ... \otimes \I \right)\left( \I \otimes \U^{(2)} \otimes ... \otimes \I \right) ... \left( \I \otimes \I \otimes ... \otimes \U^{(d)} \right) \z
 $$
 
-As is visible, the original multiplication has now been broken into $d$ stages. However, the $i$-th stage can be completed with $N \times N_i$ multiplications by reshaping the vector in the appropriate way and leveraging the properties of the Kronecker product. The reshaping operation can be completed using strided permutation matrices which can be applied in practice for virtually zero computational cost \citep{Granata1992}. This idea is also key to the FFT and related algorithms, which can be understood as finding a recursive Kronecker structure in the Fourier matrix \citep{Tolimieri2013}. 
+As is visible, the original multiplication has now been broken into $d$ stages. However, the $i$-th stage can be completed with $N \times N_i$ multiplications by appropriately reshaping the vector and leveraging the properties of the Kronecker product. The reshaping operation can be completed using strided permutation matrices which can be applied in practice for virtually zero computational cost \citep{Granata1992}. This idea is also key to the FFT and related algorithms, which can be understood as finding a recursive Kronecker structure in the Fourier matrix \citep{Tolimieri2013}. 
 
 Work on efficient computational procedures for this operation can be traced back to \cite{Roth1934} who formulated the original 2-dimensional ``vec trick" algorithm. The $d$-dimensional generalisation was proposed in \cite{Pereyra1973} and improved in \cite{DeBoor1979}. More recent work, such as \cite{Fackler2019}, has focused on further optimisations such as minimising data transit times and parallel processing. 
 
 Furthermore, if the $i$-th factor graph in the Cartesian product is a path or ring graph, then the corresponding matrix transformation can be completed with only $N \log N_i$ multiplications by making use of the FCT/FST/FFT algorithms. In the extreme case, where every factor graph has this special structure, the computational complexity reaches parity with the multidimensional FFT algorithm, and will have a runtime complexity of $O(N \log N)$ \citep{Smith1995}. 
 
-In order to execute computations of this nature in a way that is maximally efficient, we have developed the Python library \textit{PyKronecker}, which is described in detail in \cite{Antonian2023}. This library offers a high-level API for constructing Kronecker-based operators and applying them to either vectors or tensors, whilst optimising the underlying computation using parallel GPU processing and Just In Time (JIT) compilation using the Jax library \citep{Bradbury2018}. In the following, it will be assumed that all chained Kronecker product matrices are applied to vectors/tensors using an efficient implementation. This is essential for computing the $d$-dimensional GFT and IGFT, the basic pseudocode for which is shown in algorithm \hyperlink{al:GFT_dd}{\textbf{4}}. Note that the `reshape' operation should always be applied using the row-major convention. This is the standard convention in languages such as C and Python's NumPy library \citep{Harris2020}, but not in languages such as Matlab and Fortran. 
+In order to execute computations of this nature in a maximally efficient way, we have developed the Python library \textit{PyKronecker}, which is described in detail in \cite{Antonian2023}. This library offers a high-level API for constructing Kronecker-based operators and applying them to either vectors or tensors, whilst optimising the underlying computation using parallel GPU processing and Just In Time (JIT) compilation using the Jax library \citep{Bradbury2018}. In the following, it will be assumed that all chained Kronecker product matrices are applied to vectors/tensors using an efficient implementation. This is essential for computing the $d$-dimensional GFT and IGFT, the basic pseudocode for which is shown in algorithm \hyperlink{al:GFT_dd}{\textbf{4}}. Note that the `reshape' operation should always be applied using the row-major convention. This is the standard convention in languages such as C and Python's NumPy library \citep{Harris2020}, but not in languages such as Matlab and Fortran. 
 
 \begin{algorithm}[t]
     \hypertarget{al:GFT_dd}{}
@@ -376,7 +376,7 @@ In order to execute computations of this nature in a way that is maximally effic
 
 
 \note{A note on tensor notation}{
-    The use of tensor algebra is well established in fields such as phyics and mechanics \citep{Renteln2013,Abraham1988}, however, it is less widespread in the signal processing community. For this reason, we choose to adopt a notation that leans more on standard linear algebra, however, all the equations and algorithms discussed in the following chapters could be alternatively written in a purer form of tensor notation. For example, consider the IGFT of a tensor signal $\Zt$. In our notation, this is written as
+    The use of tensor algebra is well established in fields such as physics and mechanics \citep{Renteln2013,Abraham1988}, however, it is less widespread in the signal processing community. For this reason, we choose to adopt a notation that leans more on standard linear algebra, however, all the equations and algorithms discussed in the following chapters could be alternatively written in a purer form of tensor notation. For example, consider the IGFT of a tensor signal $\Zt$. In our notation, this is written as
 
     \vspace{0.3cm}
 
@@ -387,7 +387,7 @@ In order to execute computations of this nature in a way that is maximally effic
 
     \vspace{0.3cm}
 
-    As is visible, this describes the process in terms of regular matrix-vector multiplication, but requires the additional definition of the $\vecrm{\cdot}$ and $\tenrm{\cdot}$ operations. Alternatively, this expression could be written using tensor indexing and Einstein summation notation as follows. 
+    As is visible, this describes the process in terms of regular matrix-vector multiplication but requires the additional definition of the $\vecrm{\cdot}$ and $\tenrm{\cdot}$ operations. Alternatively, this expression could be written using tensor indexing and Einstein summation notation as follows. 
     
     \vspace{0.3cm}
 
@@ -398,11 +398,11 @@ In order to execute computations of this nature in a way that is maximally effic
 
     \vspace{0.3cm}
 
-    Note that here the indices $j_1, j_2, ..., j_d$ on the right hand side are implicitly summed over. This eliminates the need to consider vectorisation at all and is perhaps a more elegant way of describing the $d$-dimensional GFT/IGFT. However, there are multiple indices to keep track of which becomes somewhat unaesthetic in a variable number of dimensions.
+    Note that here the indices $j_1, j_2, ..., j_d$ on the right-hand side are implicitly summed over. This eliminates the need to consider vectorisation at all and is perhaps a more elegant way of describing the $d$-dimensional GFT/IGFT. However, there are multiple indices to keep track of which becomes somewhat unaesthetic in a variable number of dimensions.
 
     \vspace{0.3cm}
     
-    Both forms offer different trade-offs, however, there is no practical difference when it comes to executing the signal precessing algorithms themselves. Note that, as described in \cref{sec:fast_kron_dd}, the full $N \times N$ matrix implied by \cref{eq:LA_MM} is never actually instantiated in memory (see algorithm \hyperlink{KronMatMul}{\textbf{4}}).
+    Both forms offer different trade-offs, however, there is no practical difference when it comes to executing the signal processing algorithms themselves. Note that, as described in \cref{sec:fast_kron_dd}, the full $N \times N$ matrix implied by \cref{eq:LA_MM} is never actually instantiated in memory (see algorithm \hyperlink{KronMatMul}{\textbf{4}}).
 
 }
 
@@ -427,13 +427,13 @@ The input data for signal reconstruction on a $d$-dimensional Cartesian product 
     \text{input data} = \Big\{\; \Yt \in \R^{N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \LL \in \R^{N \times N} \; \Big\}
 \end{equation*}
 
-In analogy with the two dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\Yt$ is a noisy partial observation of an underlying tensor, $\Ft$, which is smooth with respect to the topology of the Cartesian product graph. This is represented by the following statistical model. 
+In analogy with the two-dimensional case, (see \cref{sec:problem_statement_2d}), we assume that $\Yt$ is a noisy partial observation of an underlying tensor, $\Ft$, which is smooth with respect to the topology of the Cartesian product graph. This is represented by the following statistical model. 
 
 \begin{equation}
     \Yt = \St \circ \big(\Ft + \Et \big)
 \end{equation}
 
-where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\Et$ is a random tensor where each element has an independent normal distribution with with unit variance. That is,
+where, here, the $\circ$ symbol represents the generalised tensor Hadamard product, i.e. element-wise multiplication of two tensors. $\Et$ is a random tensor where each element has an independent normal distribution with unit variance. That is,
 
 \begin{equation}
     \vecrm{\Et} \, \sim \, \Norm{\zero}{\I_N}
@@ -463,7 +463,7 @@ where $\HH$ is constructed from a graph filter function in the manner specified 
     \HH = \U \D_\Gt \U^\top
 \end{equation*}
 
-where $\D_\Gt = \diag{\vecrm{\Gt}}$, and $\Gt$ is the spectral scaling matrix obtained by applying a graph filter to the graph Laplacian eigenvalues. The intuition for this prior can be obtained from a direct generalisation of the one and two dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
+where $\D_\Gt = \diag{\vecrm{\Gt}}$, and $\Gt$ is the spectral scaling matrix obtained by applying a graph filter to the graph Laplacian eigenvalues. The intuition for this prior can be obtained from a direct generalisation of the one and two-dimensional cases. In essence, tensor signals drawn from this prior will have the same probability density function as iid noise filtered by $\HH$, so samples will be naturally smooth with respect to the topology of the underlying Cartesian product graph. By applying Bayes' theorem, we obtain the posterior distribution for $\f$ conditioned on $\y$. 
 
 
 \begin{equation}
@@ -483,7 +483,7 @@ Therefore, the mean of this posterior is obtained by solving the following linea
     \f^{\star} = \left(\D_\St + \gamma \HH^{-2}\right)^{-1} \y
 \end{equation}
 
-Once again, we are faced with a similar set of problems to those outlined in \cref{sec:problem_statement_2d}. Namely, the coefficient matrix is very large and potentially ill-defined. This can be solved by turing to iterative methods such as the SIM and CGM, which are repeated here in their form adapted for the general tensor case. 
+Once again, we are faced with a similar set of problems to those outlined in \cref{sec:problem_statement_2d}. Namely, the coefficient matrix is very large and potentially ill-defined. This can be solved by turning to iterative methods such as the SIM and CGM, which are repeated here in their form adapted for the general tensor case. 
 
 \subsection{Tensor SIM}
 
@@ -659,7 +659,7 @@ Note that, once again, this preconditioned coefficient matrix can be multiplied 
 
 
 
-Just as with the two-dimensional case, we can bound the condition number of the preconditioned coefficient matrix to find the worst case scaling rates in the limit of a weak and strong filter. As before, this falls between
+Just as with the two-dimensional case, we can bound the condition number of the preconditioned coefficient matrix to find the worst-case scaling rates in the limit of a weak and strong filter. As before, this falls between
 
 $$
 \sqrt{\frac{1 - m + \gamma}{\gamma}} \; \leq \; n_{\text{CGM}} \; \leq \; \sqrt{\frac{1+\gamma}{\gamma}}
@@ -669,7 +669,7 @@ $$
 
 \label{sec:kgr_dd}
 
-In this section, we take the Kernel Graph Regression (KGR) algorithm, developed in \cref{sec:kgr_mdp}, and generalise it to the multiway/tensor case. Consider a series of $T$ product graph signals, each denoted as $\Yt_t$, with dimensions $(N_1 \times ... \times N_d)$. In this scenario, each signal is associated with an explanatory vector, $\x_t \in \R^M$. Therefore, the available data consist of labeled pairs $\big\{\x_t, \Yt_t\big\}_{t=1}^T$. This data can be consolidated into a a matrix, $\X$, of dimensions $(T \times M)$, and a tensor, $\Yt$, with shape $(T \times N_1 \times ... \times N_d)$.
+In this section, we take the Kernel Graph Regression (KGR) algorithm, developed in \cref{sec:kgr_mdp}, and generalise it to the multiway/tensor case. Consider a series of $T$ product graph signals, each denoted as $\Yt_t$, with dimensions $(N_1 \times ... \times N_d)$. In this scenario, each signal is associated with an explanatory vector, $\x_t \in \R^M$. Therefore, the available data consist of labelled pairs $\big\{\x_t, \Yt_t\big\}_{t=1}^T$. This data can be consolidated into a a matrix, $\X$, of dimensions $(T \times M)$, and a tensor, $\Yt$, with shape $(T \times N_1 \times ... \times N_d)$.
 
 The observed tensor $\Yt$ may also contain an arbitrary amount of missing data, which is described by the binary sensing tensor $\St$. In accordance with previous sections, $\St$ shares its shape with $\Yt$ and holds ones at elements where successful observations were made and zeros elsewhere. As a result, the input data for multiway KGR can be summarised as follows.
 
@@ -709,7 +709,7 @@ where, in this case, the posterior precision matrix $\bar{\PP}$ is an $NT \times
 
 \subsection{Computation of the posterior mean}
 
-In order to find the posterior mean, we must solve the linear system $\bar{\PP}^{-1} \y$. Again, this can be achieved by utilising the tensor versions of the SIM or CGM. In close analogy with the two dimensional case, the process is the same as that of multiway GSR, under the following change of variables. 
+In order to find the posterior mean, we must solve the linear system $\bar{\PP}^{-1} \y$. Again, this can be achieved by utilising the tensor versions of the SIM or CGM. In close analogy with the two-dimensional case, the process is the same as that of multiway GSR, under the following change of variables. 
 
 \begin{equation}
     \U \rightarrow \bar{\U}, \aand \Gt \rightarrow \bar{\Gt}
@@ -868,7 +868,7 @@ One key intrinsic factor that can influence the yield of a bond is its maturity,
 For bonds issued by other entities, such as state authorities, numerous intrinsic factors other than maturity may affect the yield. These include the credit rating of the issuer, the tax exemption status, and, particularly relevant to green bonds, the Environmental, Social and Governance (ESG) impact of the funded project. In this case study, we frame the problem of estimating unknown yields as a multiway graph signal processing task. Specifically, we categorise the bonds based on several factors likely to influence the yield, such that each bond can be associated with a node on a four-dimensional Cartesian product graph. In particular, we take into account the following factors, each of which forms the basis of one of the factor graphs. 
 
 \begin{enumerate}
-    \item \textit{Use of funds}. Each bond in our dataset was associated with a project category (such as water, pollution or power) and sub-category (such as waste management, habitat conservation, or solar farms). We used this information to construct a tree graph, beginning with a root node, and branching into category and sub-category nodes. The resulting tree, comprising a total of 161 nodes, is visualised in \cref{fig:green_bond_graph}. Each bond can then be associated with a specific leaf node based on their particular project category.
+    \item \textit{Use of funds}. Each bond in our dataset was associated with a project category (such as water, pollution or power) and sub-category (such as waste management, habitat conservation, or solar farms). We used this information to construct a tree graph, beginning with a root node, and branching into category and sub-category nodes. The resulting tree, comprising a total of 161 nodes, is visualised in \cref{fig:green_bond_graph}. Each bond can then be associated with a specific leaf node based on its particular project category.
     \item \textit{Credit rating}. Each bond also had an assigned credit rating associated with the issuer, designated by a ratings agency. These ratings range from the highest possible, ``AAA", to the lowest in our dataset, ``BBB+", giving a total of eight categories. Since these ratings have a natural order, they can be represented using a simple chain graph.
     \item \textit{Maturity}. Each bond has a fixed period from its issue date to the date of maturity. Unlike treasury bonds, the green bonds we considered did not necessarily have standard maturity lengths. We thus categorised each bond by the length of this period, sorted into eight different bins, with edges corresponding to 0, 1, 2, 5, 10, 20, 30, 40 and 50 years. As with credit rating, the natural order enables us to represent this with a chain graph.
     \item \textit{Tax status}. Each bond also has an associated tax status. This includes information about whether the bond was taxed at the federal and state level, as well as certain other provisions such as special exemptions for specific institutions. We represented tax status as a network, where any two codes were connected if they shared at least one property in common. Further information on the possible green bond tax statuses is presented in \cref{table:student}, and the graph we used to connect them is depicted in \cref{fig:tax_graph}.
@@ -925,13 +925,13 @@ Given these factors, each bond could be associated with a particular four-dimens
     \begin{center}
         \includegraphics[width=0.9\linewidth]{Figures/bond_tensor.pdf}
     \end{center}
-   \caption[A visualisation of the tensor coordinates used in the greed bond application]{A visualisation of the tensor coordinates used in this application. Rating, maturity and coupon are all represented by a chain graph, while category is a tree graph as described above.} 
+   \caption[A visualisation of the tensor coordinates used in the greed bond application]{A visualisation of the tensor coordinates used in this application. Rating, maturity and coupon are all represented by a chain graph, while category is represented by a tree graph as described above.} 
     \label{fig:bond_tensor}
 \end{figure} 
 
-For many specific tensor coordinates, no bond yield existed, and as such the tensor $\Yt$ was very sparse. This could be due to the fact that the bond was not trading at this particular time, or because no bond ever existed with these particular characteristics. Moreover, since the parent nodes in the graph representing the use of funds are in a sense ``artificial" - serving solely to create the tree structure - no realised yield could possibly exist there. Under the framework developed in this thesis, this does not present a problem, since we can simply allocate these coordinates as containing missing data, as specified by the binary sensing tensor $\St$. 
+For many specific tensor coordinates, no bond yield existed, and as such the tensor $\Yt$ was very sparse. This could be because the bond was not trading at this particular time, or because no bond ever existed with these particular characteristics. Moreover, since the parent nodes in the graph representing the use of funds are in a sense ``artificial" - serving solely to create the tree structure - no realised yield could exist there. Under the framework developed in this thesis, this does not present a problem, since we can simply allocate these coordinates as containing missing data, as specified by the binary sensing tensor $\St$. 
 
-Additionally, there were certain bonds that shared identical characteristics, i.e., the same use of funds, rating, maturity, and tax status. In these instances, we simply selected the bond with the longest available history and randomly broke ties. In total, we used 829 bonds (out of a theoretically possible $161 \times 8 \times 8 \times 7 = 72,128$). As many bonds did not span the total 429 weeks, this left a total missingness of $m=99.27\%$.
+Additionally, certain bonds shared identical characteristics, i.e., the same use of funds, rating, maturity, and tax status. In these instances, we simply selected the bond with the longest available history and randomly broke ties. In total, we used 829 bonds (out of a theoretically possible $161 \times 8 \times 8 \times 7 = 72,128$). As many bonds did not span the total 429 weeks, this left a total missingness of $m=99.27\%$.
 
 As previously noted, one model we employ in this case study to predict the yields is Kernel Graph Regression. This necessitates, in addition to the input tensor $\Yt$ and the sensing tensor $\St$, a matrix of explanatory variables $\X$ with shape $(T, M)$. Here, we use the treasury yields over 11 different maturities, along with core inflation, the Federal Reserve fund rate, and a simple linear variable $t$ ranging from -1 to 1, totalling $M=14$ explanatory variables. This data was obtained from the FRED API \citep{FRED2023}.
 
@@ -984,7 +984,7 @@ The results from the experiment can be found in \cref{tab:bond_yield_results}. A
 
 \section{Conclusions}
 
-In this chapter we have been concerned with generalising several graph signal processing methods to the $d$-dimensional tensor setting. In \cref{sec:dd_gsp}, we discussed how the Cartesian product can be generalised to include more than two factor graphs, resulting in tensor-valued multiway graph signals. In \cref{sec:GSP_dd,sec:fast_kron_dd}, we reviewed how GSP techniques such as the GFT can be understood for $d$-dimensional signals, and introduced the concept of a general anisotropic graph filter. We also discussed how $d$-dimensional Kronecker products can be efficiently computed and presented the PyKronecker software library for this purpose \citep{Antonian2023}.
+In this chapter, we have been concerned with generalising several graph signal processing methods to the $d$-dimensional tensor setting. In \cref{sec:dd_gsp}, we discussed how the Cartesian product can be generalised to include more than two factor graphs, resulting in tensor-valued multiway graph signals. In \cref{sec:GSP_dd,sec:fast_kron_dd}, we reviewed how GSP techniques such as the GFT can be understood for $d$-dimensional signals, and introduced the concept of a general anisotropic graph filter. We also discussed how $d$-dimensional Kronecker products can be efficiently computed and presented the PyKronecker software library for this purpose \citep{Antonian2023}.
 
-In \cref{sec:tensor_gsr}, we reexamined the Graph Signal Reconstruction model developed in \cref{chap:gsr_2d}, generalising it to $d$ dimensions. This necessitated a fresh look at the SIM and CGM methods previously developed to make them applicable for this setting. Next, in \cref{sec:kgr_dd,sec:rnc_dd} respectively we took the Kernel Graph Regression and Regression with Network Cohesion techniques, which were developed in \cref{chap:kgr_rnc_2d}, and generalised them for the multiway case. Finally, in \cref{sec:green_bonds}, we showed how the multiway KGR and GSR methods could be applied to the problem of predicting the yield of novel green bonds in a time series application. In particular, we showed that both GSR and KGR could achieve good performance, significantly out-performing the standard techniques of Ridge and Lasso regression. 
+In \cref{sec:tensor_gsr}, we reexamined the Graph Signal Reconstruction model developed in \cref{chap:gsr_2d}, generalising it to $d$ dimensions. This necessitated a fresh look at the SIM and CGM methods previously developed to make them applicable to this setting. Next, in \cref{sec:kgr_dd,sec:rnc_dd} respectively we took the Kernel Graph Regression and Regression with Network Cohesion techniques, which were developed in \cref{chap:kgr_rnc_2d}, and generalised them for the multiway case. Finally, in \cref{sec:green_bonds}, we showed how the multiway KGR and GSR methods could be applied to the problem of predicting the yield of novel green bonds in a time series application. In particular, we showed that both GSR and KGR could achieve good performance, significantly outperforming the standard techniques of Ridge and Lasso regression. 
 

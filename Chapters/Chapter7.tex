@@ -4,9 +4,9 @@
 
 \lhead{Chapter 7. \emph{Reconstruction and Regression with Binary-Valued Graph Signals}} 
 
-Up to this point in this thesis, our attention has been focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued, which can be employed to describe node classification tasks conducted over networks. For example, consider the task of predicting whether each user in a social network will engage with a specific online advertisement. Assuming it is shown to a subset of the user population, we can represent the outcome (click/no click) as a partially observed binary graph signal across the network. It is reasonable to assume that closely connected users will exhibit a more similar propensity to click than distantly connected users; or in other words, we might expect that the click probability varies smoothly with respect to the topology of the graph. Hence, incorporating this relational information into a predictive task could potentially improve its accuracy.
+Up to this point in this thesis, our attention has been focused on reconstruction and regression models for real-valued graph signals, as discussed in \cref{chap:gsr_2d,chap:kgr_rnc_2d,chap:nd_gsp,chap:variance}. In this chapter, we shift our attention to scenarios where the signal of interest is binary-valued, which can be employed to describe node classification tasks conducted over networks. For example, consider the task of predicting whether each user in a social network will engage with a specific online advertisement. Assuming it is shown to a subset of the user population, we can represent the outcome (click/no click) as a partially observed binary graph signal across the network. It is reasonable to assume that closely connected users will exhibit a more similar propensity to click than distantly connected users; in other words, we might expect that the click probability varies smoothly with respect to the topology of the graph. Hence, incorporating this relational information into a predictive task could potentially improve its accuracy.
 
-This example represents a binary classification task over the network, since there are only two possible outcomes. However, there may also be situations in which each node must be classified into one of $C > 2$ groups. Again, it may be reasonable to assume that the relative class probabilities vary smoothly over the graph. \Cref{fig:binary_class_graph,fig:mutliclass_graph} give visual representations of binary and multiclass classification tasks over a network, respectively.
+This example represents a binary classification task over the network since there are only two possible outcomes. However, there may also be situations in which each node must be classified into one of $C > 2$ groups. Again, it may be reasonable to assume that the relative class probabilities vary smoothly over the graph. \Cref{fig:binary_class_graph,fig:mutliclass_graph} give visual representations of binary and multiclass classification tasks over a network, respectively.
 
 
 \begin{figure}[t] 
@@ -25,16 +25,16 @@ This example represents a binary classification task over the network, since the
     \label{fig:mutliclass_graph}
 \end{figure} 
 
-Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally well-suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. By contrast, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received notably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, there, the graph is usually constructed by considering a distance metric in a feature space, and the focus is on maximising the utility of unlabelled data using algorithms such as label propagation (see, for example \cite{Zhang2017}). The GSP community, by contrast, focuses on statistical processes that occur over intrinsically graph-structured objects using spectral methods. While some work on binary reconstruction and regression from this perspective has occurred (see, for example \cite{Tran2020}), many of the prominent GSP algorithms and frameworks are yet to be generalised to binary data. In this chapter, we build on some of the models already developed in this thesis (GSR, KGR and RNC) to define associated ``logistic" reconstruction and regression algorithms (L-GSR, L-KGR and L-RNC). These models are targeted towards applications of interest to the GSP community and are applicable to multiway graph signals in an arbitrary number of dimensions. This means they are particularly suited to multivariate applications such as hyperspectral image processing, graph time series etc.  
+Within the graph signal processing community, a significant amount of research has been dedicated to the study of real-valued signals, since they are naturally well-suited to spectral analysis via the GFT and representation in terms of Gaussian random fields. By contrast, binary-valued graph signals, as well as other discrete or non-Gaussian distributions, have received notably less attention. In the machine learning community, binary graph signals have been studied in the context of semi-supervised learning, see for example \cite{Kondor2002,Zhu2003}. However, there, the graph is usually constructed by considering a distance metric in a feature space, and the focus is on maximising the utility of unlabelled data using algorithms such as label propagation (see, for example, \cite{Zhang2017}). The GSP community, by contrast, focuses on statistical processes that occur over intrinsically graph-structured objects using spectral methods. While some work on binary reconstruction and regression from this perspective has occurred (see, for example, \cite{Tran2020}), many of the prominent GSP algorithms and frameworks are yet to be generalised to binary data. In this chapter, we build on some of the models already developed in this thesis (GSR, KGR and RNC) to define associated ``logistic" reconstruction and regression algorithms (L-GSR, L-KGR and L-RNC). These models are targeted towards applications of interest to the GSP community and apply to multiway graph signals in an arbitrary number of dimensions. This means they are particularly suited to multivariate applications such as hyperspectral image processing, graph time series etc.  
 
-This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for Logistic Graph Signal Reconstruction (L-GSR) on a Cartesian product graph. Here, we describe how the real-valued multiway GSR framework we developed in \cref{chap:nd_gsp} can be modified to produce a statistical model to describe $d$-dimensional binary graph signals. By making use of the Conjugate Gradient Method (CGM) in conjunction with the Iteratively Reweighted Least Squares (IRLS) algorithm, we demonstrate how to efficiently estimate the underlying class probabilities at each node. Next, in \cref{sec:multiclass}, we adapt this algorithm to accommodate multiclass classification problems. This necessitates the introduction of a new class of Kronecker operator, which appears in the preconditioned coefficient matrix. Using Gerschgorin's circle theorem we are able provide guarantees for the CGM convergence by ascertaining an upper bound for its condition number. In \cref{sec:logistic_regression}, adapt the Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) models developed in \cref{chap:kgr_rnc_2d}, and adapt them for the task of binary and multiclass node classification, given additional explanatory variables. Finally, in \cref{sec:logistic_rnc_application}, we explore the behaviour of the L-GSR and L-RNC models on an image segmentation task. In particular, we analyse the interpretation of the hyperparameters $\gamma$ and $\beta$ in the context of the logistic models, and provide intuition for how these can be set in practice. We also discuss some of the convergence issues associated with the IRLS algorithm and provide practical solutions for mediating them. 
+This chapter is structured as follows. First, in \cref{sec:lgsr}, we define a model for Logistic Graph Signal Reconstruction (L-GSR) on a Cartesian product graph. Here, we describe how the real-valued multiway GSR framework we developed in \cref{chap:nd_gsp} can be modified to produce a statistical model to describe $d$-dimensional binary graph signals. By making use of the Conjugate Gradient Method (CGM) in conjunction with the Iteratively Reweighted Least Squares (IRLS) algorithm, we demonstrate how to efficiently estimate the underlying class probabilities at each node. Next, in \cref{sec:multiclass}, we adapt this algorithm to accommodate multiclass classification problems. This necessitates the introduction of a new class of Kronecker operator, which appears in the preconditioned coefficient matrix. Using Gerschgorin's circle theorem we can provide guarantees for the CGM convergence by ascertaining an upper bound for its condition number. In \cref{sec:logistic_regression}, adapt the Kernel Graph Regression (KGR) and Regression with Network Cohesion (RNC) models developed in \cref{chap:kgr_rnc_2d}, and adapt them for the task of binary and multiclass node classification, given additional explanatory variables. Finally, in \cref{sec:logistic_rnc_application}, we explore the behaviour of the L-GSR and L-RNC models on an image segmentation task. In particular, we analyse the interpretation of the hyperparameters $\gamma$ and $\beta$ in the context of the logistic models and provide intuition for how these can be set in practice. We also discuss some of the convergence issues associated with the IRLS algorithm and provide practical solutions for mediating them. 
 
 
 \section{Logistic Graph Signal Reconstruction (L-GSR)}
 
 \label{sec:lgsr}
 
-In this section we define a model for the reconstruction of binary signals existing on the nodes of a $d$-dimensional Cartesian product graph, which we term Logistic Graph Signal Reconstruction (L-GSR). As before, the graph is characterised by $d$ graph Laplacians $\left\{\LL^{(i)}\right\}_{i=1}^d$, with the total Laplacian given by their Kronecker sum (see \cref{sec:dd_gsp}). The partially observed graph signal, $\Yt$, is an order-$d$ tensor of shape $(N_1, N_2, .., N_d)$, with binary-valued elements representing the two classes. This is accompanied by another binary tensor, $\St$, of the same shape which, as in previous chapters, contains the information about which elements of $\Yt$ were observed by holding ones where successful observations were made and zeros elsewhere. Where no observation was made (i.e. $\St_{\nn} = 0$), the corresponding element $\Yt_{\nn}$ is set to zero by default. The goal is to predict the value of the graph signal at elements where no observation was made using solely the topology of the graph. As such, the input data for this problem can be summarised as follows. 
+In this section, we define a model for the reconstruction of binary signals existing on the nodes of a $d$-dimensional Cartesian product graph, which we term Logistic Graph Signal Reconstruction (L-GSR). As before, the graph is characterised by $d$ graph Laplacians $\left\{\LL^{(i)}\right\}_{i=1}^d$, with the total Laplacian given by their Kronecker sum (see \cref{sec:dd_gsp}). The partially observed graph signal, $\Yt$, is an order-$d$ tensor of shape $(N_1, N_2, .., N_d)$, with binary-valued elements representing the two classes. This is accompanied by another binary tensor, $\St$, of the same shape which, as in previous chapters, contains the information about which elements of $\Yt$ were observed by holding ones where successful observations were made and zeros elsewhere. Where no observation was made (i.e. $\St_{\nn} = 0$), the corresponding element $\Yt_{\nn}$ is set to zero by default. The goal is to predict the value of the graph signal at elements where no observation was made using solely the topology of the graph. As such, the input data for this problem can be summarised as follows. 
 
 \begin{equation*}
     \text{input data} = \left\{\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d}, \;\; \St \in \{0, 1\}^{N_1 \times ... \times N_d} , \;\; \left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d \; \right\}
@@ -75,7 +75,7 @@ The goal of our L-GSR model is to estimate the value of the latent probability t
     \Mt(\Ft) = \frac{\one}{\one + \exp(-\Ft)} \quad \Longleftrightarrow \quad \muu(\f) = \frac{\one}{\one + \exp(-\f)}
 \end{equation}
 
-Here, the exponential and division should be interpreted as element-wise. Next, we make the assumption that $\f = \vecrm{\Ft}$ is smooth with respect to the topology of the graph by assigning it the following Gaussian prior. 
+Here, the exponential and division should be interpreted as element-wise. Next, we assume that $\f = \vecrm{\Ft}$ is smooth with respect to the topology of the graph by assigning it the following Gaussian prior. 
 
 \begin{equation}
     \label{eq:f_prior_logit}
@@ -90,7 +90,7 @@ As in previous chapters, the covariance matrix $\HH^2$ is the square of a graph 
 
 where $\U$ is the Kronecker product of each of the eigenvector matrices of the individual factor graph Laplacians, and $\D_\G = \diag{\vecrm{\Gt}}$ is the diagonalised spectral scaling tensor, created by applying an isotropic or anisotropic graph filter to the corresponding eigenvalues (see \cref{sec:dd_gsp,sec:GSP_dd} for details). 
 
-By applying this prior we encode the belief that $\Ft$ is smooth with respect to the topology of the graph, which is then applied by proxy to the mean tensor $\Mt$. In particular, $\muu$ is distributed on $[0, 1]^N$ according to a multivariate logit-normal distribution. Note that this is distinct from the multivariate logistic-normal distribution, which is produced by applying a softmax function to a random Gaussian vector to produce vectors on a simplex \citep{Atchinson1980}. \Cref{fig:logistic_gsr} gives some visual intuition for this by showing a colour-map of several smooth signals on a 2D lattice graph, along with the corresponding mean tensor $\Mt$. As visible, the qualitative smoothness properties of $\Ft$ broadly translate under the transformation of the logistic link function. That is, increasingly smooth real-valued signals correspond to increasingly smooth signals on the unit interval. 
+By applying this prior we encode the belief that $\Ft$ is smooth with respect to the topology of the graph, which is then applied by proxy to the mean tensor $\Mt$. In particular, $\muu$ is distributed on $[0, 1]^N$ according to a multivariate logit-normal distribution. Note that this is distinct from the multivariate logistic-normal distribution, which is produced by applying a softmax function to a random Gaussian vector to produce vectors on a simplex \citep{Atchinson1980}. \Cref{fig:logistic_gsr} gives some visual intuition for this by showing a colourmap of several smooth signals on a 2D lattice graph, along with the corresponding mean tensor $\Mt$. As visible, the qualitative smoothness properties of $\Ft$ broadly translate under the transformation of the logistic link function. That is, increasingly smooth real-valued signals correspond to increasingly smooth signals on the unit interval. 
 
 \begin{figure}[t] 
     \begin{center}
@@ -115,7 +115,7 @@ The goal of the next section is to find an algorithm for minimising this express
 
 Unlike the normal models of the previous sections, no closed-form solution exists to minimise \cref{eq:nll_logistic}, meaning we must resort to numerical methods. One standard approach is the Iteratively Reweighted Least Squares (IRLS) algorithm. The IRLS algorithm is a numerical method used to solve certain non-linear optimisation problems. It essentially works by iteratively solving a sequence of weighted least squares sub-problems until a satisfactory solution is found. As we will show, in our case, this is particularly attractive, since it is possible to leverage the properties of the Kronecker product to solve these simpler sub-problems efficiently. 
 
-In the context of maximum likelihood estimation for generalised linear models, the IRLS algorithm is equivalent to Fisher's scoring algorithm, which is a variant of the Newton-Raphson method \citep{Nelder1972}. Instead of using the actual Hessian matrix (second derivatives of the log-likelihood), Fisher's scoring algorithm uses its expected value, called the Fisher Information matrix. In this setting, each iteration of the IRLS algorithm involves re-weighting the data based on the current estimate of the parameters, then solving a weighted least squares problem to update the parameters, akin to the update step in Fisher Scoring \citep{Fan2020}.
+In the context of maximum likelihood estimation for generalised linear models, the IRLS algorithm is equivalent to Fisher's scoring algorithm, which is a variant of the Newton-Raphson method \citep{Nelder1972}. Instead of using the actual Hessian matrix (second derivative of the log-likelihood), Fisher's scoring algorithm uses its expected value, called the Fisher Information matrix. In this setting, each iteration of the IRLS algorithm involves re-weighting the data based on the current estimate of the parameters, then solving a weighted least squares problem to update the parameters, akin to the update step in Fisher Scoring \citep{Fan2020}.
 
 Fisher's scoring algorithm begins with an initial estimate $\f_0$, which is then iteratively refined to reach the global minimum according to the following formula. 
 
@@ -175,7 +175,7 @@ where
     \tee_k = \D_\St \big(\y - \muu_k\big) + \D_{\muu}^k \f_k
 \end{equation}
 
-As visible, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. As such, we must be able to compute a solution to this problem in a way that is maximally efficient. 
+As visible, each iteration of the IRLS algorithm reduces to solving the linear system $\PP^{-1}_k \tee_k$, for some vector $\tee_k$. As such, we must be able to compute a solution to this problem in a maximally efficient way. 
 
 
 \subsection{Completing IRLS iterations with the CGM}
@@ -184,13 +184,13 @@ When it comes to solving the linear system $\PP^{-1}_k \tee_k$, we encounter fam
 
 In this chapter, our focus will be on the CGM for two primary reasons. Firstly, as the dimensionality of tensor-valued binary graph signals increases, it is likely that only a small fraction of nodes will have valid observed data in most practical applications. As demonstrated in \cref{sec:GSR_convergence_implications}, the CGM exhibits superior scaling properties when the input graph signal $\Yt$ is sparsely observed. Secondly, as discussed in \cref{sec:RNC_solving}, the CGM is applicable to GSR, KGR and RNC problems while the SIM is not suitable for RNC models. Therefore, for simplicity, and for the sake of brevity we focus on the CGM. 
 
-Recall that the CGM seeks to solve a linear system by introducing the symmetric preconditioner $\PSI$, for the purpose of reducing the condition number of the coefficient matrix. In the case of logistic GSR, we can obtain an alternative expression for the update formula with a reduced condition number as follows. 
+Recall that the CGM seeks to solve a linear system by introducing the symmetric preconditioner $\PSI$, to reduce the condition number of the coefficient matrix. In the case of logistic GSR, we can obtain an alternative expression for the update formula with a reduced condition number as follows. 
 
 \begin{equation*}
     \f_k = \PP^{-1}_k \tee_k \quad \Longrightarrow \quad \f_k = \PSI \Q_k^{-1} \PSI^\top \tee_k
 \end{equation*}
 
-where, as in the cass of standard real-valued GSR, 
+where, as in the case of standard real-valued GSR, 
 
 \begin{equation*}
     \PSI = \U \D_\Gt
@@ -307,7 +307,7 @@ Consider the task of multiclass graph signal reconstruction. Here, the goal is t
 
 As in previous sections, the tensor $\St$, of shape $(N_1 \times ... \times N_d$), indicates which nodes in the product graph have been successfully observed by holding a one in the corresponding entry, and zeros elsewhere. Note that the observed graph signal, $\Yt$, has an additional dummy dimension of length $C$ to represent the class label, which is not present in $\St$. Where no observation was made (i.e. $\St_{\nn} = 0$), all values along the corresponding fibre $\Yt_{\nn, :}$ can be safely set to zero by default. Note that $\Yt_{\nn, :}$ can have a maximum of one non-zero entry. 
 
-We describe the probability that node $\nn$ has class $c$ by introducing  another tensor, $\Mt$. Like $\Yt$, this tensor has shape $(N_1 \times ... \times N_d \times C)$. Each fiber $\Mt_{\nn, :}$ is interpreted as the probability mass function over the $C$ mutually exclusive classes at node $\nn$. In particular, 
+We describe the probability that node $\nn$ has class $c$ by introducing another tensor, $\Mt$. Like $\Yt$, this tensor has shape $(N_1 \times ... \times N_d \times C)$. Each fibre $\Mt_{\nn, :}$ is interpreted as the probability mass function over the $C$ mutually exclusive classes at node $\nn$. In particular, 
 
 \begin{equation*}
     p(\text{node} \; \nn \; \text{is of class} \; c) = \Mt_{\nn, c}, \quad \sum_{c=1}^C \Mt_{\nn, c} = 1
@@ -378,7 +378,7 @@ Unlike the binary model where the Hessian was the sum of a diagonal matrix $\D_{
     \RR_{\muu}(\f) =  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu(\f)} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n (\f) \m_n^\top(\f) \right)
 \end{equation}
 
-where $\m_n \in \R^C$ is the probability mass function at node $n$ (i.e. the $n$-th lexicographically ordered fiber within the tensor $\Mt$), and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
+where $\m_n \in \R^C$ is the probability mass function at node $n$ (i.e. the $n$-th lexicographically ordered fibre within the tensor $\Mt$), and $\mathbf{\Delta}_{n}$ is a matrix of zeros, with a single one at element $(n, n)$. Given the definition of the Kronecker product, we can see that $\RR_{\muu}(\f)$ is a block-diagonal matrix with the following structure. 
 
 \begin{equation*}
     \RR_{\muu}(\f) = \begin{bmatrix}
@@ -389,7 +389,7 @@ where $\m_n \in \R^C$ is the probability mass function at node $n$ (i.e. the $n$
     \end{bmatrix}, \quad \text{where} \quad \B_n = \s_n \Big(\diag{\m_n} - \m_n \m_n^\top\Big)
 \end{equation*}
 
-Despite no longer being diagonal, we can still leverage the block structure of this matrix to multiply $\RR_{\muu}(\f)$ onto an arbitrary vector, $\ve$, efficiently. This can be achieve as follows. 
+Despite no longer being diagonal, we can still leverage the block structure of this matrix to multiply $\RR_{\muu}(\f)$ onto an arbitrary vector, $\ve$, efficiently. This can be achieved as follows. 
 
 
 \begin{equation}
@@ -423,7 +423,7 @@ where
     \tee_k = \big(\D_\St \otimes \I_C\big)\big(\y - \muu_k \big) + \RR_{\muu}^k\f_k
 \end{equation*}
 
-As before, we can solve the linear system $\PP^{-1}_k \tee_k$ by introducing a symmetric preconditioner $\PSI$. The only modification is that it must be of dimension of $(NC \times NC)$, rather than $(N \times N)$. This can be achieved as follows. 
+As before, we can solve the linear system $\PP^{-1}_k \tee_k$ by introducing a symmetric preconditioner $\PSI$. The only modification is that it must be of dimension $(NC \times NC)$, rather than $(N \times N)$. This can be achieved as follows. 
 
 \begin{equation*}
     \PSI = \left(\U \D_\Gt\right) \otimes \I_C 
@@ -578,7 +578,7 @@ We now present the full algorithm for logistic graph signal reconstruction, whic
 
 \label{sec:logistic_regression}
 
-So far in this chapter we have developed binary and multiclass multiway graph signal reconstruction algorithms, where no additional data exists to help predict the value of the graph signal at the unlabelled nodes. In this section, we explore several circumstances where explanatory variables are at our disposal, and propose models to leverage this information to estimate the underlying class label probabilities.
+So far in this chapter, we have developed binary and multiclass multiway graph signal reconstruction algorithms, where no additional data exists to help predict the value of the graph signal at the unlabelled nodes. In this section, we explore several circumstances where explanatory variables are at our disposal and propose models to leverage this information to estimate the underlying class label probabilities.
 
 \subsection{Logistic Kernel Graph Regression (L-KGR)}
 
@@ -590,7 +590,7 @@ The first regression models we consider are binary and multiclass Logistic Kerne
 
 First, let us consider binary L-KGR. In this case, we have a sequence of $T$ partially observed binary tensor graph signals, $\Yt_t$, each with a shape of $(N_1, ..., N_d)$. As before, each signal is interpreted as existing on the nodes of a $d$-dimensional Cartesian product graph, with factor graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$. Where no class outcome was recorded, the relevant element in the signal $\Yt_t$ can default to zero. Furthermore, at each time instant, we have a length-$M$ vector of explanatory variables $\x_t$, which is anticipated to have some non-linear explanatory relation to each $\Yt_t$.
 
-The sequence of partially observed signals can be assembled into a single tensor $\Yt$ of shape $(T, N_1, ..., N_d)$. This is accompanied by a binary sensing tensor, $\St$, of the same shape, which indicates which values were observed and which were absent. The explanation variables can also be aggregated into a single object, in this case a matrix $\X$ with a shape of $(T, M)$. The goal is to leverage the explanatory variables, in conjunction with the topology of the underlying graph, to estimate the class probability at each node, at each time instant. The relevant input data can therefore be described as follows. 
+The sequence of partially observed signals can be assembled into a single tensor $\Yt$ of shape $(T, N_1, ..., N_d)$. This is accompanied by a binary sensing tensor, $\St$, of the same shape, which indicates which values were observed and which were absent. The explanation variables can also be aggregated into a single object, in this case, a matrix $\X$ with a shape of $(T, M)$. The goal is to leverage the explanatory variables, in conjunction with the topology of the underlying graph, to estimate the class probability at each node, at each time instant. The relevant input data can therefore be described as follows. 
 
 
 \begin{multline*}
@@ -600,7 +600,7 @@ The sequence of partially observed signals can be assembled into a single tensor
 
 Following the same pattern as the KGR algorithms of previous sections (see \cref{sec:KGR_and_GSR} for details and further explanation), we can conveniently derive a logistic kernel graph regression model by making small modifications to the L-GSR model derived in \cref{sec:lgsr}.  
 
-As with L-GSR, we first assume each element of $\Yt$ is distributed according to a Bernoulli distribution, with a mean given by a latent mean tensor $\Mt$, which has the same shape as $\Yt$ (see \cref{eq:lgsr_bern,eq:lgsr_prob,eq:lgsr_logprob}). However, in this case, we assume that $\Mt$ is smooth with respect to both the topology of the graph, \textit{and} with with respect to the feature space. (This is admittedly a somewhat vague statement on its own - see \cref{sec:kgr_mdp} for a more detailed model derivation and \cref{sec:KGR_and_GSR} for further intuition). This belief can be encoded by proxy via a tensor $\Ft$, which is again related to $\Mt$ via the logistic link function of \cref{eq:logistic_link}. We implement these assumptions by establishing the following prior distribution for $\f = \vecrm{\Ft}$.
+As with L-GSR, we first assume each element of $\Yt$ is distributed according to a Bernoulli distribution, with a mean given by a latent mean tensor $\Mt$, which has the same shape as $\Yt$ (see \cref{eq:lgsr_bern,eq:lgsr_prob,eq:lgsr_logprob}). However, in this case, we assume that $\Mt$ is smooth with respect to both the topology of the graph, \textit{and} with respect to the feature space. (This is admittedly a somewhat vague statement on its own - see \cref{sec:kgr_mdp} for a more detailed model derivation and \cref{sec:KGR_and_GSR} for further intuition). This belief can be encoded by proxy via a tensor $\Ft$, which is again related to $\Mt$ via the logistic link function of \cref{eq:logistic_link}. We implement these assumptions by establishing the following prior distribution for $\f = \vecrm{\Ft}$.
 
 \begin{equation}
     \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2}
@@ -619,7 +619,7 @@ where $\lambda_t^{(K)}$ is the $t$-th eigenvalue of $\K$. This implies that
     \K \otimes \HH^2 = \bar{\U} \D_{\bar{\Gt}} \bar{\U}^\top
 \end{equation}
 
-where $\D_{\bar{\Gt}} = \diag{\vecrm{\bar{\Gt}}}$. The L-KGR algorithm then follows by modifying \cref{al:LGSR} such that every instance of $\U$ and $\Gt$ is substituted for $\bar{\U}$ and $\bar{\Gt}$ respectively. Note tha, as with the KGR models of previous sections, this has an impact on the convergence rate of the CGM step, since the condition number of the preconditioned coefficient matrix $\Q_k$ is increased. As a result, the upper bound on the run time complexity for the whole algorithm is given by 
+where $\D_{\bar{\Gt}} = \diag{\vecrm{\bar{\Gt}}}$. The L-KGR algorithm then follows by modifying \cref{al:LGSR} such that every instance of $\U$ and $\Gt$ is substituted for $\bar{\U}$ and $\bar{\Gt}$ respectively. Note that, as with the KGR models of previous sections, this has an impact on the convergence rate of the CGM step, since the condition number of the preconditioned coefficient matrix $\Q_k$ is increased. As a result, the upper bound on the run time complexity for the whole algorithm is given by 
 
 \begin{equation*}
     O\left(\rho(\K)\frac{0.25 + \gamma}{\gamma} TN \Big(T + \sum_{i=1}^d N_i\Big) \right)  \approx O\left( \frac{0.25 + \gamma}{\gamma} T^2 N \Big(T + \sum_{i=1}^d N_i\Big) \right) 
@@ -647,7 +647,7 @@ We then place a prior over the signal $\f = \vecrm{\Ft} \in \R^{TNC}$ of
     \f \sim \Norm{\zero}{\gamma \K \otimes \HH^2 \otimes \I_C}
 \end{equation}
 
-This encodes the belief that each of the $c$ class probabilities should vary smoothly (and independently) with respect to the topology of the graph and the feature space. once again, the full procedure for outputting the tensor $\Mt$ can be achieved by running \cref{al:LGSR_mc} after substituting the variables $\U \rightarrow \bar{\U}$ and $\Gt \rightarrow \bar{\Gt}$, as described in \cref{eq:lkgr_substitution}. Given the effect this substitution has on the the preconditioned coefficient matrix $\Q_k$ appearing in each iteration of the IRLS algorithm, it is simple to show that the run time complexity of multiclass L-KGR becomes bounded by the following. 
+This encodes the belief that each of the $c$ class probabilities should vary smoothly (and independently) with respect to the topology of the graph and the feature space. once again, the full procedure for outputting the tensor $\Mt$ can be achieved by running \cref{al:LGSR_mc} after substituting the variables $\U \rightarrow \bar{\U}$ and $\Gt \rightarrow \bar{\Gt}$, as described in \cref{eq:lkgr_substitution}. Given the effect this substitution has on the preconditioned coefficient matrix $\Q_k$ appearing in each iteration of the IRLS algorithm, it is simple to show that the run time complexity of multiclass L-KGR becomes bounded by the following. 
 
 \begin{equation*}
     O\left(\rho(\K) \frac{0.5 + \gamma}{\gamma} TNC \Big(T + C + \sum_{i=1}^d N_i \Big)\right) \approx O\left(\frac{0.5 + \gamma}{\gamma} T^2NC \Big(T + C + \sum_{i=1}^d N_i \Big)\right)
@@ -658,7 +658,7 @@ This encodes the belief that each of the $c$ class probabilities should vary smo
 
 \label{sec:lrnc}
 
-In this section we present models for binary and multiclass Logistic Regression with Network Cohesion (L-RNC). These models are relevant when there is a $d$-dimensional Cartesian product graph, for which a subset of nodes have a known class label. In addition, each node has a length-$M$ vector of explanatory variables. The goal is to utilise both the topology of the graph, and the explanatory variables to estimate the class probabilities at the unlabelled nodes. 
+In this section, we present models for binary and multiclass Logistic Regression with Network Cohesion (L-RNC). These models are relevant when there is a $d$-dimensional Cartesian product graph, for which a subset of nodes have a known class label. In addition, each node has a length-$M$ vector of explanatory variables. The goal is to utilise both the topology of the graph and the explanatory variables to estimate the class probabilities at the unlabelled nodes. 
 
 \subsubsection{Binary L-RNC}
 
@@ -675,7 +675,7 @@ As with the L-GSR model, we suppose that each observed element of $\Yt$ is a Ber
     \muu(\cc, \w) = \frac{\one}{\one + \exp\big(-(\cc + \X \w) \big)}
 \end{equation}
 
-Here, $\cc = \vecrm{\Ct}$ the a real-valued vector form of a tensor $\Ct$, which is assumed to vary smoothly with respect to the topology of the multiway graph, $\X$ is the tensor of explanatory variables reshaped into a matrix of dimensions $(N \times M)$ (see \cref{eq:X_RNC_dd}), and $\w \in \R^M$ is the length-$M$ vector of coefficients specifying the contribution of each of the explanatory variables. As in previous sections on RNC, we can stack $\cc$ and $\w$ into a single parameter vector $\thetaa$, such that 
+Here, $\cc = \vecrm{\Ct}$ is the real-valued vector form of a tensor $\Ct$, which is assumed to vary smoothly with respect to the topology of the multiway graph, $\X$ is the tensor of explanatory variables reshaped into a matrix of dimensions $(N \times M)$ (see \cref{eq:X_RNC_dd}), and $\w \in \R^M$ is the length-$M$ vector of coefficients specifying the contribution of each of the explanatory variables. As in previous sections on RNC, we can stack $\cc$ and $\w$ into a single parameter vector $\thetaa$, such that 
 
 \begin{equation}
     \label{eq:lrnc_logistic}
@@ -729,7 +729,7 @@ Then, using the shorthands
     \widetilde{\PP}(\thetaa_k) = \widetilde{\PP}_k, \quad \widetilde{\g}(\thetaa_k) = \widetilde{\g}_k, \quad \muu(\thetaa_k) = \muu_k, \aand \D_{\muu}(\thetaa_k) = \D_{\muu}^k
 \end{equation*}
 
-The IRLS update formula can be derived as follows. 
+the IRLS update formula can be derived as follows. 
 
 \begin{align*}
     \thetaa_{k + 1} &= \thetaa_k - \widetilde{\PP}^{-1}_k \, \widetilde{\g}_k \\
@@ -901,7 +901,7 @@ $ $
 
 \subsubsection{Multiclass L-RNC}
 
-In this section, we consider the multiclass generalisation of the L-RNC model. The data available for this model is much the same as the binary version outlined in the previous section, except here we have a partially labelled graph signal where each observed node has been classified into one of $C > 2$ groups. As with the L-GSR model developed in \cref{sec:multiclass}, this input data can be described a multiway tensor signal $\Yt$, with shape $(N_1, ..., N_d, C)$, where the final dimension represents a ``one-hot"  encoding of the class label. Each element, $\nn$, is interpreted as existing on a Cartesian product graph with factor Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$, and is accompanied by a binary sensing tensor $\St$, with shape $(N_1, ..., N_d)$, indicating which nodes were observed and which were not. Once again, we also have a length-$M$ vector of explanatory variables at each node in the product graph, which can be collected into a single tensor $\Xt$. 
+In this section, we consider the multiclass generalisation of the L-RNC model. The data available for this model is much the same as the binary version outlined in the previous section, except here we have a partially labelled graph signal where each observed node has been classified into one of $C > 2$ groups. As with the L-GSR model developed in \cref{sec:multiclass}, this input data can be described by a multiway tensor signal $\Yt$, with shape $(N_1, ..., N_d, C)$, where the final dimension represents a ``one-hot"  encoding of the class label. Each element, $\nn$, is interpreted as existing on a Cartesian product graph with factor Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$, and is accompanied by a binary sensing tensor $\St$, with shape $(N_1, ..., N_d)$, indicating which nodes were observed and which were not. Once again, we also have a length-$M$ vector of explanatory variables at each node in the product graph, which can be collected into a single tensor $\Xt$. 
 
 \begin{multline*}
     \text{input data} = \Bigg\{\;\Xt \in \R^{N_1 \times ... \times N_d \times M}, \;\; \Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}, \;\; \\ 
@@ -1171,7 +1171,7 @@ This leads to the complete algorithm for computing the class probabilities, give
 
 In this section, we examine the behaviour of the binary and multiclass algorithms developed in this chapter using an image segmentation task. The objective is to estimate the true class label at unlabelled pixels within an image, where a subset of the pixels have been classified into two or more groups. As briefly discussed in \cref{sec:gsp_cpg}, we can interpret image data as a special case of a 2D graph signal, with underlying graphs being simple chains reflecting the image's dimensions. By performing a Cartesian product of these factor graphs, we generate a lattice structure where each node corresponds to a pixel.
 
-In the following sections we analyse the properties of the L-GSR and L-RNC models introduced earlier in this chapter, in both their binary and multiclass form. For the binary case, we consider a foreground/background separation task on standard RGB images sourced from the Berkeley Segmentation Dataset \citep{Martin2001}. For the multiclass case, we consider a hyperspectral image segmentation task, with data captured by an airborne sensor of farmland that has been divided into seventeen classes based on land use \citep{Baumgardner2015}. 
+In the following sections, we analyse the properties of the L-GSR and L-RNC models introduced earlier in this chapter, in both their binary and multiclass form. For the binary case, we consider a foreground/background separation task on standard RGB images sourced from the Berkeley Segmentation Dataset \citep{Martin2001}. For the multiclass case, we consider a hyperspectral image segmentation task, with data captured by an airborne sensor of farmland that has been divided into seventeen classes based on land use \citep{Baumgardner2015}. 
 
 
 Many sophisticated techniques, most notably utilising deep neural networks, exist for image segmentation tasks (refer to \cite{Minaee2022,Wang2022} for a comprehensive review). Whilst the classical statistical models introduced in this section are unlikely to be competitive with such methods on image segmentation tasks, they bring the advantage of versatility, enabling classification over generic Cartesian product graphs. However, since image segmentation datasets are readily accessible and easy to interpret visually, they serve as a useful test bed to investigate the properties of our more general graph-based algorithms. As such, it is worth emphasising that the goal of this section is not to produce a state-of-the-art image segmentation algorithm, but only to verify and analyse the properties of the techniques presented in this chapter. 
@@ -1179,20 +1179,20 @@ Many sophisticated techniques, most notably utilising deep neural networks, exis
 
 \subsection{Background/foreground separation}
 
-The first task we attempted was to separate the background from the foreground using four $481 \times 321$ pixel images taken from the Berkeley Segmentation Dataset \citep{Martin2001}. These images had been manually labelled on a per-pixel basis into multiple objects, which we manually divided into background and foreground. We then randomly selected a certain fraction of pixels to serve as the labelled set $\mathcal{S}$, generating the input graph signals $\Yt$ and $\St$, both of shape (481, 321). Then, we attempted to estimate the class probabilities of the remaining pixels using both the L-GSR and L-RNC algorithms on a lattice graph using an isotropic diffusion graph filter. For L-RNC, the algorithm also had access to the the RGB pixel data, creating a tensor of explanatory variables, $\Xt$, with shape (481, 321, 3). To ensure that the algorithms generated sensible outputs, we ran preliminary tests with 10\% of the pixels labelled. The results can be seen in \cref{fig:foreground_separation}, where the output, $\Mt$, is depicted as a colour-map. As can be seen, both algorithms broadly succeed at the separating the background from the foreground. 
+The first task we attempted was to separate the background from the foreground using four $481 \times 321$ pixel images taken from the Berkeley Segmentation Dataset \citep{Martin2001}. These images had been manually labelled on a per-pixel basis into multiple objects, which we manually divided into background and foreground. We then randomly selected a certain fraction of pixels to serve as the labelled set $\mathcal{S}$, generating the input graph signals $\Yt$ and $\St$, both of shape (481, 321). Then, we attempted to estimate the class probabilities of the remaining pixels using both the L-GSR and L-RNC algorithms on a lattice graph using an isotropic diffusion graph filter. For L-RNC, the algorithm also had access to the RGB pixel data, creating a tensor of explanatory variables, $\Xt$, with shape (481, 321, 3). To ensure that the algorithms generated sensible outputs, we ran preliminary tests with 10\% of the pixels labelled. The results can be seen in \cref{fig:foreground_separation}, where the output, $\Mt$, is depicted as a colourmap. As can be seen, both algorithms broadly succeed at separating the background from the foreground. 
 
 
 \begin{figure}[t] 
     \begin{center}
         \includegraphics[width=0.8\linewidth]{Figures/segmentation.pdf}
     \end{center}
-   \caption[Foreground/background separation with L-GSR and L-RNC]{A color-map of the output probabilities, $\Mt$, from the L-GSR and L-RNC are shown, along with the original image and the ground truth for the four examples. These were generated with 10\% of the pixels labelled, using an isotropic diffusion filter with $\beta = 50$, and $\gamma = 5 \times 10^{-5}$. For L-RNC, $\lambda$ was set to $10^4$. } 
+   \caption[Foreground/background separation with L-GSR and L-RNC]{A colourmap of the output probabilities, $\Mt$, from the L-GSR and L-RNC are shown, along with the original image and the ground truth for the four examples. These were generated with 10\% of the pixels labelled, using an isotropic diffusion filter with $\beta = 50$, and $\gamma = 5 \times 10^{-5}$. For L-RNC, $\lambda$ was set to $10^4$. } 
     \label{fig:foreground_separation}
 \end{figure} 
 
 \subsubsection{Assessing accuracy as a function of label percentage}
 
-In the first experiment, we examined the accuracy of each method as a function of the fraction of labelled pixels. \Cref{fig:starfish} provides a visual depiction of the estimated probability tensor $\Mt$ over a range of fractions. As expected, both methods progressively improve as the labelled fraction increases. The L-RNC model appears to outperform the L-GSR, particularly at lower label fractions, likely due to its access to the RGB colour profile in the explanatory tensor $\Xt$. L-GSR, on the other hand, only has access to the lattice graph structure and the location of the labelled pixels. This effect is visible in the first column, where the L-GSR model can only identify the approximate shape of the object, whereas the L-RNC model shows artifacts from the original image, such as the texture of the starfish body. 
+In the first experiment, we examined the accuracy of each method as a function of the fraction of labelled pixels. \Cref{fig:starfish} provides a visual depiction of the estimated probability tensor $\Mt$ over a range of fractions. As expected, both methods progressively improve as the labelled fraction increases. The L-RNC model appears to outperform the L-GSR, particularly at lower label fractions, likely due to its access to the RGB colour profile in the explanatory tensor $\Xt$. L-GSR, on the other hand, only has access to the lattice graph structure and the location of the labelled pixels. This effect is visible in the first column, where the L-GSR model can only identify the approximate shape of the object, whereas the L-RNC model shows artefacts from the original image, such as the texture of the starfish body. 
 
 
 \begin{figure}[t] 
@@ -1224,7 +1224,7 @@ The second experiment sought to assess the effects on the probability output of 
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/starfish2.pdf}
     \end{center}
-   \caption[Qualitative effects of varying $\beta$ on the output of the L-GSR and L-RNC algorithms]{A color-map of the probability output of the L-GSR and L-RNC algorithms are shown for various increasing values of $\beta$. Here, $\gamma$ is set to $5 \times 10^{-5}$ and for L-RNC, $\lambda$ is set to $10^4$. } 
+   \caption[Qualitative effects of varying $\beta$ on the output of the L-GSR and L-RNC algorithms]{A colourmap of the probability output of the L-GSR and L-RNC algorithms are shown for various increasing values of $\beta$. Here, $\gamma$ is set to $5 \times 10^{-5}$ and for L-RNC, $\lambda$ is set to $10^4$. } 
     \label{fig:starfish2}
 \end{figure}
 
@@ -1232,29 +1232,30 @@ The second experiment sought to assess the effects on the probability output of 
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/starfish3.pdf}
     \end{center}
-    \caption[Qualitative effects of varying $\gamma$ on the output of the L-GSR and L-RNC algorithms]{A color-map of the probability output of the L-GSR and L-RNC algorithms are shown for various increasing values of $\gamma$. Here, $\beta$ is set to $100$ and for L-RNC, $\lambda$ is set to $10^4$.}
+    \caption[Qualitative effects of varying $\gamma$ on the output of the L-GSR and L-RNC algorithms]{A colourmap of the probability output of the L-GSR and L-RNC algorithms are shown for various increasing values of $\gamma$. Here, $\beta$ is set to $100$ and for L-RNC, $\lambda$ is set to $10^4$.}
     \label{fig:starfish3}
 \end{figure}
 
 
 As seen in \cref{fig:starfish2}, an increase in beta tends to extend the range over which each labelled pixel can influence nearby probability. When $\beta$ is low, at 10, the labelled pixels only affect other pixels in the immediate vicinity, with the probability quickly reverting to 0.5 (i.e. unknown) for more distant unlabelled pixels. As $\beta$ increases, so does this influence range, which is most visible in the L-GSR model where, when $\beta = 500$, the probability prediction becomes quite blurred. Furthermore, these results suggest that increasing $\beta$ assists the L-RNC model in utilising the RGB data, as the outline of the foreground object becomes more defined with the increase in $\beta$.
 
+
 \Cref{fig:starfish3} illustrates the impact of altering $\gamma$. As visible, a lower $\gamma$ tends to accentuate the transition between class probabilities, with the model yielding probabilities that cluster around zero or one. Interestingly, in this low $\gamma$ region, the graph intercept predominates over the explanatory variables within the L-RNC model. On the other hand, with higher $\gamma$ values, we observe the L-GSR probabilities leaning towards 1/2 across the entire lattice. For the L-RNC model in this scenario, the influence of the graph intercept term wanes, allowing the explanatory variables to take precedence in the prediction process.
 
 
 \subsection{Multiclass segmentation with hyper-spectral images}
  
-In this section, we test the multiclass L-GSR and L-RNC algorithms on a segmentation task using a hyperspectral image of a patch of farmland in North-western Indiana \citep{Baumgardner2015}. The image has been manually segmented into seventeen distinct classes representing different crop types and land uses. The image is $145 \times 145$ pixels in shape, and has 200 channels representing the response over a wavelength range of $0.4-2.5 \times 10^{-6}$m, with some bands covering the region of water absorption removed.  \Cref{fig:hyperspectral} gives an overview of this dataset, with the image on the left an example reading from one of the wavelength channels, and the image on the right a color-representation of the different land types. 
+In this section, we test the multiclass L-GSR and L-RNC algorithms on a segmentation task using a hyperspectral image of a patch of farmland in North-western Indiana \citep{Baumgardner2015}. The image has been manually segmented into seventeen distinct classes representing different crop types and land uses. The image is $145 \times 145$ pixels in shape, and has 200 channels representing the response over a wavelength range of $0.4-2.5 \times 10^{-6}$m, with some bands covering the region of water absorption removed.  \Cref{fig:hyperspectral} gives an overview of this dataset, with the image on the left an example reading from one of the wavelength channels, and the image on the right a colour representation of the different land types. 
 
 \begin{figure}[t] 
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/hyperspectral.pdf}
     \end{center}
-    \caption[A visual overview of the Indian Pines hyperspectral image dataset]{An overview of the Indian Pines hyperspectral image dataset. On the left is an example reading of the intensity response form the channel representing a wavelength of $0.9 \times 10^{-6}$m. On the right is the ground truth for the land use types, along with the associated color key.}
+    \caption[A visual overview of the Indian Pines hyperspectral image dataset]{An overview of the Indian Pines hyperspectral image dataset. On the left is an example reading of the intensity response from the channel representing a wavelength of $0.9 \times 10^{-6}$m. On the right is the ground truth for the land use types, along with the associated colour key.}
     \label{fig:hyperspectral}
 \end{figure}
 
-In order to verify the algorithms behave as expected, we tested the output when 20\% of the pixels had the correct class labelled. This generated the binary input tensor $\Yt$ of shape $(145, 145, 17)$, with a one-hot encoding along the class dimension, and the sensing tensor $\St$ of shape $(144, 144)$. For the L-RNC algorithm, we allowed access to the pixel data as a tensor of explanatory variables $\Xt$, of shape $(144, 144, 200)$. We then ran the L-GSR and L-RNC algorithms using an isotropic diffusion filter with parameter $\beta = 20$, and set $\gamma = 5 \times 10^{-3}$. For the L-RNC algorithm, we used a regularisation parameter of $\lambda = 100$.  
+In order to verify the algorithms behave as expected, we tested the output when 20\% of the pixels had the correct class labelled. This generated the binary input tensor $\Yt$ of shape $(145, 145, 17)$, with a one-hot encoding along the class dimension, and the sensing tensor $\St$ of shape $(144, 144)$. For the L-RNC algorithm, we allowed access to the pixel data as a tensor of explanatory variables $\Xt$, of shape $(144, 144, 200)$. We then ran the L-GSR and L-RNC algorithms using an isotropic diffusion filter with parameter $\beta = 20$ and set $\gamma = 5 \times 10^{-3}$. For the L-RNC algorithm, we used a regularisation parameter of $\lambda = 100$.  
 
 Both these algorithms produced tensors representing the class probabilities at each pixel in the form of a tensor $\Mt$ of shape $(144, 144, 17)$. From this, we obtained the most likely class by taking the maximum element along the final dimension. The results can be seen in \cref{fig:pines}. The L-GSR model achieved an accuracy of 84\%, and the L-RNC algorithm achieved 89\%. 
 
@@ -1263,7 +1264,7 @@ Both these algorithms produced tensors representing the class probabilities at e
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/pines.pdf}
     \end{center}
-    \caption[The predicted class labels from the multiclass L-GSR and L-RNC algorithms as applied to the Indian pines dataset]{A color representation of the predicted classes from the multiclass L-GSR an L-RNC algorithms as applied to the Indian Pines dataset. On the left, we show the represent the input $\Yt$ available to the models, which contains 20\% of the labelled pixels randomly selected. }
+    \caption[The predicted class labels from the multiclass L-GSR and L-RNC algorithms as applied to the Indian pines dataset]{A colour representation of the predicted classes from the multiclass L-GSR an L-RNC algorithms as applied to the Indian Pines dataset. On the left, we represent the input $\Yt$ available to the models, which contains 20\% of the labelled pixels randomly selected. }
     \label{fig:pines}
 \end{figure}
 

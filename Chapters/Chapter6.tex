@@ -4,7 +4,7 @@
 
 \lhead{Chapter 6. \emph{Signal Uncertainty: Estimation and Sampling}} % 
 
-So far in this thesis we have introduced several Bayesian GSP models and focused on tractable methods for finding mean of the associated Gaussian posterior. In this chapter, we turn our attention to the posterior \textit{covariance}, which presents several new interesting challenges. These challenges stem from the dimensionality the associated covariance matrix which, in each case, is the inverse of a large Kronecker-structured operator. For example, consider the two-dimensional graph signal reconstruction problem defined in \cref{sec:gsr_cpg}. The posterior mean has shape $(N \times T)$ and the posterior covariance matrix has shape $(NT \times NT)$. For a modest-sized problem comprising a 200-node graph measured over 365 time points, the (known) precision matrix will have over $5 \times 10^9$ elements, corresponding to over 20GB of memory with 32-bit floating-point numbers. Even if this could be held in RAM, inverting a matrix of this size would be intractable on consumer-grade hardware. This problem is only compounded when considering the tensor-valued models introduced in \cref{chap:nd_gsp}, where the covariance matrices have $O(N^2)$ elements, where $N = \prod N_i$. \Cref{tab:post_cov} lists the posterior covariance matrices that appear in these models, along with their associated dimensionality. 
+So far in this thesis we have introduced several Bayesian GSP models and focused on tractable methods for finding the mean of the associated Gaussian posterior. In this chapter, we turn our attention to the posterior \textit{covariance}, which presents several new interesting challenges. These challenges stem from the dimensionality of the associated covariance matrix which, in each case, is the inverse of a large Kronecker-structured operator. For example, consider the two-dimensional graph signal reconstruction problem defined in \cref{sec:gsr_cpg}. The posterior mean has shape $(N \times T)$ and the posterior covariance matrix has shape $(NT \times NT)$. For a modest-sized problem comprising a 200-node graph measured over 365 time points, the (known) precision matrix will have over $5 \times 10^9$ elements, corresponding to over 20GB of memory with 32-bit floating-point numbers. Even if this could be held in RAM, inverting a matrix of this size would be intractable on consumer-grade hardware. This problem is only compounded when considering the tensor-valued models introduced in \cref{chap:nd_gsp}, where the covariance matrices have $O(N^2)$ elements, where $N = \prod N_i$. \Cref{tab:post_cov} lists the posterior covariance matrices that appear in these models, along with their associated dimensionality. 
 
 \setcellgapes{8pt}
 \makegapedcells
@@ -38,7 +38,7 @@ So far in this thesis we have introduced several Bayesian GSP models and focused
 \setcellgapes{2pt}
 
 
-Given these challenges, the goal of this chapter is to to gain insight into the uncertainty about the predicted posterior mean, whilst circumventing the need to instantiate, invert or decompose large matrices directly in memory. To this end, we specify two separate but related tasks of interest:
+Given these challenges, the goal of this chapter is to gain insight into the uncertainty about the predicted posterior mean, whilst circumventing the need to instantiate, invert or decompose large matrices directly in memory. To this end, we specify two separate but related tasks of interest:
 
 \begin{enumerate}
     
@@ -67,7 +67,7 @@ where
     \PP \in \R^{N \times N} = \D_{\St} + \gamma \HH^{-2}
 \end{equation}
 
-The goal of this section is to estimate the posterior marginal variance, i.e. diagonal of the covariance matrix $\PP^{-1}$, without directly evaluating the matrix in full. For the sake of brevity, in this section we concentrate on accomplishing this task for the GSR model only. However, the methods discussed can easily be generalised to KGR, RNC and KG-RNC by making suitable modifications. 
+The goal of this section is to estimate the posterior marginal variance, i.e. diagonal of the covariance matrix $\PP^{-1}$, without directly evaluating the matrix in full. For the sake of brevity, in this section, we concentrate on accomplishing this task for the GSR model only. However, the methods discussed can easily be generalised to KGR, RNC and KG-RNC by making suitable modifications. 
 
 \subsection{A baseline approach}
 
@@ -75,7 +75,7 @@ The goal of this section is to estimate the posterior marginal variance, i.e. di
 
 As previously established, it is possible to efficiently solve a linear system of the form $\PP^{-1} \z$, where $\z$ is an arbitrary length-$N$ vector, using the SIM or CGM. Therefore, a straightforward approach to computing the marginal variance in full is immediately available: to compute the $n$-th column of $\PP^{-1}$, we can solve the linear system $\PP^{-1} \e_n$, where $\e_n$ is the $n$-th unit basis vector. Consequently, to compute the entire marginal variance in full, we solve this system $N = \prod N_i$ times, once for each $n \in [1, 2, ..., N]$, retaining only the $n$-th element of the resultant solution each time.
     
-Whilst this strategy avoids holding any $(N \times N)$ matrix directly in memory, and has lower time complexity than performing direct inversion of $\PP$, it still presents significant computational challenges. Since obtaining each element of the marginal variance necessitates solving a linear system, the whole process takes $N$ times longer than the computation of the mean, which itself can be intensive for large problems. It is clear that this approach is still not scalable. A natural question, then, is whether the full marginal variance can be \textit{estimated} for a lower computational cost. 
+Whilst this strategy avoids holding any $(N \times N)$ matrix directly in memory, and has lower time complexity than directly inverting $\PP$, it still presents significant computational challenges. Since obtaining each element of the marginal variance necessitates solving a linear system, the whole process takes $N$ times longer than the computation of the mean, which itself can be intensive for large problems. A natural question, then, is whether the full marginal variance can be \textit{estimated} for a lower computational cost. 
 
 
 \subsection{Matrix diagonal estimation}
@@ -96,7 +96,7 @@ Here, $\oslash$ denotes element-wise division, and $\circ$ is the Hadamard produ
 
 \label{sec:logvar_supervised}
 
-In this subsection we introduce the key contribution of the first half of this chapter. The basic idea is as follows. Using the approach outlined in \cref{sec:var_baseline}, we can compute the `true' variance at a limited number, $Q$, of the elements by solving the linear system $\PP^{-1}\e_n$, and retaining only the $n$-th element of the resultant vector, for a set of elements $\mathcal{Q}$. Next, we \textit{predict} the the marginal variance at all the other elements not in the set $\mathcal{Q}$. If we can construct a set of artificial explanatory variables associated with each element, then this becomes a standard supervised learning problem. 
+In this subsection, we introduce the key contribution of the first half of this chapter. The basic idea is as follows. Using the approach outlined in \cref{sec:var_baseline}, we can compute the `true' variance at a limited number, $Q$, of the elements by solving the linear system $\PP^{-1}\e_n$, and retaining only the $n$-th element of the resultant vector, for a set of elements $\mathcal{Q}$. Next, we \textit{predict} the marginal variance at all the other elements not in the set $\mathcal{Q}$. If we can construct a set of artificial explanatory variables associated with each element, then this becomes a standard supervised learning problem. 
 
 Since variance is strictly positive, we choose to predict the \textit{log}-variance rather than the variance itself. This transformation changes the prediction range from the positive values of $[0, \infty]$ to the full range of $[-\infty, \infty]$, which is more suitable for standard regression techniques. We define the target variable, denoted as $\Omegat$, as follows.
 
@@ -104,7 +104,7 @@ Since variance is strictly positive, we choose to predict the \textit{log}-varia
     \Omegat \in \R^{N_1 \times N_2 \times ... \times N_d} = \tenrm{\text{log}\left(\diagi{\PP^{-1}}\right)}
 \end{equation}
 
-Note that here we have introduced the notation $\diagi{\cdot}$, which denotes a function mapping the diagonal of an $(N \times N)$ matrix into a length-$N$ vector. Therefore, the whole expression can be understood as taking the diagonal of the covariance matrix $\PP^{-1}$, performing an element-wise logarithm, and transforming this into a tensor, $\Omegat$,  of shape $(N_1, N_2, ..., N_d)$ in row major order. The objective of the regression algorithms discussed in this section is to predict the tensor $\Omegat$.
+Note that here we have introduced the notation $\diagi{\cdot}$, which denotes a function mapping the diagonal of an $(N \times N)$ matrix into a length-$N$ vector. Therefore, the whole expression can be understood as taking the diagonal of the covariance matrix $\PP^{-1}$, performing an element-wise logarithm, and transforming this into a tensor, $\Omegat$,  of shape $(N_1, N_2, ..., N_d)$ in row-major order. The objective of the regression algorithms discussed in this section is to predict the tensor $\Omegat$.
 
 To make this prediction, we first compute a subset of the elements of $\Omegat$. Since $\Omegat$ is an order-$d$ tensor, its elements are indexed by a length-$d$ integer vector, $\nn$. Therefore we can describe the indices that we choose to compute by the set $\mathcal{Q} = \{\nn_1, \nn_2, ..., \nn_Q \}$. Additionally, we define the binary tensor $\Qt$, which also indicates which elements of $\Omegat$ have been computed. 
 
@@ -137,7 +137,7 @@ The linear system $\PP^{-1} \e_n$ can then be solved efficiently using either th
 
 As mentioned, we also need a set of explanatory variables to help predict the unknown elements of $\Omegat$. In particular, every element, $\nn$, should have an associated feature vector, $\x_\nn$, which should have some explanatory power over $\Omegat_\nn$. In this way, the problem becomes a regular supervised learning task where the goal is to predict $\Omegat$ given the labelled training pairs $\{\Omegat_\nn, \x_\nn\}_{\nn \in \mathcal{Q}}$. If each feature vector has length $k$, the explanatory variables as a whole can be described by the tensor $\Xt$ with shape $(N_1, ..., N_d, k)$. The question then becomes how to construct a tensor $\Xt$ which is likely to explain the posterior marginal variance well. 
 
-By inspecting \cref{eq:P_posterior}, it is clear that the marginal variance can only depend on $\St$, and $\HH$, since these are the only matrices appearing in the posterior covariance ($\gamma$ can be considered a constant for the purpose of this problem). $\HH$ itself also depends on the graph filter used and the structure of the graph. Therefore, we should choose features which capture different aspects of these objects. 
+By inspecting \cref{eq:P_posterior}, it is clear that the marginal variance can only depend on $\St$, and $\HH$, since these are the only matrices appearing in the posterior covariance ($\gamma$ can be considered a constant for this problem). $\HH$ itself also depends on the graph filter used and the structure of the graph. Therefore, we should choose features which capture different aspects of these objects. 
 
 \begin{table}[t]
     \renewcommand{\arraystretch}{1.7}
@@ -190,7 +190,7 @@ $$
 \w^\star = \left(\X^\top \D_\Qt \X + \lambda \I_N\right)^{-1} \X^\top  \vecrm{\Omegat_Q}
 $$
 
-Note that since $\D_\Qt = \diag{\vecrm{\Qt}}$ is a sparse diagonal matrix, the product $\X^\top \D_\Qt \X$ can be computed efficiently with $O(k^2Q)$ operations. This model includes a regularisation parameter $\lambda$ which must be set ahead of time (or potentially learned via cross validation).
+Note that since $\D_\Qt = \diag{\vecrm{\Qt}}$ is a sparse diagonal matrix, the product $\X^\top \D_\Qt \X$ can be computed efficiently with $O(k^2Q)$ operations. This model includes a regularisation parameter $\lambda$ which must be set ahead of time (or potentially learned via cross-validation).
 
 
 \subsubsection{Solving with RNC}
@@ -225,7 +225,7 @@ Once again, this linear system can be solved efficiently using the SIM or CGM.
 
 \label{sec:logvar_LFP}
 
-The final novel method we consider for prediction of the posterior log-variance is based on the empirical observation that the predictions made by ridge regression can be improved by adjusting the parameters that characterise the graph filter used to construct features $\Xt_{:,3}$ and $\Xt_{:,7}$. However, it is difficult to tell ahead of time the direction and magnitude of the optimal adjustment. For this reason, we propose a new estimator for $\Omegat$ that simultaneously learns the coefficients multiplying each feature in \cref{tab:post_cov_features}, as well as the filter parameters characterising $\Xt_{:, 3}$ and $\Xt_{:, 7}$, which can vary independently. This can be expressed as follows. 
+The final novel method we consider for the prediction of the posterior log-variance is based on the empirical observation that the predictions made by ridge regression can be improved by adjusting the parameters that characterise the graph filter used to construct features $\Xt_{:,3}$ and $\Xt_{:,7}$. However, it is difficult to tell ahead of time the direction and magnitude of the optimal adjustment. For this reason, we propose a new estimator for $\Omegat$ that simultaneously learns the coefficients multiplying each feature in \cref{tab:post_cov_features}, as well as the filter parameters characterising $\Xt_{:, 3}$ and $\Xt_{:, 7}$, which can vary independently. This can be expressed as follows. 
 
 \begin{equation}
     \Omegat^\star = \tenrm{\X(\betaa^\star) \w^\star}
@@ -246,7 +246,7 @@ where $\betaa_0$ represents the parameters characterising the original graph fil
 
 \label{sec:query_strats}
 
-So far in this discussion we have not addressed the question of how to select which elements of $\Omegat$ to query. The simplest approach is to uniformly select samples at random. However, although unbiased, this can lead to a high variance estimator, particularly when the query size is very small. A preferable approach is to select elements in a principled way, such that the variance of the estimator is reduced for a small sample size. This is likely to be achieved when the associated features of the samples are representative of the population at large. 
+So far in this discussion, we have not addressed the question of how to select which elements of $\Omegat$ to query. The simplest approach is to uniformly select samples at random. However, although unbiased, this can lead to a high variance estimator, particularly when the query size is very small. A preferable approach is to select elements in a principled way, such that the variance of the estimator is reduced for a small sample size. This is likely to be achieved when the associated features of the samples are representative of the population at large. 
 
 Here we make use of a simple but effective query strategy. First, cluster the elements $\{ \nn \}$ into $K \leq Q$ groups based on the data matrix $\X$. Any clustering algorithm can be used here: a simple and fast option is $K$-means \citep{MacQueen1967, Hartigan1979}. Next, generate a query set $\mathcal{Q}$ by randomly choosing a new data point from each cluster in order. This simple approach is made explicit in \cref{al:K_means}. 
 
@@ -289,7 +289,7 @@ Here we make use of a simple but effective query strategy. First, cluster the el
 
 \label{sec:logvar_experiments} 
 
-In order to compare the performance of the various techniques discussed in this section, we ran the following simple experiment which was setup as follows. First, a product graph was generated by taking the Cartesian product of three random connected graphs, with 10, 15 and 20 nodes respectively, resulting in a graph with $10 \times 15 \times 20 = 3000$ total nodes. Next, we generated a random binary sensing tensor $\St$ of shape $(10, 15, 20)$ by setting elements to zero or one uniformly at random. Finally, we chose a anisotropic diffusion graph filter with $\betaa = [0.5, 0.7, 0.6]$, and set $\gamma$ to one. The task, then, was to predict the diagonal of $(\D_\St + \gamma \HH^{-2})^{-1}$ given the values as specified. Given the relatively small size of the problem, we could compute the true value of $\Omegat$ by running the baseline algorithm as discussed in \cref{sec:var_baseline} over 3000 elements. 
+In order to compare the performance of the various techniques discussed in this section, we ran the following simple experiment which was set up as follows. First, a product graph was generated by taking the Cartesian product of three random connected graphs, with 10, 15 and 20 nodes respectively, resulting in a graph with $10 \times 15 \times 20 = 3000$ total nodes. Next, we generated a random binary sensing tensor $\St$ of shape $(10, 15, 20)$ by setting elements to zero or one uniformly at random. Finally, we chose an anisotropic diffusion graph filter with $\betaa = [0.5, 0.7, 0.6]$, and set $\gamma$ to one. The task, then, was to predict the diagonal of $(\D_\St + \gamma \HH^{-2})^{-1}$ given the values as specified. Given the relatively small size of the problem, we could compute the true value of $\Omegat$ by running the baseline algorithm as discussed in \cref{sec:var_baseline} over 3000 elements. 
 
 Next, we compared the performance of each of the algorithms discussed in this section. They were the traditional diagonal estimation algorithm of \cite{Bekas2007} (Bekas) outlined in \cref{sec:logvar_bekas}, Ridge Regression (RR), as outlined in \cref{sec:logvar_RR}, Regression with Network Cohesion (RNC) as outlined in \cref{sec:logvar_RNC}, and finally ridge regression with Learned Filter Parameters (LFP), as outlined in \cref{sec:logvar_LFP}. For each strategy, we measured the performance of the estimator by computing the total square error of the predicted variance (not the log-variance), and the $R^2$ statistic of the predicted variance. To be explicit, these were calculated as follows. 
 
@@ -305,18 +305,18 @@ where the exponential is understood as element-wise, and $\overline{\exp(\Omegat
 
 For each of these different estimators, we measured the performance via these two metrics across a range of values of $Q$, i.e. for different numbers of queries. In the case of the Bekas estimator, we measured the performance for different values of $R$ [see \cref{eq:bekas}]. Since each query requires solving the linear system $\PP^{-1}\e_n$, and each iteration of the Bekas algorithm requires solving the linear system $\PP^{-1}\ve_r$, these two measures have a direct correspondence in terms of total compute time. 
 
-For the case of RR, RNC and LFP, we also compared the performance when using a random query strategy, and the representative sampling query strategy as outlined in \cref{al:K_means}. The results are shows in \cref{fig:var_solvers}. On the $x$-axis, we show the number of queries (number of Bekas iterations) as a percentage of the total number of elements, i.e. $Q/N$ (or $R/N$ for Bekas). 
+For the case of RR, RNC and LFP, we also compared the performance when using a random query strategy, and the representative sampling query strategy as outlined in \cref{al:K_means}. The results are shown in \cref{fig:var_solvers}. On the $x$-axis, we show the number of queries (number of Bekas iterations) as a percentage of the total number of elements, i.e. $Q/N$ (or $R/N$ for Bekas). 
  
 
 \begin{figure}[t] 
     \begin{center}
         \includegraphics[width=\linewidth]{Figures/VarSolvers.pdf}
     \end{center}
-   \caption[Performance of various algorithms for predicting the posterior log-variance]{The performance of the various algorithms for predicting the posterior log-variance is shown as a function of the percentage of $\Omegat$ that has been queried. The top row shows the total square error of the posterior variance, and the bottom row shows the $R^2$ statistic. The left column shows results for random queries and the right column show the results when using representative queries as outlined in \cref{al:K_means}. Since the Bekas technique does make use of the active learning strategy, it is repeated in the left and right columns for reference. } 
+   \caption[Performance of various algorithms for predicting the posterior log-variance]{The performance of the various algorithms for predicting the posterior log-variance is shown as a function of the percentage of $\Omegat$ that has been queried. The top row shows the total square error of the posterior variance, and the bottom row shows the $R^2$ statistic. The left column shows results for random queries and the right column shows the results when using representative queries as outlined in \cref{al:K_means}. Since the Bekas technique does make use of the active learning strategy, it is repeated in the left and right columns for reference. } 
     \label{fig:var_solvers}
 \end{figure} 
 
-The results show that the three supervised learning-based strategies (RR, RNC and LFP) all significantly out-perform Bekas on this synthetic dataset. Moreover, when coupled with the representative sampling strategy of \cref{al:K_means}, all three achieve an $R^2$ statistic of around 0.99 when only 1\% of the elements of $\Omegat$ are queried. These results clearly demonstrate the value of this sampling strategy, especially when the number of queries is low. On this dataset, \cref{al:K_means} has a significant positive impact on performance up to a query percentage of around 3\%, beyond which the difference is less pronounced. 
+The results show that the three supervised learning-based strategies (RR, RNC and LFP) all significantly outperform Bekas on this synthetic dataset. Moreover, when coupled with the representative sampling strategy of \cref{al:K_means}, all three achieve an $R^2$ statistic of around 0.99 when only 1\% of the elements of $\Omegat$ are queried. These results clearly demonstrate the value of this sampling strategy, especially when the number of queries is low. On this dataset, \cref{al:K_means} has a significant positive impact on performance up to a query percentage of around 3\%, beyond which the difference is less pronounced. 
 
 Of the three supervised learning-based techniques, LFP tends to display the strongest performance at low query percentages, for both random and representative query strategies. RR and RNC have similar performance in this domain, with RNC improving more as the query percentage increases. 
 
@@ -328,7 +328,7 @@ Overall, these results demonstrate that high accuracy predictions ($R^2$ of roug
 \label{sec:sampling}
 
 
-In this section we move on to the second aim of this chapter, which is to produce an algorithm capable of drawing independent samples directly from the posterior. Let us again begin with the tensor-valued Graph Signal Reconstruction problem. Recall that the posterior distribution is 
+In this section, we move on to the second aim of this chapter, which is to produce an algorithm capable of drawing independent samples directly from the posterior. Let us again begin with the tensor-valued Graph Signal Reconstruction problem. Recall that the posterior distribution is 
 
 \begin{equation}
     \f \, | \, \y \sim \Norm{\PP^{-1} \y}{\PP^{-1}}
@@ -347,7 +347,7 @@ The most straightforward approach would be to perform Cholesky decomposition dir
     \f_i = \PP^{-1} \y + \LL \z_i
 \end{equation}
 
-where $\z_i \in \R^N$ is a random vector with components that are independent standard normal variates which can be generated, for example, by using the Box-Muller transform \citep{Box1958}. Alternatively, if we can perform eigen-decomposition on the covariance matrix into $\PP^{-1} = \U \LAM \U^\top$, then samples can be drawn according to
+where $\z_i \in \R^N$ is a random vector with components that are independent standard normal variates which can be generated, for example, by using the Box-Muller transform \citep{Box1958}. Alternatively, if we can perform eigendecomposition on the covariance matrix into $\PP^{-1} = \U \LAM \U^\top$, then samples can be drawn according to
 
 \begin{equation}
     \f_i = \PP^{-1} \y + \U \LAM^{1/2} \z_i
@@ -373,7 +373,7 @@ where $\left\{\RR_k\right\}$ are a set of alternative covariance matrices from w
     \item Step O (Optimisation): Compute $\f$ as the minimiser of the criterion $$J(\f) = \sum_{k=1}^K \left(\etaa_k - \M_k \f \right)^\top \RR_k^{-1}\left(\etaa_k - \M_k \f \right)$$
 \end{enumerate}
  
-Once the optimisation step has been completed, the resultant vector, $\f$, will be distributed according to $\Norm{\zero}{\PP^{-1}}$. This can be trivially extended to non-centered distributions by adding the mean to the each sample. It's important to note that for PO to be an effective algorithm, it necessitates efficient resolution of the optimisation step. As we will see, in our case we can exploit the Kronecker structure of the relevant matrices to accomplish this step for the same computational cost as computing the mean.  
+Once the optimisation step has been completed, the resultant vector, $\f$, will be distributed according to $\Norm{\zero}{\PP^{-1}}$. This can be trivially extended to non-centred distributions by adding the mean to each sample. It's important to note that for PO to be an effective algorithm, it necessitates efficient resolution of the optimisation step. As we will see, in our case, we can exploit the Kronecker structure of the relevant matrices to accomplish this step for the same computational cost as computing the mean.  
 
 \subsection{PO for Graph Signal Reconstruction}
 
@@ -480,7 +480,7 @@ With this preconditioner in place, the linear system $\Q^{-1} \left(\PSI^\top \y
         \text{Cov}\left[\f\right] = \text{Cov}\left[\PSI \Q^{-1} \left(\PSI^\top \y + \PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right] 
     \end{equation*}
 
-    Consider the three terms within the inner brackets. Since the first has no stochastic component, it does not contribute to the covariance and can therefore dropped. 
+    Consider the three terms within the inner brackets. Since the first has no stochastic component, it does not contribute to the covariance and can therefore be dropped. 
 
     \begin{align*}
         \text{Cov}\left[\f\right] &= \text{Cov}\left[\PSI \Q^{-1} \left(\PSI^\top \D_\St \z_1 + \sqrt{\gamma} \, \z_2\right)\right]  \\
@@ -837,7 +837,7 @@ Therefore, in order to draw samples from the distribution given in \cref{eq:KGRN
 
 \label{sec:comparison}
 
-So far in this chapter we have addressed estimation of the posterior marginal variance and direct sampling from the posterior as separate objectives. In \cref{sec:post_var_pred}, we proposed several methods based on a supervised learning approach, aiming to predict the entire marginal variance (i.e., the diagonal of the posterior covariance matrix), given our ability to ``query" a subset of these matrix elements. On the other hand, in \cref{sec:sampling}, we developed methods for direct sampling from the posterior. However, it's evident that a valid approach to estimating the marginal variance would be to simply draw samples, using the techniques discussed in \cref{sec:sampling}, and compute the sample variance as an estimator for the population variance. This naturally raises the question of whether this approach is superior to the supervised learning approaches discussed in \cref{sec:post_var_pred}. 
+So far in this chapter, we have addressed estimation of the posterior marginal variance and direct sampling from the posterior as separate objectives. In \cref{sec:post_var_pred}, we proposed several methods based on a supervised learning approach, aiming to predict the entire marginal variance (i.e., the diagonal of the posterior covariance matrix), given our ability to ``query" a subset of these matrix elements. On the other hand, in \cref{sec:sampling}, we developed methods for direct sampling from the posterior. However, it's evident that a valid approach to estimating the marginal variance would be to simply draw samples, using the techniques discussed in \cref{sec:sampling}, and compute the sample variance as an estimator for the population variance. This naturally raises the question of whether this approach is superior to the supervised learning approaches discussed in \cref{sec:post_var_pred}. 
 
 Let us take the Graph Signal Reconstruction model as the primary example. If we have already computed the posterior mean, $\f^\star = \PP^{-1}\y$, then an unbiased estimator for the posterior marginal variance based on $K$ samples $\{\f_k\}_{k=1}^K$ is clearly
 
@@ -861,7 +861,7 @@ meaning $K = 2 / r^2$ samples are necessary to reduce the relative error to a fr
 
 \subsection{Experiments}
 
-In order to investigate the properties of these two approaches to estimating the posterior marginal variance, that is, the supervised learning approaches discussed in \cref{sec:post_var_pred}, and the sample variance approach highlighted in \cref{sec:comparison}, we ran the following experiment. Graphs, comprising the Cartesian product of three random fully-connected sub-graphs, were created in increasing size. For each, we generated a random pattern of missingness $\St$ by uniformly sampling each element from $\{0, 1\}$, and tested the three supervised learning approaches (with active learning), the Bekas diagonal estimator, and the sample-based approach for predicting the posterior marginal variance. As with the experiments in \cref{sec:logvar_experiments}, we used a diffusion filter with $\betaa = [0.5, 0.7, 0.6]$ and set $\gamma=1$. Each estimator was given a budget of 50 linear system solves, and its prediction performance was measured by the $R^2$ score. The result are show in \cref{fig:var_comparison}.
+In order to investigate the properties of these two approaches to estimating the posterior marginal variance, that is, the supervised learning approaches discussed in \cref{sec:post_var_pred}, and the sample variance approach highlighted in \cref{sec:comparison}, we ran the following experiment. Graphs, comprising the Cartesian product of three random fully-connected sub-graphs, were created in increasing size. For each, we generated a random pattern of missingness $\St$ by uniformly sampling each element from $\{0, 1\}$, and tested the three supervised learning approaches (with active learning), the Bekas diagonal estimator, and the sample-based approach for predicting the posterior marginal variance. As with the experiments in \cref{sec:logvar_experiments}, we used a diffusion filter with $\betaa = [0.5, 0.7, 0.6]$ and set $\gamma=1$. Each estimator was given a budget of 50 linear system solves, and its prediction performance was measured by the $R^2$ score. The results are shown in \cref{fig:var_comparison}.
 
 
 \begin{figure}[t] 
@@ -875,7 +875,7 @@ In order to investigate the properties of these two approaches to estimating the
 
 As visible, RR, RNC and LFP all have similar performance over the range of graph sizes, with $R^2$ never dropping below 0.9. Of the three, LFP once again achieves the highest accuracy, although the difference compared to RR and RNC is fairly small. The sample-based estimator achieves an $R^2$ of around 0.85-0.9 across the range of graph sizes, with performance dropping as low as 0.7 but mostly remaining within this bound. Its performance is also between that of the Bekas diagonal estimator and the three supervised learning techniques over the whole range. 
 
-While the supervised learning estimators are fairly consistent, there is some evidence that their performance is dropping as node number increases. Unfortunately, it is difficult to test this hypothesis since, in order to tets the accuracy scores, it is necessary to solve for the entire posterior variance meaning the number of linear system solves required to run this experiment increases rapidly as the number of nodes increases. 
+While the supervised learning estimators are fairly consistent, there is some evidence that their performance is dropping as node number increases. Unfortunately, it is difficult to test this hypothesis since, in order to test the accuracy scores, it is necessary to solve for the entire posterior variance meaning the number of linear system solves required to run this experiment increases rapidly as the number of nodes increases. 
 
 \section{Conclusions}
 
@@ -883,6 +883,6 @@ In this chapter, we have presented a detailed examination of various methods rel
 
 We concentrated on two distinct tasks. First, in \cref{sec:post_var_pred}, we aimed to estimate the posterior marginal variance, i.e. the diagonal of $\SIG = \PP^{-1}$. In particular, we compared a recent stochastic algorithm devised by \cite{Bekas2007} against three supervised learning-based techniques. This was achieved by first noting that it is possible to compute (or ``query'') a subset of the elements of $\PP^{-1}$ directly by solving the linear system $\PP^{-1} \e_n$, where $\e_n$ is a unit basis vector. Next, by creating a set of artificial explanatory variables associated with each element, the task of estimating the non-queried elements was framed in terms of a traditional supervised learning task. We proposed three separate estimators, namely Ridge Regression (RR), Regression with Network Cohesion (RNC), and Learned Filter Parameters (LFP), for prediction. On a synthetic dataset, all three were capable of achieving high accuracy ($R^2 > 0.99$) for a small fraction of the computational cost of computing the marginal variance in full. We also combined this with an active learning strategy which increased prediction accuracy further, especially at low query numbers.  
 
-In \cref{sec:sampling}, we focused on the task of drawing samples directly from the posterior distribution. To achieve this, we made use of a technique known as Perturbation Optimisation (PO) \citep{Orieux2012}, which takes advantage of the special structure of the posterior precision matrix  to reduce the computational cost to one linear system solve per sample. By coupling this with the symmetric preconditioner $\PSI$, we were able to remedy the numerical difficulties associated with the algorithm in its basic form to produce an efficient procedure using the CGM. We demonstrated that this procedure yielded the correct posterior distribution for the GSR, RNC, KGR, and KG-RNC algorithms in their general tensor form.  
+In \cref{sec:sampling}, we focused on the task of drawing samples directly from the posterior distribution. To achieve this, we made use of a technique known as Perturbation Optimisation (PO) \citep{Orieux2012}, which takes advantage of the special structure of the posterior precision matrix to reduce the computational cost to one linear system solve per sample. By coupling this with the symmetric preconditioner $\PSI$, we were able to remedy the numerical difficulties associated with the algorithm in its basic form to produce an efficient procedure using the CGM. We demonstrated that this procedure yielded the correct posterior distribution for the GSR, RNC, KGR, and KG-RNC algorithms in their general tensor form.  
 
 Finally, in \cref{sec:comparison}, we explored whether the sampling algorithm developed in \cref{sec:sampling} could serve as an alternative method for estimating the posterior marginal variance. By assessing the prediction accuracy over product graphs of increasing size, we found that the supervised learning techniques typically outperform the sampling strategy. However, for very large graphs, sampling may be preferable, as the relative error is independent of the graph's size, while the supervised learning techniques show some signs of performance degradation as the number of nodes grows. Further research into this question would be valuable.
