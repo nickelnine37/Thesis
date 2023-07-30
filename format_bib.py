@@ -13,7 +13,8 @@ with open('Bibliography.bib', 'r+') as f:
 
 skipitems = ['EPA2023', 'FRED2023', 'ONS2019', 'Bradbury2018', 'Wang2022b',         
              'Wang2022c', 'Sandryhaila2013a', 'Sandryhaila2013b', 'Romero2017b', 
-             'Zhou2022b', 'Wang2015b', 'Narang2013b', 'Belkin2004b', 'Narang2013c']
+             'Zhou2022b', 'Wang2015b', 'Narang2013b', 'Belkin2004b', 'Narang2013c', 
+             'Zhang2023b', 'Marques2020b']
 
 for item in bib_database.entries:
 

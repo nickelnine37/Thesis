@@ -37,7 +37,7 @@ A graph filter or kernel is characterised by a function $g(\lambda)$, which is a
 \end{equation}
 
 \begin{table}[t]
-    \vspace*{1cm}
+    \vspace*{0.5cm}
     \centering
     \setlength{\tabcolsep}{10pt}
     \def\arraystretch{1.8}
@@ -55,11 +55,11 @@ A graph filter or kernel is characterised by a function $g(\lambda)$, which is a
     \end{tabular}
     \caption[Example graph filter functions]{Some example low-pass graph filter functions}
     \label{tab:iso_filters}
-    \vspace*{1cm}
+    \vspace*{0.5cm}
 \end{table}
 
 
-Equivalently, $\HH$ can be understood as originating from the direct application of the function $g(\cdot)$ to the Laplacian, represented as $\HH = g(\LL)$. Here, this operation should be interpreted as an analytic function of a matrix, that is, a series sum of matrix powers \citep{Bhatia1997}. The function $g(\cdot)$ can be set such that it promotes certain properties in the output signal. For example, a low-pass filter (as those specified in \cref{tab:iso_filters}) is a monotonically decreasing function, attenuating the high-frequency content of a signal. The choice of filter will depend on the application of interest and may rely on expert domain knowledge about the spectral profile of the graph signals. 
+Equivalently, $\HH$ can be understood as originating from the direct application of the function $g(\cdot)$ to the Laplacian, represented as $\HH = g(\LL)$. Here, this operation should be interpreted as an analytic function of a matrix, that is, a series sum of matrix powers \citep{Bhatia1997}. The function $g(\cdot)$ can be set such that it promotes certain properties in the output signal. For example, a low-pass filter (as those specified in \cref{tab:iso_filters}) is a monotonically decreasing function, attenuating the high-frequency content of a signal. Each filter also introduces a parameter $\beta$ which controls the filter strength, with higher values resulting in more aggressive attenuation of high-frequency content. The choice of filter will depend on the application of interest and may rely on expert domain knowledge about the spectral profile of the graph signals. 
 
 In the GSP community, the term `filter' is typically preferred when referring to this class of operator \citep{Shuman2013}, although some favour the term `kernel' \citep{Ioannidis2016, Romero2017}. Often, the primary practical distinction is that a kernel is an increasing function, used to construct penalty terms in regularised problems, whereas a filter is a decreasing one, interpreted as providing spectral transformations on graph signals. In \cite{Romero2017b}, the authors advocate for the preferential use of the term kernel, arguing that many GSP methods have an elegant interpretation in terms of Reproducing Kernel Hilbert Spaces (RKHSs). Within the machine learning community, where kernel methods and RKHSs are common, the kernel interpretation is typically favoured \citep{Kondor2002, Smola2003}. Regardless, either convention can be used, and in this thesis, we predominantly describe our methods in terms of filters since they provide a more direct correlation with conventional signal processing techniques, offering an intuitive way to manipulate and reason about the spectral content of graph signals.
 
@@ -80,10 +80,10 @@ This probabilistic interpretation offers a principled way of reasoning about gra
 \end{equation}
 
 
-where $\HH$ is a generic graph filter. Since $\HH^2 = \U g^2(\LAM) \U^\top$, this distribution can be interpreted as an independent multivariate Gaussian in the Laplacian eigenbasis, where the covariance of each basis vector is given by $g^2(\lambda_i)$. Since, for a low pass filter, $g(\cdot)$ is monotonically decreasing, this naturally results in higher probability density placed on smoothly varying graph signals. 
+where $\HH$ is a generic graph filter. Since $\HH^2 = \U g^2(\LAM) \U^\top$, this distribution can be interpreted as an independent multivariate Gaussian in the Laplacian eigenbasis, where the covariance of the $i$-th basis vector is given by $g^2(\lambda_i)$. Since, for a low pass filter, $g(\cdot)$ is monotonically decreasing, this naturally results in higher probability density placed on smoothly varying graph signals. 
 
 
-Further insight into this model can be gained from the following consideration. First, start with an independent multivariate normally distributed random variable, denoted as $\y \sim \Norm{\zero}{\I_N}$. Applying a graph filter yields a new signal, $\HH \y$, which has its high-frequency content attenuated in accordance with the properties of the filter. This filtered signal will also be normally distributed, according to $\HH \x \sim \Norm{\zero}{\HH^2}$. Therefore the process of filtering white Gaussian noise is equivalent to drawing from a distribution with mean zero and covariance $\HH^2$, meaning $\HH^2$ can be interpreted as a covariance matrix for generating smooth, normally distributed graph signals. This flexible approach permits the encoding of various beliefs regarding the frequency profile of graph signals. \Cref{fig:random_smooth_uk} displays an example of a random signal drawn from the distribution of \cref{eq:gaussian_filter} using a bandlimited filter.
+Further insight into this model can be gained from the following consideration. First, start with an independent multivariate normally distributed random variable, denoted as $\y \sim \Norm{\zero}{\I_N}$. Applying a graph filter yields a new signal, $\HH \y$, which has its high-frequency content attenuated in accordance with the properties of the filter. This filtered signal will also be normally distributed, according to $\HH \y \sim \Norm{\zero}{\HH^2}$. Therefore the process of filtering white Gaussian noise is equivalent to drawing from a distribution with mean zero and covariance $\HH^2$, meaning $\HH^2$ can be interpreted as a covariance matrix for generating smooth, normally distributed graph signals. This flexible approach permits the encoding of various beliefs regarding the frequency profile of graph signals. \Cref{fig:random_smooth_uk} displays an example of a random signal drawn from the distribution of \cref{eq:gaussian_filter} using a bandlimited filter.
 
 % \begin{wrapfigure}{r}{0.4\linewidth}
     \begin{figure}[t]
@@ -146,9 +146,9 @@ Note that this definition ensures only repeated multiplications by $\LL$ when ap
     \label{eq:Cheb_int}
     c_k = \begin{cases}
         \displaystyle   
-        \; \frac{1}{\pi} \int_{0}^{\pi} g\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta  & \quad \text{if} \quad k = 0, \\[0.8cm]
+        \; \frac{1}{\pi} \int_{0}^{\pi} g\left(\frac{\lambda_{\text{max}}}{2} \big(\cos(\theta) + 1\big)\right) \, d\theta  & \quad \text{if} \quad k = 0, \\[0.8cm]
         \displaystyle   
-        \; \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) \; g\left(\frac{\lambda_{\text{max}}}{2} (\cos(\theta) + 1)\right) \, d\theta  & \quad \text{otherwise.}
+        \; \frac{2}{\pi} \int_{0}^{\pi} \cos(k \theta) \; g\left(\frac{\lambda_{\text{max}}}{2} \big(\cos(\theta) + 1\big)\right) \, d\theta  & \quad \text{otherwise.}
     \end{cases}
 \end{equation}
 
@@ -162,18 +162,18 @@ and can be quickly evaluated numerically.
 \end{figure}
 
 
-Chebyshev polynomials appeared in early papers on GSP, such as \citep{Hammond2011}, in which the authors were concerned with defining wavelet transforms on graphs, also defined in terms of Laplacian-based spectral operators $g(\LL)$. Since then, they have been widely used in distributed applications \citep{Shuman2018}, and have also been extensively employed in Graph Neural Networks \citep{Gama2020}. In \cite{Defferrard2017}, Chebyshev polynomials form the basis of convolutional filters with learned parameters, in direct analogy with traditional Convolutional Neural Networks (CNNs). This approach was further simplified in \cite{Kipf2017} by reducing the number of terms in the polynomial to mitigate overfitting.
+Chebyshev polynomials appeared in early papers on GSP, such as \citep{Hammond2011}, in which the authors were concerned with defining wavelet transforms on graphs, also defined in terms of Laplacian-based spectral operators $g(\LL)$. Since then, they have been widely used in distributed applications \citep{Shuman2018}, and have also been extensively employed in Graph Neural Networks \citep{Gama2020}. In \cite{Defferrard2017}, Chebyshev polynomials form the basis of convolutional filters with learned parameters, in direct analogy with traditional Convolutional Neural Networks (CNNs). This approach was further developed in \cite{Kipf2017} by reducing the number of terms in the polynomial to mitigate overfitting.
 
 In \cite{Rimleanscaia2020, Tseng2020}, the authors propose an extension to polynomial filters, which considers a more general class of rational filters, i.e. the ratio between two polynomials. As they describe, in certain circumstances, rational designs can approximate a given frequency response using lower-order polynomials. Notably, when the response is band-limited, rational filters were found to have significantly lower error than standard Chebyshev polynomials, which tend to struggle when approximating the sharp cut-off. In general, rational filtering requires solving a linear system $\y' = P(\LL)^{-1} Q(\LL) \y$, where $P$ and $Q$ are the polynomials occurring in the numerator and denominator, respectively. This incurs an additional computational cost. Furthermore, solving for the coefficients of each polynomial no longer has a closed-form solution and requires addressing a more challenging non-convex, constrained problem.
 
-As noted, polynomial approximations are primarily useful because multiplications of a graph signal by the Laplacian can be executed efficiently. In all the papers discussed so far, efficiency has been achieved through distributed execution and/or leveraging Laplacian sparsity. However, another way to exploit the Laplacian structure is if it has a representation in terms of a tensor factorisation. This is one of the approaches we take in the subsequent sections, focusing on how tensor factorisation can further optimise the computation time and resource usage, especially in cases with high-dimensional data or large-scale product graphs.
+As noted, polynomial approximations are primarily useful because multiplications of a graph signal by the Laplacian can be executed efficiently. In all the papers discussed so far, efficiency has been achieved through distributed execution and/or leveraging Laplacian sparsity. However, another way to exploit the Laplacian structure is if it has a representation in terms of a tensor factorisation. In this thesis, we leverage this fact extensively, focusing on how tensor factorisation can further optimise the computation time and resource usage, especially in cases with high-dimensional data or large-scale product graphs.
 
 
 \section{Graph Signal Reconstruction}
 
 \label{sec:GSR_review}
 
-Graph Signal Reconstruction (GSR), sometimes also known as graph signal interpolation, is a classic problem in GSP \citep{Ortega2018}. The task can be stated as, given a partially observed graph signal, estimate the signal value at the unobserved vertices using only the topology of the graph. Closely related, is the topic of signal sampling, which seeks to find an informative set of vertices to measure a graph signal, in order to perform an accurate reconstruction \citep{Tanaka2020}. Typically, GSR is posed as an optimisation problem where one seeks to identify a smooth underlying graph signal, $\f$, that simultaneously minimises the square error across the observed nodes, as well as a penalty term $P$, that enforces some kind of signal smoothness or bandlimited assumption. 
+Graph Signal Reconstruction (GSR), sometimes also known as graph signal interpolation, is a classic problem in GSP \citep{Ortega2018}. The task can be stated as, given a partially observed graph signal, estimate the signal value at the unobserved vertices using only the topology of the graph. Closely related, is the topic of signal sampling, which seeks to find an informative set of vertices to measure a graph signal, in order to perform an accurate reconstruction \citep{Tanaka2020}. GSR is often posed as an optimisation problem where one seeks to identify a smooth underlying graph signal, $\f$, that simultaneously minimises the square error across the observed nodes, as well as a penalty term $P$, that enforces some kind of signal smoothness or bandlimited assumption. 
 
 \begin{equation}
     C(\f) = \sum_{i \in \text{observed}} (\y_i - \f_i)^2 + P(\f)
@@ -183,7 +183,7 @@ Early work on GSR, such as \cite{Narang2013, Wang2015b, Anis2016}, mainly focuse
 
 In \citep{Romero2017b}, the authors propose using a flexible parametrisation of the reconstructed signal profile based on graph kernels. This can be understood as a generalisation of previous works where, rather than specifying a particular form of the penalty term, arbitrary kernel functions of the graph Laplacian are utilised to draw functions from an RKHS.
 
-Several methods have also been proposed for the reconstruction of time-varying graph signals, in so termed Time-Vertex (T-V) problems. In \cite{Qiu2017}, the penalty term in the optimisation objective promotes both smoothness across the graph using a Laplacian penalty, and consistency across time, by introducing a temporal difference operator $\D$. Although framed slightly differently, this also amounts to a Laplacian penalty, since $\D\D^\top$, which appears in the regularisation term, is precisely the Laplacian of a path graph. The problem is then solved for both the noiseless and noisy cases using a gradient projection algorithm with a backtracking line search. A similar method is adopted in \cite{Giraldo2022}, but with a regularised version of the Laplacian for improved computational robustness. In \cite{Ioannidis2016}, this approach is modified to incorporate a more dynamic penalty that can adjust the strength of regularisation across the graph and across time independently, using so-termed ``space-time kernels''. Furthermore, in this paper, as well as \cite{Romero2017, Ioannidis2018}, the authors propose an online algorithm that can accommodate dynamic graphs (i.e. graphs for which the edge weights can change over time), although this is only possible for a special class of kernel which have a tri-diagonal inverse. 
+Several methods have also been proposed for the reconstruction of time-varying graph signals, in so termed Time-Vertex (T-V) problems. In \cite{Qiu2017}, the penalty term in the optimisation objective promotes both smoothness across the graph using a Laplacian penalty, and consistency across time, by introducing a temporal difference operator $\D$. Despite being presented in a slightly different way, this also amounts to a Laplacian penalty, since $\D\D^\top$, which appears in the regularisation term, is precisely the Laplacian of a path graph. The problem is then solved for both the noiseless and noisy cases using a gradient projection algorithm with a backtracking line search. A similar method is adopted in \cite{Giraldo2022}, but with a regularised version of the Laplacian for improved computational robustness. In \cite{Ioannidis2016}, this approach is modified to incorporate a more dynamic penalty that can adjust the strength of regularisation across the graph and across time independently, using so-termed ``space-time kernels''. Furthermore, in this paper, as well as \cite{Romero2017, Ioannidis2018}, the authors propose an online algorithm that can accommodate dynamic graphs (i.e. graphs for which the edge weights can change over time), although this is only possible for a special class of kernel which have a tri-diagonal inverse. 
 
 Recently, some methods have also been proposed for distributed reconstruction of time-varying graph signals. In \cite{Chi2022}, as well as \citep{Zhou2022b}, the authors propose distributed algorithms that draw upon the work of \cite{Qiu2017} using the temporal difference operator. In these two papers, which have similar goals but were developed separately, the authors use a modified Newton method to solve the optimisation problem, by making use of an approximation to the Hessian. 
 
@@ -291,20 +291,28 @@ One limitation of the RNC model is that the total square variation penalty, whil
 
 \section{Multiway Graph Signal Processing}
 
-Multiway Graph Signal Processing (MWGSP) is an emerging subfield that extends Graph Signal Processing to analyse multiway data represented by multidimensional arrays and tensors \citep{Stanley2020}. In most GSP applications, a graph signal is represented by a vector $\y \in \R^N$, which is interpreted as existing on the nodes of a single graph. MWGSP extends this by considering tensor-valued signals $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, where each axis is described by an independent graph. As a whole, the tensor can be understood as existing on the nodes of a single product graph. 
+Multiway Graph Signal Processing (MWGSP) is an emerging subfield that extends Graph Signal Processing to analyse data represented by multidimensional arrays and tensors \citep{Stanley2020}. In most standard GSP applications, a signal is represented by a vector $\y \in \R^N$, which is interpreted as existing on the nodes of a single graph. MWGSP generalises this by considering tensor-valued signals $\Yt \in \R^{N_1 \times N_2 \times ... \times N_d}$, where each axis is described by an independent graph, which are combined together via a $d$-dimensional product. Many multidimensional models and algorithms from GSP and classical signal processing, such as the 2D DFT and Time-Vertex (T-V) signals can be reinterpreted under the MWGSP framework, bringing additional insight and new applications. As a relatively new paradigm, there is yet to be a large pool of research on MWGSP. Whilst many authors have noted its potential applications \citep{Marques2020b,Li2023}, many models from GSP are yet to be discussed in the context of GSP. This leaves many opportunities for the development of theory in this area. 
 
-By incorporating underlying graphs in each data axis, MWGSP handles higher dimensional data sets, which are typically unaddressed by classical GSP. This new approach offers promising applications in real-world situations, such as climate modelling, epidemic spread, and complex biological systems.             
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.45\linewidth]{Figures/colored_tensor.pdf}
+    \caption[Graphical depiction of an order-3 tensor]{Graphical depiction of an order-3 tensor signal with graphs underlying each axis.} 
+    \label{fig:coloured_tensor}
+\end{figure}   
+
+It should be noted that MWGSP is related by distinct from multi-layer GSP \citep{Zhang2023b}. This is also an emerging framework that uses the language of tensors to describe higher-order graph structures. However, in multi-layer GSP, the focus is on multiple layers of heterogeneous graphs, each with possibly different structures and physical meanings, that connect to each other in more general ways. For example, one layer could represent a network of cloud computing servers, and another could represent a power grid. Each layer may have different nodes with \textit{intralayer} edges, and the two layers may be connected via \textit{interlayer} edges. This is certainly a promising and interesting framework, but not the focus of this thesis. 
 
 % \cite{Smilde2004}
+
 % \cite{Kroonenberg2008}
 
 % \cite{Ji2019}
 
 % \cite{Cammoun2009}
 
-% \cite{Zhao2023}
-
 % \cite{Li2012}
+
+% \citep{Sandryhaila2014}
 
 
 
@@ -312,7 +320,7 @@ By incorporating underlying graphs in each data axis, MWGSP handles higher dimen
 
 The majority of models and algorithms discussed in this review thus far have primarily dealt with real-valued graph signals $\y \in \R^N$. However, it is natural to generalise this to other forms of data, for example, binary signals $\y \in \{0, 1\}^N$ representing two distinct classes, or signals on the interval $\y \in [0, 1]^N$ which could represent probabilities. Moreover, this can easily be extended to categorical data, where each node belongs to one of $C$ classes, with a corresponding simplex representing their respective probabilities. Signals with these characteristics can be employed to design node classification algorithms. 
 
-The GFT operator is typically defined to operate on real-valued graph signals, which has conventionally limited GSP models to this type of data. However, some studies have considered node classification tasks. For instance, in \cite{Sandryhaila2013a}, the authors utilise graph signals of the form $\s \in {-1, 0, +1}^N$ to portray a binary classification task, with zero signifying an unknown label. Their proposed prediction for the true signal is the solution to the optimisation problem outlined as follows:
+The GFT operator is typically defined to act on real-valued graph signals, which has conventionally limited GSP models to this type of data. However, some studies have considered node classification tasks. For instance, in \cite{Sandryhaila2013a}, the authors utilise graph signals of the form $\s \in \{-1, 0, +1\}^N$ to represent a binary classification task, with zero signifying an unknown label. Their proposed prediction for the true signal is the solution to the optimisation problem outlined as follows:
 
 \begin{equation}
     \hat{\y} = \argmin{\y \in \R^N} \text{TV}_\text{G}(\y), \quad \text{s.t.} \quad ||\C \y - \C \s ||^2_2 < \epsilon
@@ -324,41 +332,40 @@ Here, $\C$ represents a diagonal matrix with $\C_{nn} = |\s_n|$, and $\text{TV}_
     \text{TV}_\text{G}(\y) = \frac{1}{||\y||^2_2} \left| \left| \y - \frac{1}{\lambda_{\text{max}}} \A \y \right| \right|^2_2
 \end{equation}
 
-for a graph adjacency matrix $\A$ with maximum eigenvalue $\lambda_{\text{max}}$. The authors also compare this with a method utilising $\text{TV}_2$ Laplacian-based regularisation, with the results favouring the former approach. One potential issue with this model is that the optimisation step occurs for real-valued signals, and is subsequently interpreted as an estimate for class probabilities. Although their optimisation condition ensures that the predictions do not vary too far from the observed classes, which are confined to the interval $[-1, 1]$, there is nothing, in theory, preventing the estimates from extending beyond this range which may make results difficult to interpret. Furthermore, their total variation measure lacks the flexibility to encode more precise assumptions about the spectral profile of the signal and is applied directly to a class probability vector, which is typically designed for real-valued signals only. This makes some aspects of their model difficult to interpret from a theoretical perspective. 
+for a graph adjacency matrix $\A$ with maximum eigenvalue $\lambda_{\text{max}}$. The authors also compare this with a method utilising $\text{TV}_2$ Laplacian-based regularisation, with the results favouring the former approach. One potential issue with this model is that the optimisation searches in the space of real-valued signals, which are subsequently interpreted as estimates for class probabilities. Although the $\epsilon$-condition ensures that the predictions do not deviate excessively from the observed classes, confined to the set $\{-1, 0, +1\}$, there is, in theory, nothing preventing the estimates from extending beyond this range, which may make results difficult to interpret. Furthermore, their total variation measure lacks the flexibility to encode more precise assumptions about the spectral profile of the signal and is applied directly to a class probability vector, which is typically designed for real-valued signals only. This makes some aspects of their model difficult to interpret from a theoretical perspective. 
 
-More recently, \cite{Tran2020} propose a method for binary node classification based on the so-called logistic network lasso. They consider the situation where each node in the network also has an associated vector of explanatory variables $\x_n \in \R^M$, and assume that the class probabilities are given by a logistic function as follows. 
+More recently, \cite{Tran2020} propose a method for binary node classification based on the so-called logistic network lasso. They consider the situation where each node also has an associated vector of explanatory variables $\x_n \in \R^M$, and propose that the class probabilities can be estimated using a logistic function as follows. 
 
 \begin{equation}
     p(\y_n = 1) = \frac{1}{1 + \exp \left(-\w_n^\top \x_n \right)}
 \end{equation}
 
-Each node in the network also has its own unique coefficient vector $\w_n$ specifying the contribution of the local explanatory variables to the probability at each node. They define their estimator for these coefficient vectors using a logistic loss function along with a total variation penalty defined as follows. 
+This is similar in spirit to traditional logistic regression, except each node in the network also has its own unique coefficient vector $\w_n$ specifying the contribution of the local explanatory variables to the respective probability. Evidently, in isolation, the optimal setting for each $\w_n$ is underdetermined. To complete this model, they introduce a cost function that includes a standard logistic loss function accompanied by a total variation penalty, defined as follows:
 
 \begin{equation}
-    P(\{\w_i\}) = \sum_{i, j} \A_{ij} || \w_i - \w_j ||
+    P(\W) = \sum_{i, j} \A_{ij} || \w_i - \w_j ||
 \end{equation}
 
-This is solved using a primal-dual method with proximal splitting. The effect is to promote node clusters to possess the same coefficient vectors. The concept of using a logistic function to map real numbers to the interval $[0, 1]$ is an interesting suggestion, since the coefficient vectors, which are real-valued, can then be penalised in the vertex domain which is more consistent from a GSP perspective. Their use of a Lasso penalty term is also interesting and bares some similarity to trend filtering on graphs \citep{Wang2016}. 
+This objective is then minimised using a primal-dual method with proximal splitting. The outcome is that node clusters are encouraged to share the same coefficient vectors, with the L$_1$ norm promoting exact matches for closely connected nodes, as opposed to the smooth variation that a quadratic penalty would induce. The concept of using a logistic function to map real numbers to the interval $[0, 1]$ is a n interesting suggestion, since the coefficient vectors, which are real-valued, can then be penalised in the vertex domain, which is more consistent from a GSP perspective. Their application of a Lasso penalty term also exhibits interesting properties and bears some similarity to trend filtering on graphs \citep{Wang2016}.
 
-Node classification has also been addressed in the machine learning community, typically under the framework of semi-supervised learning, for example in \cite{Belkin2002}. 
+Node classification has also been addressed in the machine learning community, typically under the framework of semi-supervised learning. For example, in \cite{Belkin2002}, the authors effectively introduce an early bandlimited model for binary graph signal reconstruction, although it predates many of the modern GSP concepts. Here, they consider reconstructing a binary signal $\y \in \{-1, 1\}^{N}$ by finding a linear combination of the first $K$ eigenvectors of the graph Laplacian. In particular, denoting $\U_K \in \R^{N \times K}$ as the rectangular matrix containing the first $K$ eigenvectors, they seek a vector $\aaa$ that minimises thew following objective.
 
+\begin{equation}
+    C(\aaa) = || \y - \U_K \aaa ||^2_2
+\end{equation}
 
+This is simply a standard least squares problem with solution 
 
+\begin{equation}
+    \aaa = (\U_K^\top \U_K)^{-1} \U_K \y
+\end{equation}
 
-
-
-\citep{Ahmed2017}
-
-No one has done it on multiway graphs. Limited regression models. No one using graph filters. 
-
-in ML: \citep{Belkin2002}
-
-
+Their prediction for the unknown class labels is then determined based on whether the corresponding element of $\U_k \aaa$ is greater than or less than zero. While the paper shows promising results on a dataset of handwritten digits, it suffers from some of the same difficulties in terms of interpretability as \cite{Sandryhaila2013a}. In particular, the prediction $\U_k \aaa$ is an unbounded, real-valued estimator to a binary input signal. Unlike the output of the model proposed in \cite{Tran2020}, the predicted signal cannot be interpreted in probabilistic terms. 
 
 
 \section{Related topics}
 
-For the sake of clarity, in this section, we give a high-level overview of some important sub-fields of GSP which are adjacent to the work in this thesis, but not directly relevant to the core subject matter. While not addressed directly in this thesis, some of these topics offer potentially useful avenues for the extension of our work. 
+For the sake of clarity, in this section, we give a high-level overview of two important topics within GSP which are adjacent to the work in this thesis, but not directly relevant to the core subject matter. While not addressed directly in this thesis, these topics offer potentially useful avenues for the extension of our work. 
 
 
 \subsection{Graph learning}
@@ -456,14 +463,4 @@ As a complex Hermitian operator, $\LL_M$ has eigenvectors given by unitary matri
 where $\U^\dagger$ is the Hermitian adjoint of $\U$. Therefore, the GFT of a signal $\y$ is given by $\U^\dagger \y$ and the IGFT by $\U\y$. This elegant formulation maintains many of the desirable properties of the undirected GFT, such as power preservation. Early results indicate that the magnetic Laplacian may be effective in tasks such as community detection and denoising on directed graphs \citep{Furutani2020, Fanuel2017}. However, some uncertainty remains on how to interpret the complex-valued signals after transformations via the GFT and IGFT. In \cite{Furutani2020}, the authors opt to take the real part of the signal only, however, best practices have not yet been established. 
 
 In general, spectral methods on directed graphs present a number of additional challenges and there is no clear front-runner for how to handle them. For this reason, as well as the additional computational challenges associated with many of the methods, the authors of \cite{Marques2020} suggest that node-domain algorithms may generally be preferable when it comes to directed graphs. 
-
-
-\subsection{Graph neural networks}
-
-Another area that is strongly related to GSP, although has arguably evolved into a field in its own right, is graph neural networks. 
-
-
-
-
-\section{Summary of contributions}
 

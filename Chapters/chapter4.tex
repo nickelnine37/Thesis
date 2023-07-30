@@ -249,6 +249,8 @@ where $\D_{\bar{\J}} = \diag{\vecc{\bar{\J}}}$, and $\bar{\J} \in \R^{N \times T
     \bar{\J}_{nt} = \frac{\lambda^{(K)}_t g^2\big(\lambda_n^{(N)}\big)}{ \raisebox{-0.2cm} { $\lambda^{(K)}_t g^2\big(\lambda_n^{(N)}\big) + \gamma$ } } = \frac{\bar{\G}_{nt}^2}{ \raisebox{-0.15cm} {$\bar{\G}_{nt}^2 + \gamma$}}
 \end{equation}
 
+Note that it is still possible to implement this in an eigendecomposition-free manner, although the procedure is slightly more complex than it was in the case of GSR as discussed in \cref{sec:SIM_cheb}. First, we can approximate the function $g^2(\lambda)$ using Chebyshev polynomials. This makes it possible to multiply $\HH_N^2$ onto vectors/matrices without the need to decompose the graph Laplacian. Next, approximate the function $J(x) = x/(x+\gamma)$ using a separate set of Chebyshev polynomials. This makes it possible to approximate the function of a matrix $J(\A) = (\gamma \A^{-1} + \I)^{-1}$. By setting the matrix $\A = \K \otimes \HH^2$, and computing the relevant action of the $\HH^2$ portion using the original set of polynomials, we can achieve the application of $\M^{-1}$ onto a vector whilst avoiding eigendecomposition. 
+
 The SIM algorithm then proceeds in much the same way as described in \cref{sec:SIM}. As before, it is clear to see that convergence will be achieved, since the spectral radius of $\M^{-1}\N$ will surely be less than one for any positive $\gamma$. In this case, the update formula is given by 
 
 \begin{align}
@@ -437,7 +439,7 @@ where, as before, $\U = \U_T \otimes \U_N $. We choose this preconditioner becau
         \end{bmatrix}
 \end{equation*}
 
-Note that the upper left block can be multiplied onto a length $NT$ vector with complexity $O(N^2T + NT \log T)$, by leveraging the properties of the Kronecker product and making use of the Fast Cosine Transform (FCT). The upper right block of this matrix consists of $M$ length $NT$ column vectors, which can be computed with complexity $O(MN^2T + MNT \log T)$ and multiplied onto a length $M$ vector with complexity $O(NTM)$. This also applies to the lower left block, which is the transpose of the upper right, and can be multiplied onto a length $M$ vector in the same number of operations. Finally, the lower right block can be multiplied onto a length $M$ vector with $M$ operations. Therefore, the overall complexity of multiplying the entire matrix onto a vector of length $NT + M$ is $O(N^2T + NT \log T)$. 
+Note that the upper left block can be multiplied onto a length $NT$ vector with complexity $O(N^2T + NT \log T)$, by leveraging the properties of the Kronecker product and making use of the Fast Cosine Transform (FCT). The upper right block of this matrix consists of $M$ length-$NT$ column vectors, which can be computed with complexity $O(MN^2T + MNT \log T)$ and multiplied onto a length $M$ vector with complexity $O(NTM)$. This also applies to the lower left block, which is the transpose of the upper right, and can be multiplied onto a length $M$ vector in the same number of operations. Finally, the lower right block can be multiplied onto a length $M$ vector with $M$ operations. Therefore, the overall complexity of multiplying the entire matrix onto a vector of length $NT + M$ is $O(N^2T + NT \log T)$. 
 
 
 
@@ -527,32 +529,33 @@ which can be efficiently multiplied onto a length $NT + M$ vector by leveraging 
 
 \section{Network regression for pollutant monitoring}
 
-In this section, we analyse the performance of the regression models developed in this chapter by applying them to an environmental modelling task. Our focus is on predicting the concentration of PM$_{2.5}$, a common airborne pollutant which consists of particulate matter with a diameter of 2.5 micrometres or less. We apply our models over a network of monitoring stations located in California, USA, using a dataset obtained from the U.S. Environmental Protection Agency's Air Data program. This program is responsible for generating daily readings of several airborne pollutants, including Ozone, Sulfur Dioxide (SO$_2$), Carbon Monoxide (CO), Nitrous Dioxide (NO$_2$), PM$_{2.5}$ and PM$_{10}$ at hundreds of locations across the country \citep{EPA2023}.  
+In this section, we give an illustrative example application for the regression models developed in this chapter by applying them to an environmental modelling task. Here, the aim is to check the models produce sensible output, and to gain some insight into their behaviour. Our focus is on predicting the concentration of PM$_{2.5}$, a common airborne pollutant which consists of particulate matter with a diameter of 2.5 micrometres or less. We apply our models to data taken from a network of monitoring stations located in California, obtained from the U.S. Environmental Protection Agency's Air Data program. This program is responsible for generating daily readings of several airborne pollutants, including Ozone, Sulfur Dioxide (SO$_2$), Carbon Monoxide (CO), Nitrous Dioxide (NO$_2$), PM$_{2.5}$ and PM$_{10}$ at many locations across the U.S. \citep{EPA2023}.  
 
-In total, we consider $N=571$ monitoring stations across a period of $T=3957$ days from the 1$^\text{st}$ of January 2012 to the 30$^\text{th}$ of September 2022. Our method for graph construction was as follows. First, we took the latitude and longitude coordinates of each monitoring station and created a two-dimensional Voronoi diagram bounded by the California border \citep{Fortune1986}. This tessellated the state into 571 distinct regions; one per station. Next, we connected each pair of stations $i$ and $j$ if their respective Voronoi regions shared a boundary, and weight that connection by  $1 / (1 + kd_{ij})$, where $k$ is a scaling factor and $d_{ij}$ is their geodesic separation. This creates a sparse graph, which is visually represented in \cref{fig:cali_voronoi}. The total product graph used was then the Cartesian product between the size-$T$ path graph (i.e. $T$ nodes connected in a chain representing time), and the cross-sectional network represented in \cref{fig:cali_voronoi}. 
+In total, we consider $N=571$ monitoring stations across a period of $T=3957$ days from the 1$^\text{st}$ of January 2012 to the 30$^\text{th}$ of September 2022. Our method for graph construction was as follows. First, we took the latitude and longitude coordinates of each station and created a two-dimensional Voronoi diagram bounded by the California border \citep{Fortune1986}. This tessellated the state into 571 distinct regions; one per station. Next, we connected each pair of stations $(i, j)$ if their respective Voronoi regions shared a boundary, and weight that connection by  $1 / (1 + d_{ij})$, where $d_{ij}$ is their geodesic separation in kilometres. This creates a sparse graph, which is visually represented in \cref{fig:cali_voronoi}. 
 
-\begin{figure}[ht]
+In our experiments, we predicted $\log(1+c)$ (to reduce skewness \citep{West2022}), where $c$ was the concentration of PM$_{2.5}$ in parts per million, across the network using all three regression algorithms outlined in this chapter. In the case of Kernel Graph Regression, we used a set of exogenous environmental variables such as season and active wildfires (see \cref{tab:features1}). For Regression with Network Cohesion, we used local explanatory variables such as measurements of the other pollutants and land use (see \cref{tab:features2}). For Kernel Graph Regression with Network Cohesion, we used both sets of variables. All explanatory variables were lagged by one day, such that predictions were being made on data collected from 24 hours previously. 
+
+
+\begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\linewidth]{Figures/cali_plot2.pdf}
-    \caption[The network of monitoring stations created via Voronoi tessellation]{The network of monitoring stations, created via Voronoi tessellation. The geographic coordinates of the stations are used to create closed regions, which are connected by a weighted edge to neighbouring regions. }
+    \vspace*{3cm}
+    \includegraphics[width=0.65\linewidth]{Figures/cali_plot2.pdf}
+    \vspace*{0.3cm}
+    \caption[The network of monitoring stations created via Voronoi tessellation]{The network of monitoring stations, created via Voronoi tessellation. The geographic coordinates of the stations are used to create closed regions, which are connected by a weighted edge to neighbouring regions. The colours are for visual clarity only and do not represent a graph signal colour-map. }
     \label{fig:cali_voronoi}
 \end{figure}
 
-In our experiments, we predicted $\log(1+c)$, where $c$ was the concentration of PM$_{2.5}$ in parts per million across the network using all three regression algorithms outlined in this chapter. In the case of Kernel Graph Regression, we used a set of global explanatory variables which were not associated with conditions at the individual monitoring stations, and for Regression with Network Cohesion, we used local explanatory variables that were associated with conditions at the individual monitoring stations. For KGR, we considered the number of active wildfires (which is known to be a strong contributor to PM$_{2.5}$ concentration \citep{Jaffe2020}) and meteorological conditions across the state including temperature, pressure and humidity. In particular, for the wildfires, we calculated the number of acres actively burning on each day, within nine different regions using data from the CAL FIRE service from the Department of Forestry and Fire Protection \citep{CALFIRE2023}. For the meteorological variables, we took readings also published by the Air Data program from locations across the state and took the first five principal components. 
+\FloatBarrier
 
-For RNC, we used the other pollutants measured over the network, i.e. Ozone, SO$_2$, CO, NO$_2$, and PM$_{10}$. Since, in general, a considerable proportion of this data was missing, we first used Graph Signal Reconstruction. as described in \cref{chap:gsr_2d}, to interpolate the missing values. In addition, we used information local to each monitoring station such as land use and elevation. We also tested the KG-RNC framework outlined in \cref{sec:kgrnc} by combining both the local and global explanatory variables. Further information about the explanatory variables used is given in \cref{tab:features1,tab:features2}. 
-
-
-
-\begin{table}[ht]
-    \renewcommand{\arraystretch}{1.8}
+\begin{table}[p]
+    \renewcommand{\arraystretch}{2}
     \centering
-    \begin{tabular}{|l|p{11cm}|}
-    \hline
-    \multicolumn{2}{|c|}{\textbf{Global explanatory variables}} \\
-    \hline
+    \begin{tabular}{l p{11cm}}
+    \toprule
+    \multicolumn{2}{c}{\textbf{Exogenous explanatory variables}} \\
+    \midrule
     \textbf{Variable} & \textbf{Description} \\
-    \hline
+    \midrule
 
     Time & A simple linear variable. \\
 
@@ -565,22 +568,25 @@ For RNC, we used the other pollutants measured over the network, i.e. Ozone, SO$
     Pressure & As above, but for pressure. Readings from 48 locations were transformed into five PCA components. \\
 
     Humidity & As above, for humidity. Readings from 51 locations were transformed into five PCA components  \\
-    \hline
+    \bottomrule
     \end{tabular}
-    \caption[Global explanatory variables used in the environmental modelling application]{The global explanatory variables used in this experiment. Each feature is not associated with any node in particular but covaries with the graph signal over time. This resulted in a feature matrix $\X$ of shape $3957 \times 27$. All columns were normalised to have a mean of zero and a standard deviation of one. }
+    \vspace*{0.3cm}
+    \caption[Global explanatory variables used in the environmental modelling application]{The global explanatory variables used in this experiment. Each feature is not associated with any node in particular but covaries with the graph signal over time. This resulted in a feature matrix $\X$ of shape $3957 \times 27$. All columns were normalised to have a mean of zero and a standard deviation of one. All data was lagged by one day relative to the target variable $\Y$. }
     \label{tab:features1}
 \end{table}
 
-\begin{table}[ht]
-    \renewcommand{\arraystretch}{1.8}
+\FloatBarrier
+
+\begin{table}[p]
+    \renewcommand{\arraystretch}{2}
     \centering
-    \begin{tabular}{|l|p{10.5cm}|}
-    \hline
-    \multicolumn{2}{|c|}{\textbf{Local explanatory variables}} \\
-    \hline
+    \begin{tabular}{l p{10.5cm}}
+    \toprule
+    \multicolumn{2}{c}{\textbf{Endogenous explanatory variables}} \\
+    \midrule
     \textbf{Variable} & \textbf{Description} \\
-    \hline
-    Ozone & Ozone readings from the Air Data program were taken at all 571 monitoring stations. Where data was missing, graph signal reconstruction was used to interpolate the missing values. 72\% of the original data was missing. \\
+    \midrule
+    Ozone & Ozone readings, transformed via $\log(1+x)$, from the Air Data program were taken at all 571 monitoring stations. Where data was missing, graph signal reconstruction was used to interpolate the missing values. 72\% of the original data was missing. \\
     Sulfur Dioxide & As above. 95\% of the original data was missing.  \\
     Carbon Monoxide & As above. 89\% of the original data was missing.  \\
     Nitrous Dioxide & As above. 83\% of the original data was missing.  \\
@@ -588,21 +594,85 @@ For RNC, we used the other pollutants measured over the network, i.e. Ozone, SO$
     Elevation & The elevation of the station in meters. This variable remained constant over time \\
     Land use & Each monitoring station had a land use flag, which was one of `Commercial', `Residential', `Agricultural', `Forest', `Industrial', `Desert', or `Military Reservation'. This was turned into a length-7 vector for each station using one-hot encoding which remained constant over time. \\
     Location setting & Each station also had a location flag, which was one of `Urban And Center City', `Suburban' or `Rural. In the same fashion as above, we created a one-hot encoding for each station, which remained constant over time. \\
-    \hline
+    \bottomrule
     \end{tabular}
-    \caption[Local explanatory variables used in environmental modelling application]{The local explanatory variables used in this experiment. Each variable is associated with a monitoring station and also varies over time. For elevation, land use and location setting which are fixed for each station, the values are simply repeated over time. This creates an explanatory tensor $\Xt$ of shape $571 \times 3957 \times 16$. }
+    \vspace*{0.3cm}
+    \caption[Local explanatory variables used in environmental modelling application]{The local explanatory variables used in this experiment. Each variable is associated with a monitoring station and also varies over time. For elevation, land use and location setting which are fixed for each station, the values are simply repeated over time. This created an explanatory tensor $\Xt$ of shape $571 \times 3957 \times 16$. All data was lagged by one day relative to the target variable $\Y$. }
     \label{tab:features2}
 \end{table}
-    
-As a baseline approach, we also tested univariate and multivariate ridge regression using the local and global explanatory variables respectively. However, since multivariate ridge regression has no standard approach for the situation where values are missing from the multivariate targets, we first filled in these values according to the mean reading at each station. Where no readings were available at all at a particular station, we used the mean reading across time. 
 
-In order to 
+\FloatBarrier
 
-\cite{Cleland2020}. 
+The original graph signal, $\Y_0 \in \R^{N \times T}$, had 88\% of its values missing. To create a training set $\Y$, we removed the entire time series from 20\% of the active stations, assigning 10\% to a validation set and 10\% to a test set. Next, we solved each model using this reduced training set and tuned all relevant hyperparameters by minimising the validation error using an out-of-the-box Nelder-Mead optimisation algorithm \citep{Gao2010}. Finally, we made a prediction for each model, and measured the Root Mean Square Error (RMSE) and $R^2$ statistic across the training, validation and test nodes. 
 
-\begin{figure}[ht]
+In addition to the KGR, RNC and KG-RNC algorithms discussed, we also tested univariate and multivariate ridge regression using the endogenous and exogenous explanatory variables respectively. However, since multivariate ridge regression has no standard approach for the situation where values are missing from the multivariate targets, we first filled in these values according to the mean reading at each station. Where no readings were available at all at a particular station, we used the mean reading across time. Note that the univariate ridge regression algorithm is effectively equivalent to RNC, but with an intercept that is fixed for each node rather than flexible. The ridge regularisation parameter for each algorithm was also tuned on the validation set, using a simple line search. The results are shown in \cref{tab:cali_results}. 
+
+As visible, RNC and KG-RNC demonstrate similar performance and generally obtain the highest accuracy, whilst KGR outperforms both ridge regression models. Of these, ridge regression with endogenous (local) variables achieves lower error than ridge regression with exogenous (global) variables. Given that 88\% of the data in $\Y_0$ was missing, it is no surprise that global ridge regression produces poor performance, since the vast majority of its training data was produced via the simple mean-filling heuristic.
+
+
+\begin{table*}[b]
+    \vspace*{0.5cm}
     \centering
-    \includegraphics[width=0.85\linewidth]{Figures/regression_results.pdf}
-    \caption[Graph signal regression with exogenous variables]{A visual representation of a time-series graph signal regression problem with exogenous variables. Here, there are $T$ graph signals measured over a static graph, each with independent missing data (indicated in white). Each signal $\y_t$ is accompanied by a unique vector of global explanatory variables $\x_t$. }
-    \label{fig:regression_results}
+    \def\arraystretch{1.5}
+    \begin{tabular}{@{}lccccccc}
+    \toprule
+    & \multicolumn{3}{c}{RMSE} & \phantom{abc} & \multicolumn{3}{c}{$R^2$} \\
+    \cmidrule{2-4} \cmidrule{6-8}
+    & Train & Validation & Test && Train & Validation & Test \\
+    \midrule 
+    KGR & 0.315 & 0.444 & 0.457 && 0.782 & 0.494 & 0.504 \\
+    RNC & 0.300 & \colorbox{best!35}{0.427} & 0.388 && 0.803 & \colorbox{best!35}{0.532} & \colorbox{best!35}{0.643} \\
+    KG-RNC & \colorbox{best!35}{0.210} & 0.443 & \colorbox{best!35}{0.387} && \colorbox{best!35}{0.903} & 0.497 & \colorbox{best!35}{0.643} \\
+    Ridge (global) & 0.483 & 0.599 & 0.602 && 0.487 & 0.079 & 0.139 \\
+    Ridge (local) & 0.515 & 0.527 & 0.482 && 0.418 & 0.288 & 0.448 \\
+    \bottomrule 
+    \end{tabular}
+    \caption{The Root Mean Square Error and $R^2$ statistic are shown for the five models on the train, validation and test sets. }
+    \label{tab:cali_results} 
+\end{table*}
+
+The fact that RNC achieves significantly better performance than the local ridge model is strong evidence that the topological information expressed in the flexible intercept term provides additional predictive ability. \Cref{fig:cali_preds_ts} shows the prediction made by each model over a six month period, at one of the monitoring stations in the test set. As visible, KGR, RNC and KG-RNC all produce predictions that are broadly in line with the ground truth. On close inspection it is also clear that the RNC and KG-RNC algorithms make very similar predictions, although there are some small deviations. 
+
+
+
+
+
+
+
+\begin{figure}[h]
+    \vspace*{2cm}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Figures/cali_preds.pdf}
+    \vspace*{0.5cm}
+    \caption[Graph signal regression with exogenous variables]{A visual representation of a time-series graph signal regression problem with exogenous variables. Here, there are $T$ graph signals measured over a static graph, each with independent missing data (indicated in white with a red cross). Each signal $\y_t$ is accompanied by a unique vector of global explanatory variables $\x_t$. }
+    \label{fig:cali_preds_ts}
 \end{figure}
+
+\newpage
+
+\Cref{fig:cali_preds_map} shows a colourmap of the prediction made by each algorithm on the 27th of September 20154 (the 1000th day in the dataset). Some notable features are that, while the KGR model produces an output which is clearly smooth with respect to the graph topology, the RNC and KG-RNC algorithms are less visibly smooth. This indicates that, for these models, the contribution of the local explanatory variables is dominating over the flexible intercept term. This is further corroborated by the fact that the predictions from the RNC and KG-RNC models look visibly similar to the local ridge model. This is as expected, since the local ridge model is equivalent to the RNC model but with a fixed intercept and, as established, the flexible intercept seems to be playing a less significant role than the local variables. However, as evidenced by the numerical performance detailed in \cref{tab:cali_results}, clearly the additional flexibility afforded by this term is valuable in enhancing the predictive capability. 
+
+
+\begin{figure}[h]
+    \centering
+    \vspace*{1cm}
+    \includegraphics[width=0.8\linewidth]{Figures/cali_preds_map.pdf}
+    \vspace*{0.5cm}
+    \caption[Graph signal regression with exogenous variables]{A visual representation of a time-series graph signal regression problem with exogenous variables. Here, there are $T$ graph signals measured over a static graph, each with independent missing data (indicated in white with a red cross). Each signal $\y_t$ is accompanied by a unique vector of global explanatory variables $\x_t$. }
+    \label{fig:cali_preds_map}
+\end{figure}
+
+\FloatBarrier
+
+
+
+\section{Conclusions}
+
+In this chapter, we have addressed the topic of multivariate graph signal regression with arbitrary missing data. We began by distinguishing between two modelling scenarios that have appeared in the literature on graph signal regression. The first involves predicting a series of graph signals $\{\y_t\}$, given a series of covariates $\{\x_t\}$, which we refer to as \textit{exogenous} explanatory variables. The second involves predicting a single graph signal $\y$, where each node has an associated covariate vector $\x_n$, which we refer to as \textit{endogenous} explanatory variables. The models presented in this chapter represent extensions to existing work, most notably Kernel Graph Regression (KGR)  and Gaussian Processes over Graphs (GPoG) for the former \citep{Venkitaraman2019,Venkitaraman2020}, and Regression with Network Cohesion (RNC) for the latter \citep{Li2019}. 
+
+Our primary contribution to the problem of exogenous graph signal regression is to accommodate the case where arbitrary missing data exists in the input signals $\{\y_t\}$, which is a common feature of real-world GSP applications. Whilst in \citep{Venkitaraman2019,Venkitaraman2020} the model admits a closed-form solution which can be directly computed via Gaussian elimination, the introduction of missing data in our model makes it necessary to resort to iterative approaches. By highlighting the algebraic similarities to GSR, we demonstrate how the SIM and CGM algorithms developed in the previous chapter can be reappropriated for this purpose with minor modifications. 
+
+Next, we take the RNC model for endogenous explanatory variables developed in \citep{Li2019}, which was originally defined for univariate graph signals, and generalise it to signals on two-dimensional Cartesian product graphs. We also extend RNC by incorporating flexible filter-based priors, whereas the original only included a total square variation Laplacian penalty term. Again, this requires an iterative approach to compute the posterior mean, however, in this case, we find that only the CGM can be utilised. By making use of block-Kronecker-structured preconditioner, we present a modified version of the CGM applicable to RNC. 
+
+Finally, we propose a hybrid model that combines aspects of both KGR and RNC, which we term KG-RNC, where both exogenous and endogenous explanatory variables coexist to aid in the estimation process. This model is also applicable for arbitrary missing data, and we find that it achieves similar performance and produces similar output to the RNC model on our case study using data collected from air monitoring stations. 
+

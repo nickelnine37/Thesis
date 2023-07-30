@@ -231,7 +231,6 @@ The conditioning of the new coefficient matrix $\Q_k$ is significantly improved 
 \end{proof}
 
 
-
 \begin{algorithm}[ht]
     \begin{algorithmic}
     \vspace{0.15cm}
@@ -285,7 +284,7 @@ The conditioning of the new coefficient matrix $\Q_k$ is significantly improved 
     \label{al:LGSR}
 \end{algorithm}
 
-For completeness, we now give the full algorithm for logistic graph signal reconstruction in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:fast_kron_dd}, the runtime complexity of the CGM step is bounded by 
+For completeness, we now give the full algorithm for logistic graph signal reconstruction in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:GSP_dd}, the runtime complexity of the CGM step is bounded by 
 
 \begin{equation*}
     O\left(\frac{0.25 + \gamma}{\gamma} N \sum_{i=1}^d N_i \right)
@@ -513,7 +512,7 @@ Once again, the effect of introducing this preconditioner is to radically improv
 
 \end{proof}
 
-We now present the full algorithm for logistic graph signal reconstruction, which is given in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:fast_kron_dd}, the runtime complexity of the CGM step is bounded by 
+We now present the full algorithm for logistic graph signal reconstruction, which is given in \cref{al:LGSR}. Note that, by making use of the fast Kronecker product algorithm described in \cref{sec:GSP_dd}, the runtime complexity of the CGM step is bounded by 
 
 \begin{equation*}
     O\left(\frac{0.5 + \gamma}{\gamma} NC \Big(C + \sum_{i=1}^d N_i \Big)\right)
@@ -1165,7 +1164,7 @@ This leads to the complete algorithm for computing the class probabilities, give
 \end{algorithm}
 
 
-\section{Image segmentation}
+\section{Image segmentation experiments}
 
 \label{sec:logistic_rnc_application}
 
@@ -1285,7 +1284,7 @@ Instead, we found that using an initial estimate derived from the solution to th
 
 \subsection{Efficient computation in the multiclass L-RNC algorithm}
 
-It is straightforward to see how the binary L-GSR and L-RNC algorithms can be executed efficiently, using the same ideas used consistently in this thesis. The CGM primarily entails repeated multiplications of the coefficient matrix by an arbitrary vector, while the IRLS algorithm involves repetitive execution of the CGM. In the L-GSR model, the coefficient matrix $\Q$ is constructed solely of diagonal and Kronecker-structured operators, enabling accelerated multiplication onto tensors. This is achieved by efficiently applying \cref{al:GFT_dd}, as elaborated in \cref{sec:fast_kron_dd}. In the L-RNC scenario, the coefficient matrix $\widetilde{\Q}$ is a block matrix. The blocks aligned along the diagonal consist only of diagonal and Kronecker operators, while the off-diagonal blocks can be directly computed.
+It is straightforward to see how the binary L-GSR and L-RNC algorithms can be executed efficiently, using the same ideas used consistently in this thesis. The CGM primarily entails repeated multiplications of the coefficient matrix by an arbitrary vector, while the IRLS algorithm involves repetitive execution of the CGM. In the L-GSR model, the coefficient matrix $\Q$ is constructed solely of diagonal and Kronecker-structured operators, enabling accelerated multiplication onto tensors. This is achieved by efficiently applying \cref{al:GFT_dd}, as elaborated in \cref{sec:GSP_dd}. In the L-RNC scenario, the coefficient matrix $\widetilde{\Q}$ is a block matrix. The blocks aligned along the diagonal consist only of diagonal and Kronecker operators, while the off-diagonal blocks can be directly computed.
 
 As we progress to the multiclass L-GSR algorithm, a complication emerges due to the presence of a non-diagonal, non-Kronecker-structured operator, $\RR_{\muu}$, within the coefficient matrix. Nevertheless, as detailed in \cref{sec:multiclass} and explicitly stated in \cref{eq:R_mu_eff}, the action of $\RR_{\muu}$ on a vector or tensor can be computed efficiently by leveraging its special structure, with a time-complexity of $O(NC)$. 
 
@@ -1319,7 +1318,11 @@ The reverse process, of multiplying the transpose of this block onto a vector of
 
 \section{Conclusions}
 
-Classification tasks over networks can be effectively represented by partially labelled binary graph signals. Although the Graph Signal Processing (GSP) community has made significant strides in the study of real-valued signals, binary signals have received comparatively less attention. In this chapter, we have taken a graph spectral approach to network-based classification tasks, examining several statistical models for regression and reconstruction that incorporate binary-valued graph signals.
+In this chapter we have considered reconstruction and regression tasks for binary and categorical multiway graphs signals. Whilst related tasks have been considered in the machine learning community, in the context of semi-supervised learning \cite{Kondor2002,Zhu2003}, the aims those models are distinct from ours. In SSL, the graph is usually formed by considering a distance metric in feature space, whereas we take the perspective of GSP, in which the graph is a fundamental structure that preexists, potentially with additional covariates. Although the graph signal processing community has a mature literature on real-valued signals, there have be been few papers addressing reconstruction and regression with binary and categorical graph signals. The objective of this chapter has been to present novel classification models applicable to signals existing on general $d$-dimensional Cartesian product graphs, a topic which to the best of our knowledge has not been addressed by the ML or GSP communities. 
+
+In our models, we propose placing a Gaussian graph-spectral prior over a real-valued underlying tensor $\Ft$, which is subsequently transformed via the logistic function to generate class probabilities for each node in the product graph. These probabilities therefore vary smoothly with respect to the topology of the graph, inheriting properties from the graph filter, whilst remaining in the interval $[0, 1]$. 
 
 In particular, we have developed several three novel graph signal processing models by generalising the Graph Signal Reconstruction (GSR), Kernel Graph Regression (KGR), and Regression with Network Cohesion (RNC) models, which were developed earlier in this thesis for real-valued signals, to accommodate binary graph signals. This led to the creation of three ``logistic" models: L-GSR, L-KGR, and L-RNC. Similar to their real-valued counterparts introduced in \cref{chap:nd_gsp}, all three models are devised to handle signals residing on the nodes of general Cartesian product graphs, making them relevant for applications such as network time series modelling. Additionally, we introduced multiclass versions of these three algorithms to manage scenarios where nodes need to be classified into one of several groups or classes. 
+
+These new logistic models required the introduction of a new Iteratively Reweighted Least Squares (IRLS) algorithm to solve for the posterior mean. We discussed the convergence properties of this algorithm in depth, and made proposals for increasing the chances of convergence. In particular, the multiclass models often failed to converge when the initial estimate was a tensor of zeros. However, the chances of success were improved dramatically when we used the solution to the equivalent real-valued problem, with a target tensor of $2\Yt - \St$, as the initial estimate instead. 
 
