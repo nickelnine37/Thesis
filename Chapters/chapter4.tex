@@ -175,7 +175,7 @@ As before, $\D_\Ss = \diag{\vecc{\Ss}}$.
 
 \label{sec:KGR_and_GSR}
 
-Despite arising from a different set of modelling assumptions, Kernel Graph Regression as described in \cref{sec:kgr_model_desc} bares a stark mathematical resemblance to Graph Signal Reconstruction. The only key difference between the specification of these two models is that in GSR, the prior distribution over $\vecc{\F}$ has covariance $\HH^2$ [see \cref{eq:F_prior}], and in KGR it has covariance $\K \otimes \HH_N^2$ [see \cref{eq:F_prior3}]. Intuitively speaking, the prior used in the GSR model encodes the belief that the underlying graph signal should be smooth with respect to the topology of the 2D Cartesian product graph. On the other hand, the prior used in the KGR model encodes the belief that the predicted signal should be smooth with respect to the topology of the 1D graph and the explanatory variables, i.e. graph signals $\y_i$ and $\y_j$ are expected to be similar if the vectors $\x_i$ and $\x_j$ are similar. 
+Despite arising from a different set of modelling assumptions, Kernel Graph Regression as described in \cref{sec:kgr_model_desc} bears a stark mathematical resemblance to Graph Signal Reconstruction. The only key difference between the specification of these two models is that in GSR, the prior distribution over $\vecc{\F}$ has covariance $\HH^2$ [see \cref{eq:F_prior}], and in KGR it has covariance $\K \otimes \HH_N^2$ [see \cref{eq:F_prior3}]. Intuitively speaking, the prior used in the GSR model encodes the belief that the underlying graph signal should be smooth with respect to the topology of the 2D Cartesian product graph. On the other hand, the prior used in the KGR model encodes the belief that the predicted signal should be smooth with respect to the topology of the 1D graph and the explanatory variables, i.e. graph signals $\y_i$ and $\y_j$ are expected to be similar if the vectors $\x_i$ and $\x_j$ are similar. 
 
 
 As a result of the differences in their respective priors, the posterior precision matrix for $\vecc{\F}$ is given by $\D_\Ss + \gamma \HH^{-2}$ in the case of GSR and $\D_\Ss + \gamma \K^{-1} \otimes \HH_N^{-2}$ in the case of KGR. In both cases, it is the sum of $\D_\Ss$ and a Hermitian matrix. To make this correspondence clearer, we can expand the second term of each expression in terms of its respective eigendecomposition. For GSR, this is
@@ -429,7 +429,7 @@ We propose that an effective preconditioner is given by
 \end{equation}
 
 
-where, as before, $\U = \U_T \otimes \U_N $. We choose this preconditioner because it transforms the block-diagonal elements of the original coefficient matrix $\widetilde{\PP}$ into matrices with eigenvalues bounded between $1 + \gamma$ and $\gamma$. In particular, the new coefficient matrix is given by
+where, as before, $\U = \U_T \otimes \U_N $. We chose this preconditioner because it transforms the block-diagonal elements of the original coefficient matrix $\widetilde{\PP}$ into matrices with eigenvalues bounded between $1 + \gamma$ and $\gamma$. In particular, the new coefficient matrix is given by
 
 \begin{equation*}
     \widetilde{\PSI}^\top \widetilde{\PP}  \widetilde{\PSI} = 
@@ -631,7 +631,7 @@ As visible, RNC and KG-RNC demonstrate similar performance and generally obtain 
     \label{tab:cali_results} 
 \end{table*}
 
-The fact that RNC achieves significantly better performance than the local ridge model is strong evidence that the topological information expressed in the flexible intercept term provides additional predictive ability. \Cref{fig:cali_preds_ts} shows the prediction made by each model over a six month period, at one of the monitoring stations in the test set. As visible, KGR, RNC and KG-RNC all produce predictions that are broadly in line with the ground truth. On close inspection it is also clear that the RNC and KG-RNC algorithms make very similar predictions, although there are some small deviations. 
+The fact that RNC achieves significantly better performance than the local ridge model is strong evidence that the topological information expressed in the flexible intercept term provides additional predictive ability. \Cref{fig:cali_preds_ts} shows the prediction made by each model over a six-month period, at one of the monitoring stations in the test set. As visible, KGR, RNC and KG-RNC all produce predictions that are broadly in line with the ground truth. On close inspection, it is also clear that the RNC and KG-RNC algorithms make very similar predictions, although there are some small deviations. 
 
 
 

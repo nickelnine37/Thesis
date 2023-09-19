@@ -181,7 +181,7 @@
 %	defined as \examname above so you cite it as \examname
 %---------------------------------   
 
-\thesistitle{Bayesian Reconsruction and Regression with Multivariate Graph Signals} % Your thesis title - this is used in the title and abstract
+\thesistitle{Bayesian Reconstruction and Regression with Multivariate Graph Signals} % Your thesis title - this is used in the title and abstract
 %---------------------------------   
 \supervisor{Prof. Mike \textsc{Chantler} \& \\ Prof. Gareth W. \textsc{Peters}} % You supervisor's name - this is used in the title page
 %---------------------------------   

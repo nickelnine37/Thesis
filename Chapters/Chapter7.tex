@@ -149,7 +149,7 @@ where $\D_{\muu}(\f)$ is a diagonal matrix with the following definition.
     \D_{\muu}(\f) = \text{diag}\big(\s \circ \muu(\f) \circ (\one - \muu(\f))\big)
 \end{equation}
 
-A derivation of the expressions for both gradient and the Hessian in this context can be found in \cref{the:gradient_and_hesian}. Note that they are both evaluated at a given $\f$. 
+A derivation of the expressions for both the gradient and the Hessian in this context can be found in \cref{the:gradient_and_hesian}. Note that they are both evaluated at a given $\f$. 
 
 Consider the update formula given in \cref{eq:irls_update}. Substituting in the derived values of $\g(\f)$ and $\PP(\f)$, and using the shorthands
 
@@ -1318,7 +1318,7 @@ The reverse process, of multiplying the transpose of this block onto a vector of
 
 \section{Conclusions}
 
-In this chapter we have considered reconstruction and regression tasks for binary and categorical multiway graphs signals. Whilst related tasks have been considered in the machine learning community, in the context of semi-supervised learning \cite{Kondor2002,Zhu2003}, the aims those models are distinct from ours. In SSL, the graph is usually formed by considering a distance metric in feature space, whereas we take the perspective of GSP, in which the graph is a fundamental structure that preexists, potentially with additional covariates. Although the graph signal processing community has a mature literature on real-valued signals, there have be been few papers addressing reconstruction and regression with binary and categorical graph signals. The objective of this chapter has been to present novel classification models applicable to signals existing on general $d$-dimensional Cartesian product graphs, a topic which to the best of our knowledge has not been addressed by the ML or GSP communities. 
+In this chapter, we have considered reconstruction and regression tasks for binary and categorical multiway graph signals. Whilst related tasks have been considered in the machine learning community, in the context of semi-supervised learning \cite{Kondor2002,Zhu2003}, the aims of those models are distinct from our own. In SSL, the graph is usually formed by considering a distance metric in feature space, whereas we take the perspective of GSP, in which the graph is a fundamental structure that preexists, potentially with additional covariates. Although the graph signal processing community has a mature literature on real-valued signals, there have been few papers addressing reconstruction and regression with binary and categorical graph signals. The objective of this chapter has been to present novel classification models applicable to signals existing on general $d$-dimensional Cartesian product graphs, a topic which to the best of our knowledge has not been addressed by the ML or GSP communities. 
 
 In our models, we propose placing a Gaussian graph-spectral prior over a real-valued underlying tensor $\Ft$, which is subsequently transformed via the logistic function to generate class probabilities for each node in the product graph. These probabilities therefore vary smoothly with respect to the topology of the graph, inheriting properties from the graph filter, whilst remaining in the interval $[0, 1]$. 
 

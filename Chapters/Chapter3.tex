@@ -110,12 +110,6 @@ Each definition of a graph product corresponds to the union of a specific subset
     \label{fig:graph_products}
 \end{figure}
 
-% choice of product effect the sparsity or A/cardinality of V
-
-% What is the natural 256 ordering in terms of sparsity
-
-% make small example in terms of vertex order
-
 Given these definitions, it may seem that all the standard graph products are non-commutative in the sense that $\A_A \oplus \A_B  \neq \A_B \oplus \A_A $ etc. However, the graphs $\mathcal{G}_A \, \diamond \, \mathcal{G}_B$ and $\mathcal{G}_B \, \diamond \, \mathcal{G}_A$ are in fact isomorphically identical in the case of the Cartesian, direct and strong products. This is not the case for the Lexicographic product \citep{Imrich2000}.
 
 \subsection{The spectral properties of graph products}
@@ -262,7 +256,7 @@ We observe that defining the filtering operation in this manner implies that the
     \G_{ba} =  g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)
 \end{equation}
 
-where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. In order for the defintion of a 2D anisotropic filter to remain consistent with the underlying Cartesian product graph, we note that all filter we list are 
+where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. In order for the definition of a 2D anisotropic filter to remain consistent with the underlying Cartesian product graph, we note that all filters we list are given by a function of a weighted sum of each Laplacian eigenvalue. Other more general functions of $\lambda^{(A)}_a$ and $\lambda^{(B)}_b$ will also result in operators that commute with the Laplacian but cannot be consistently considered graph spectral operators on the Cartesian product graph. 
 
 Similarly defined two-dimensional filters have appeared in image processing literature \citep{Aubert2006}, however, their use in graph signal processing so far has been limited to time-varying graph signal models. In \cite{Romero2017}, the authors propose `space-time kernels', and in \citep{Grassi2018, Isufi2017, Loukas2016}, the authors discuss joint time-vertex filters. These models can essentially be understood as operating on a two-dimensional Cartesian product graph when one of the graphs takes the form of a path or a cycle graph. However, to the best of our knowledge, no one has addressed filters applicable to general two-dimensional Cartesian product graphs.  \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
 
@@ -345,7 +339,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
         (\U_T)_{ij} = \cos \Big( \, \frac{j - 1}{T}\big(i - \frac{1}{2}\big)\pi \, \Big)
     $$
 
-    where the columns of $\U$ are appropriately normalised such that the magnitude of each eigenvector is one. Furthermore, this implies that that the graph Fourier transform of a signal $\y \in \R^{T}$ is given by the orthogonal type-II Discrete Cosine Transform (DCT) \citep{Ahmed1974}. This is of significance, as it means we can leverage Fast Cosine Transform (FCT) algorithms \citep{Makhoul1980} which operate in a similar manner to the well-known Fast Fourier Transform (FFT) \citep{Cooley1965}. See chapter 4 of \cite{Rao1990} for an overview of FCT algorithms. In general, FFT-type algorithms are challenging to derive for the GFT \citep{LeMagoarou2016}, however, this is a simple case where it can be achieved. 
+    where the columns of $\U$ are appropriately normalised such that the magnitude of each eigenvector is one. Furthermore, this implies that the graph Fourier transform of a signal $\y \in \R^{T}$ is given by the orthogonal type-II Discrete Cosine Transform (DCT) \citep{Ahmed1974}. This is of significance, as it means we can leverage Fast Cosine Transform (FCT) algorithms \citep{Makhoul1980} which operate in a similar manner to the well-known Fast Fourier Transform (FFT) \citep{Cooley1965}. See chapter 4 of \cite{Rao1990} for an overview of FCT algorithms. In general, FFT-type algorithms are challenging to derive for the GFT \citep{LeMagoarou2016}, however, this is a simple case where it can be achieved. 
 
     \vspace{0.2cm}
 
@@ -360,11 +354,6 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
     \begin{center}
         \includegraphics[width=0.9\linewidth]{Figures/DCT.pdf}
     \end{center}
-
-    % write algorithm explicitly
-    % what is aliasing in this context? 
-    % Nyquist for GFT? 
-
 
 }
 
@@ -892,7 +881,7 @@ Similarly, in the conjugate gradient method, the worst-case number of steps requ
 
 where $\D_\G = \diag{\vecc{\G}}$. Once again, this expression contains the matrix $\G$, which depends on the strength of the graph filter function parameter $\beta$, the matrix $\D_{\Ss}$, which depends on the structure of this missing data, and the precision parameter $\gamma$. Consequently, we should expect that, in general, convergence of the CGM is affected by all three of these variables. 
 
-Whilst it is not possible in general to obtain an analytic expression for $\rho$ or $\kappa$ as a function of $\gamma, \beta$ and $m$, we can nonetheless gain useful insight into how each of these variables can be expected to affect convergence. We achieve this by considering two distinct limits: one in which the graph filter is very strong (i.e $\beta$ is very large) and one in which the graph filter is very weak (i.e. $\beta$ is very small). 
+Whilst it is not possible in general to obtain an analytic expression for $\rho$ or $\kappa$ as a function of $\gamma, \beta$ and $m$, we can nonetheless gain useful insight into how each of these variables can be expected to affect convergence. We achieve this by considering two distinct limits: one in which the graph filter is very strong (i.e. $\beta$ is very large) and one in which the graph filter is very weak (i.e. $\beta$ is very small). 
 
 \subsection{Upper bound on convergence: the weak filter limit}
 
@@ -1047,7 +1036,7 @@ In the preceding two sections, we have derived several formulae that characteris
     $\beta \rightarrow 0$      & $ \displaystyle \frac{1}{\log(1 + \gamma)}$   & $\displaystyle \gamma^{-1}$    &&    $\displaystyle \sqrt{\frac{1 + \gamma}{\gamma}}$ & $\displaystyle \gamma^{-1/2}$    \\ \rule{0pt}{6ex}
     $\beta \rightarrow \infty$ & $\displaystyle \frac{1}{\log(1 + \gamma) - \log m}$ & $\displaystyle -\frac{1}{\log m}$    &&  $\displaystyle \sqrt{\frac{1 - m + \gamma}{\gamma}}$ & $\displaystyle \left(\frac{\gamma}{1 - m} \right)^{-1/2}$ \\[0.5cm] \bottomrule 
     \end{tabular}
-    \caption{The scaling behaviour of the number of steps required for convergence is shown as a function of $\gamma$ and $m$. The upper row gives the behaviour in the limit of a weak filter, and the lower row gives the behaviour in the limit of a strong filter. We also show the dominant term in the Taylor expansion about $\gamma=0$ (``small $\gamma$" columns) which gives a clearer picture of the asymptotic behaviour as $\gamma \rightarrow 0$. }
+    \caption[The scaling behaviour of the number of steps required for convergence as a function of $\gamma$ and $m$.]{The scaling behaviour of the number of steps required for convergence is shown as a function of $\gamma$ and $m$. The upper row gives the behaviour in the limit of a weak filter, and the lower row gives the behaviour in the limit of a strong filter. We also show the dominant term in the Taylor expansion about $\gamma=0$ (``small $\gamma$" columns) which gives a clearer picture of the asymptotic behaviour as $\gamma \rightarrow 0$. }
     \label{tab:conv_SIM_CGM} 
 \end{table*}
 
@@ -1081,7 +1070,7 @@ For the second part of experiment 1, we set $\beta = \infty$, corresponding to t
     \begin{center} 
     \includegraphics[width=\linewidth]{Figures/m_gamma_3d_plot.pdf}
     \end{center}
-    \caption[Strog Filter Limit convergence experiments]{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colourmap corresponds to vertical height and is normalised across each plot to aid comparison. }}
+    \caption[Strong Filter Limit convergence experiments]{\small{The number of iterations required for convergence is shown both theoretically and empirically for the SIM and CGM in the strong filter limit, where $\beta=\infty$. In this case, each plot is a function of both $m$ and $\gamma$. The colourmap corresponds to vertical height and is normalised across each plot to aid comparison. }}
     \label{fig:m_gamma_3d_plot}
 \end{figure}
 
