@@ -1094,69 +1094,69 @@ This leads to the complete algorithm for computing the class probabilities, give
     \begin{algorithmic}
     \vspace{0.15cm}
     \Require{Explanatory variables $\Xt \in \R^{N_1 \times ... \times N_d \times M}$}
-    \vspace{0.05cm}
+    % \vspace{0.05cm}
     \Require{Observed binary tensor $\Yt \in \{0, 1\}^{N_1 \times ... \times N_d \times C}$}
-    \vspace{0.05cm}
+    % \vspace{0.05cm}
     \Require{Binary sensing tensor $\St \in \{0, 1\}^{N_1 \times ... \times N_d}$}
-    \vspace{0.05cm}
+    % \vspace{0.05cm}
     \Require{Cartesian product graph Laplacians $\left\{\LL^{(i)} \in \R^{N_i \times N_i}\right\}_{i=1}^d$}
-    \vspace{0.05cm}
+    % \vspace{0.05cm}
     \Require{Graph regularisation parameter $\gamma \in \R^+$}
-    \vspace{0.05cm}
+    % \vspace{0.05cm}
     \Require{Graph filter function $g(\, \cdot\, \,; \betaa)$}
-    \vspace{0.05cm}
+    % \vspace{0.05cm}s
     \Require{Feautre regularisation parameter $\lambda \in \R^+$}
     \vspace{0.25cm}
     \State{$\X \leftarrow \text{reshape}\big(\Xt, (N, M)\big)$ }
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\y \leftarrow \vecrm{\Yt}$ }
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\s \leftarrow \vecrm{\St}$ }
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{Decompose each $\LL^{(i)}$ into $\U^{(i)} \LAM^{(i)} \left(\U^{(i)}\right)^\top$ }
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\U \leftarrow \bigotimes \U^{(i)}$ }
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{Compute $\Gt \in \R^{N_1 \times ... \times N_d}\;$ as $\;\Gt_{\nn} = g\big(\lambdaa(\nn); \, \betaa\big) \quad$ (see \cref{eq:Gn_dd2,eq:lam_of_n})}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\D_\Gt \leftarrow \diag{\vecrm{\Gt}}$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\D_\St \leftarrow \diag{\s}$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{Initialise $\thetaa \in \R^{N+M}$ randomly}
-    \vspace{0.25cm}
+    \vspace{0.05cm}
     \While{$|\Delta \thetaa| > \text{tol}$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\muu \leftarrow \exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)/ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C $}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\M \leftarrow \text{reshape}\big(\muu, (N, C)\big)$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\RR_{\muu} \leftarrow  \big(\D_\St \otimes \I_C\big) \left(\Diag{\muu} - \sum_{n=1}^N \mathbf{\Delta}_{n} \otimes \m_n \m_n^\top \right)\quad$ ($\m_n$ is the $n$-th row of $\M$)}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{Decompose $\X^\top  \RR_{\muu} \X$ into $\U_M \LAM_M \U_M^\top$ }
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\D_M \leftarrow  \left(\LAM_M + \lambda \I_M\right)^{-1/2}$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\PSI \leftarrow  \begin{bmatrix}
         \U \D_\Gt & \zero \\
         \zero & \U_M \D_M
     \end{bmatrix}$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\tee \leftarrow \begin{bmatrix}
         \D_\St \\ \X^\top \D_\St
     \end{bmatrix} \left(\y - \muu +  \RR_{\muu} \big[\I_N \;\; \X \big] \thetaa \right)$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\Q \leftarrow \begin{bmatrix}
         \D_\Gt \U^\top \RR_{\muu} \U \D_\Gt + \gamma \I_{NT}  &  \D_\Gt \U^\top \RR_{\muu} \X \U_M \D_M \\[0.1cm] 
         \D_M \U_M^\top \X^\top \RR_{\muu} \U \D_\Gt & \I_M
         \end{bmatrix}$}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \State{$\thetaa \leftarrow \PSI \Q^{-1} \PSI^\top \tee \quad$ solve with the CGM}
-    \vspace{0.15cm}
+    \vspace{0.05cm}
     \EndWhile
-    \vspace{0.25cm}
-    \State{$\muu \leftarrow \exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)/ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C $}    
     \vspace{0.15cm}
+    \State{$\muu \leftarrow \exp\left(\big[\I_N \;\; \X \otimes \I_C \big] \thetaa\right)/ \Big( \big(\I_N \otimes \one_C\big) \exp\big(\big[\I_N \;\; \X \otimes \I_C\big] \thetaa\big)\Big) \otimes \one_C $}    
+    \vspace{0.05cm}
     \Ensure{$\text{reshape} \big( \muu, \, (N_1, ..., N_d) \big)$}
     \end{algorithmic}
     \caption{Multiclass Logistic Regression with Network Cohesion}

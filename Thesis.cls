@@ -440,15 +440,15 @@ Unless otherwise specified, the following naming conventions apply.
 
 \newcommand\listidentities{Identities}
 \usepackage{longtable}
-\newcommand\listofidentities[2]{
+\newcommand\listofidentities[1]{
 \btypeout{\listidentities}
 \addtotoc{\listidentities}
     \chapter*{\listidentities
       \@mkboth{
           \MakeUppercase\listidentities}{\MakeUppercase\listidentities}}
 \vspace{0.2cm}
-\begin{longtable}[c]{#1}#2\end{longtable}\par
-    \cleardoublepage
+#1
+   
 }
 
 %---------------------------------   

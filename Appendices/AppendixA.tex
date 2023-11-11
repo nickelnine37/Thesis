@@ -260,13 +260,13 @@ In order to prove the theorem, we must show that the partial derivative of each 
     \frac{\partial \,  n_{\text{CGM}}(\gamma, m ; \; \beta \rightarrow \infty)}{\partial \, \gamma}  = - \frac{1 - m}{2 \gamma^2 \sqrt{\frac{1 - m + \gamma}{\gamma}}}
 \end{equation*}
 
-In each of these expressions we have a fraction for which both the numerator and denominator can easily be shown to be strictly positive over the valid ranges of $\gamma$ and $m$. Each expression also includes a negative sign in front. As such, every expression is strictly negative. 
+In each of these expressions, we have a fraction for which both the numerator and denominator can easily be shown to be strictly positive over the valid ranges of $\gamma$ and $m$. Each expression also includes a negative sign in front. As such, every expression is strictly negative. 
 
 \end{proof}
 
 \begin{theorem}
     \label{the:m_deriv}
-    In the limit of a strong filter, for any fixed value of $\gamma$, the number of iterations for convergence will always increase as the proportion of missing data $m$ increases for the SIM, whereas it the number will always decrease for the CGM.  
+    In the limit of a strong filter, for any fixed value of $\gamma$, the number of iterations for convergence will always increase as the proportion of missing data $m$ increases for the SIM, whereas the number will always decrease for the CGM.  
 \end{theorem}
 
 \begin{proof}
@@ -312,7 +312,7 @@ In each of these expressions we have a fraction for which both the numerator and
         \vecc{\Y} \, | \, \thetaa \sim \mathcal{N}\left(  \big[ \D_\Ss \;\; \D_\Ss \X \big]\thetaa  , \; \D_\Ss \right)
     \end{equation}
 
-    The prior for $\thetaa$ is given in equation \cref{eq:theta_prior}. Therefore, using Bayes rule, we can write 
+    The prior for $\thetaa$ is given in equation \cref{eq:theta_prior}. Therefore, using Bayes' rule, we can write 
 
     \begin{align*}
         -2\log \pi(\thetaa | \Y) &\propto \Big(\vecc{\Y} - \big[ \D_\Ss \;\; \D_\Ss \X \big] \thetaa \Big)^\top \D_\Ss^{-1} \Big(\vecc{\Y} - \big[ \D_\Ss \;\; \D_\Ss \X \big] \thetaa \Big) \\[0.2cm]
@@ -362,11 +362,40 @@ In each of these expressions we have a fraction for which both the numerator and
 \begin{theorem}
     \label{the:efficient_H_diag}
 
-    This diagonal of the matrices $\HH$ and $\HH^2$ can be efficiently calculated. 
+    This diagonal of the matrices $\HH$ and $\HH^2$ can be efficiently calculated as follows. 
+
+    \begin{equation}
+        \diagi{\HH} = (\U \circ \U) \, \diag{\vecrm{\Gt}}
+    \end{equation}
+    
+    and 
+
+    \begin{equation}
+        \diagi{\HH^2} = (\U \circ \U) \, \diag{\vecrm{\Gt \circ \Gt}}
+    \end{equation}
+
 \end{theorem}
 
 \begin{proof}
-    Hi 
+
+    To prove these statements, we can use the identity given in the front matter. 
+
+    \begin{equation}
+        \text{diag}^{-1} \big( \A\, \text{diag}(\mathbf{x}) \,\B \big) = (\B^{\top} \circ \A) \, \mathbf{x}
+    \end{equation}
+
+    In the case of $\HH = \U \diag{\vecrm{\Gt}} \U^\top$, this corresponds to the following. 
+
+    \begin{equation}
+        \text{diag}^{-1} \big( \U \, \text{diag}(\vecrm{\Gt}) \,\U^\top \big) = (\U \circ \U) \, \text{diag}(\vecrm{\Gt})
+    \end{equation}
+
+    For $\HH^2 = \U \diag{\vecrm{\Gt}}^2 \U^\top$, this corresponds to the following. 
+
+    \begin{equation}
+        \text{diag}^{-1} \big( \U \, \text{diag}(\vecrm{\Gt})^2 \,\U^\top \big) = (\U \circ \U) \, \text{diag}(\vecrm{\Gt \circ \Gt})
+    \end{equation}
+    
 \end{proof}
 
 
@@ -415,7 +444,7 @@ In each of these expressions we have a fraction for which both the numerator and
         \log (\one - \muu) &= - \f- \log\big(\one + \exp(-\f) \big) 
     \end{align}
 
-    Note that all operations in these expressions, including division, logarithms, and exponentiation should be understood as element-wise. Using these equations, we can rewrite expression for $\xi(\f)$. 
+    Note that all operations in these expressions, including division, logarithms, and exponentiation should be understood as element-wise. Using these equations, we can rewrite the expression for $\xi(\f)$. 
 
     \begin{align*}
         \xi(\f) &= - \log \muu^\top (\s \circ \y) - \log(\one - \muu)^\top (\s \circ (\one - \y)) + \frac{\gamma}{2} \f^\top \HH^{-2} \f \\[0.1cm]
