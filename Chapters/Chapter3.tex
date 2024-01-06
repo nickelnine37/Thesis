@@ -258,7 +258,7 @@ We observe that defining the filtering operation in this manner implies that the
 
 where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. In order for the definition of a 2D anisotropic filter to remain consistent with the underlying Cartesian product graph, we note that all filters we list are given by a function of a weighted sum of each Laplacian eigenvalue. Other more general functions of $\lambda^{(A)}_a$ and $\lambda^{(B)}_b$ will also result in operators that commute with the Laplacian but cannot be consistently considered graph spectral operators on the Cartesian product graph. 
 
-Similarly defined two-dimensional filters have appeared in image processing literature \citep{Aubert2006}, however, their use in graph signal processing so far has been limited to time-varying graph signal models. In \cite{Romero2017}, the authors propose `space-time kernels', and in \citep{Grassi2018, Isufi2017, Loukas2016}, the authors discuss joint time-vertex filters. These models can essentially be understood as operating on a two-dimensional Cartesian product graph when one of the graphs takes the form of a path or a cycle graph. However, to the best of our knowledge, no one has addressed filters applicable to general two-dimensional Cartesian product graphs.  \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
+Similarly defined two-dimensional filters have appeared in image processing literature \citep{Aubert2006}, however, their use in graph signal processing so far has been limited to time-varying graph signal models. In \cite{Romero2017}, the authors propose `space-time kernels', and in \citep{Grassi2018, Isufi2017, Loukas2016, Jiang2021}, the authors discuss joint time-vertex filters. These models can essentially be understood as operating on a two-dimensional Cartesian product graph when one of the graphs takes the form of a path or a cycle graph, which gives rise to the standard Discrete Fourier Transform (DFT) in the time dimension. However, to the best of our knowledge, no one has addressed filters applicable to general two-dimensional Cartesian product graphs.  \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
 
 
 \begin{table}[t]
@@ -387,7 +387,7 @@ Our model is based on the assumption that $\Y$ is a noisy partial observation of
     \Y = \Ss \circ \big(\F + \E \big)
 \end{equation}
 
-The matrix $\E$ represents the model error and is assumed to have an independent normal distribution with unit variance. Therefore, the probability distribution of $\Y$ given the latent signal $\F$ is
+The matrix $\E$ represents the model error and is assumed, without loss of generality, to have an independent normal distribution with unit variance which can be achieved by standardising $\Y$ appropriately. Therefore, the probability distribution of $\Y$ given the latent signal $\F$ is
 
 \begin{equation}
     \label{eq:Y_given_F}
@@ -434,7 +434,7 @@ A proof of this can be found in the appendix, theorem \ref{the:F_posterior}. In 
 
 We return to the question of sampling from the posterior and estimating the posterior covariance directly in \cref{chap:variance}.
 
-Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this paper aim to overcome these problems.
+Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this section aim to overcome these problems.
 
 
 Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each is part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
@@ -759,7 +759,7 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
         \vspace{0.25cm}
         \State{Decompose $\LL_N$ into $\U_N \LAM_L \U_N^\top$ and $\LL_T$ into $\U_T \LAM_T \U_T^\top$}
         \vspace{0.15cm}
-        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)$ }
+        \State{Compute $\G \in \R^{N \times T}$ as $\G_{nt} = g \left(\lambda^{(N)}_n, \lambda^{(T)}_t; \, \betaa \right)$ }
         \vspace{0.15cm}
         \State{Initialise $\Z \in \R^{N \times T}$ randomly}
         \vspace{0.15cm}

@@ -33,7 +33,7 @@
         \end{cases}
     \end{equation}
 
-    We can use this definition to rewrite equation \ref{eq:Y_given_F} for the probability distribution of $\Y | \F$.
+    We can use this definition to rewrite \cref{eq:Y_given_F} for the probability distribution of $\Y | \F$.
 
     \begin{equation}
         \vecc{\Y} \, | \, \F \, \sim \, \lim_{\epsilon \rightarrow 0} \, \Bigg[ \, \mathcal{N}\Big(\vecc{\Ss_{\epsilon} \circ \F}, \; \diag{\vecc{\Ss_{\epsilon}}}\Big) \, \Bigg]
@@ -69,7 +69,7 @@
     Up to an additive constant not dependent $\F$, this can be written as 
 
     \begin{equation}
-        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \Big( \vecc{\F}^\top \big( \diag{\vecc{\Ss}} + \gamma \HH^{-2}\big) \vecc{\F} - 2 \, \vecc{\Y}^\top \F \Big)
+        -\log \pi\big(\vecc{\F} \, | \, \Y \big) = \frac{1}{2} \Big( \vecc{\F}^\top \big( \diag{\vecc{\Ss}} + \gamma \HH^{-2}\big) \vecc{\F} - 2 \, \vecc{\Y}^\top \vecc{\F} \Big)
     \end{equation}
 
     Using the conjugacy of the normal distribution, by direct inspection we can conclude that the posterior covariance is given by 
