@@ -21,7 +21,7 @@ Meanwhile, in the data science and machine learning community, concepts from SGT
 
 Around the same time, in the signal processing community, authors were working on both distributed and global algorithms for denoising and regression on sensor networks \cite{Guestrin2004, Wagner2005, Wagner2006}. 
 
-In the early 2010s, two distinct yet complementary approaches to GSP emerged, as discussed in \cite{Leus2023}. The first approach, often credited to \cite{Sandryhaila2013, Sandryhaila2013b}, adopted an algebraic perspective, building upon existing work in Algebraic Signal Processing. This methodology primarily focused on defining the Graph Fourier Transform and related concepts using the foundational operation of graph shifts. Conversely, the second approach, as proposed by  \cite{Hammond2011, Shuman2013}, endorsed the use of the graph Laplacian as the core component for GSP algorithms. This second paradigm, which aligns closely with the concepts presented in \cref{sec:fundamentals}, is also the primary approach utilised in this thesis.
+In the early 2010s, two distinct yet complementary approaches to GSP emerged, as discussed in \cite{Leus2023}. The first approach, often credited to \cite{Sandryhaila2013, Sandryhaila2013b}, adopted an algebraic perspective, building upon existing work in Algebraic Signal Processing. This methodology primarily focused on defining the Graph Fourier Transform and related concepts using the foundational operation of graph shifts. Conversely, the second approach, as proposed by  \cite{Hammond2011, Shuman2013}, endorsed the use of the graph Laplacian as the central operator for GSP algorithms. This second paradigm, which aligns closely with the concepts presented in \cref{sec:fundamentals}, is also the primary approach utilised in this thesis.
 
 
 \section{Graph kernels and graph filters}
@@ -30,7 +30,7 @@ In the early 2010s, two distinct yet complementary approaches to GSP emerged, as
 
 In GSP, two distinct but closely related concepts are graph filters and graph kernels. In the Laplacian-based GSP paradigm, both can be understood as spectral operators which modify the frequency profile of a graph signal, providing a direct generalisation of conventional filters in classical signal processing. (It is worth noting that, in this context, `graph kernel' should not be confused with another concept, bearing the same name, which refers to distance measures between pairs of graphs \citep{Kriege2020}.) Graph filters/kernels play a fundamental role in GSP, and are at the heart of numerous algorithms including reconstruction \citep{Romero2017b}, anomaly detection \citep{Xiao2021}, GNNs \citep{Gama2020} and graph learning \citep{Mateos2019}. 
 
-A graph filter or kernel is characterised by a function $g(\lambda)$, which is applied to the frequency profile of a signal $\y$. This is performed by initially transforming $\y$ into the frequency domain via the GFT, then subsequently applying $g(\cdot)$ to each frequency component independently, and finally transforming back to the node domain via the IGFT. Consequently, it can be represented by a matrix operator $\HH \in \R^{N \times N}$ as follows.
+A graph filter or kernel is characterised by a function $g(\lambda)$, which can be applied to scale the frequency profile of a signal $\y$. This is performed by initially transforming $\y$ into the frequency domain via the GFT, then subsequently scaling the $i$-th frequency component by $g(\lambda_i)$ independently, and finally transforming back to the node domain via the IGFT. Consequently, it can be represented by a matrix operator $\HH \in \R^{N \times N}$ as follows.
 
 \begin{equation}
     \HH  = \U g(\LAM) \U^\top 
@@ -64,7 +64,7 @@ Equivalently, $\HH$ can be understood as originating from the direct application
 In the GSP community, the term `filter' is typically preferred when referring to this class of operator \citep{Shuman2013}, although some favour the term `kernel' \citep{Ioannidis2016, Romero2017}. Often, the primary practical distinction is that a kernel is an increasing function, used to construct penalty terms in regularised problems, whereas a filter is a decreasing one, interpreted as providing spectral transformations on graph signals. In \cite{Romero2017b}, the authors advocate for the preferential use of the term kernel, arguing that many GSP methods have an elegant interpretation in terms of Reproducing Kernel Hilbert Spaces (RKHSs). Within the machine learning community, where kernel methods and RKHSs are common, the kernel interpretation is typically favoured \citep{Kondor2002, Smola2003}. Regardless, either convention can be used, and in this thesis, we predominantly describe our methods in terms of filters since they provide a more direct correlation with conventional signal processing techniques, offering an intuitive way to manipulate and reason about the spectral content of graph signals.
 
 
-\subsection{Probability distributions over graph signals}
+\subsection{Bayesian approaches to GSP}
 
 Spectral operators can be used to define probability distributions over smooth graph signals. An early example of this approach can be found in \cite{Gadde2015}, where the authors propose a Gaussian Random Field (GRF) model for generating graph signals. In particular, they propose a method for vertex sampling that treats signals as random variables drawn from the following underlying multivariate Gaussian distribution.
 
@@ -96,9 +96,10 @@ Further insight into this model can be gained from the following considerations.
     \end{figure}
 % \end{wrapfigure}
 
-This approach is also embraced in \cite{Venkitaraman2020}, where the authors use graph filters to construct a Gaussian process regression model over graphs. In particular, they use a GRF to specify the prior distribution over their weight matrix, resulting in predictions which are smooth with respect to the graph topology. The filter-based GRF model also provides interpretation for the work of \cite{Gadde2015}, which can be seen as a special case of this more general formulation. In particular, their chosen covariance matrix can be written in the form $(\LL + \delta \I)^{-1} = \U g^2(\LAM) \U^\top$, where the filter function is given by $g(\lambda) = 1 / \sqrt{\lambda + \delta}$. Similarly, \citep{Perraudin2017} suggest a flexible class of Laplacian-based covariance matrices, however, their focus is on stationary signals with potentially non-Gaussian distributions. In other work such as \cite{Dong2016}, the authors take a Bayesian approach to the problem of graph learning, using similar graph-spectral priors. 
+This approach is also embraced in \cite{Venkitaraman2020}, where the authors use graph filters to construct a Gaussian process regression model over graphs. In particular, they use a GRF to specify the prior distribution over their weight matrix, resulting in predictions that are smooth with respect to the graph topology. The filter-based GRF model also provides interpretation for the work of \cite{Gadde2015}, which can be seen as a special case of this more general formulation. In particular, their chosen covariance matrix can be written in the form $(\LL + \delta \I)^{-1} = \U g^2(\LAM) \U^\top$, where the filter function is given by $g(\lambda) = 1 / \sqrt{\lambda + \delta}$. Similarly, \citep{Perraudin2017} suggest a flexible class of Laplacian-based covariance matrices, however, their focus is on stationary signals with potentially non-Gaussian distributions. In other work such as \cite{Dong2016}, the authors take a Bayesian approach to the problem of graph learning, using similar graph-spectral priors. 
 
-In general, many types of GSP models utilising some form of quadratic Laplacian-based regularisation can be interpreted in Bayesian terms, although this often goes undiscussed. In this thesis, we follow the example of \cite{Zhang2015} in describing signal distributions with GRFs. However, unlike any of the aforementioned work, we extend this to multidimensional graph signals (two-dimensional matrix signals in \cref{chap:gsr_2d}, and $d$-dimensional tensor signals in \cref{chap:nd_gsp}). This allows us to build a rich class of Bayesian models for tasks such as multivariate reconstruction and regression. 
+In general, many GSP models utilising some form of quadratic Laplacian-based regularisation can be interpreted in Bayesian terms, although this connection often goes undiscussed \citep{Gribonval2011}. We believe that taking a transparently Bayesian approach to graph signal reconstruction and regression problems has several benefits. Chiefly among them is the ability to characterise the posterior covariance of the predicted signal, which gives a quantitative measure of the uncertainty associated with the prediction at each node. While most GSP models provide only point estimates, Bayesian methods give a richer output which is useful for understanding the prediction veracity and model limitations. Additionally, Bayesian methods offer a principled way of setting model hyperparameters. For example, regularisation terms acquire a more rigorous statistical interpretation, aiding in their practical application. However, Bayesian models also introduce computational challenges and typically require specific domain knowledge from the outset. In the context of GSP, presumptions about the signal's underlying properties must be established beforehand. While this requirement might pose difficulties in certain scenarios, in others, it presents an opportunity. For instance, if the signal of interest is generated through a graph-based diffusion process, employing a diffusion filter is likely to be most effective.
+
 
 \subsection{Approximating graph filters with Chebyshev polynomials}
 
@@ -106,7 +107,7 @@ In general, many types of GSP models utilising some form of quadratic Laplacian-
 
 So far, we have presented graph filters as spectral operators which are constructed by applying a function to the eigenvalues of the graph Laplacian. However, this formulation is predicated on the notion that it is practical to compute and store the eigendecomposition of $\LL$. Since the time complexity of this operation scales as $O(N^3)$, this can quickly become infeasible for large-scale graphs with a high number of nodes. In addition, applying the matrix $\HH$ to a graph signal has complexity $O(N^2)$, in general requiring information from all nodes to compute the filtered signal value at each node. 
 
-On the other hand, a typical feature of graphs is sparsity, since the degree of each node is often independent of the size of the graph. This means that multiplication of a graph signal $\y$ by the Laplacian can often be achieved with complexity $O(N|\mathcal{E}|) \ll O(N^2)$. Furthermore, in the context of a physically realised graph such as a sensor network, computation of $\LL \y$ can be executed `locally', in the sense that the result at any particular node depends only on the signal value at the direct neighbours of that node. 
+On the other hand, a typical feature of graphs is sparsity, since the degree of each node is often independent of the size of the graph. This means that multiplication of a graph signal $\y$ by the Laplacian can often be achieved with complexity $O(|\mathcal{E}|) \ll O(N^2)$. Furthermore, in the context of a physically realised graph such as a sensor network, computation of $\LL \y$ can be executed `locally', in the sense that the result at any particular node depends only on the signal value at the direct neighbours of that node. 
 
 One popular and longstanding technique that takes advantage of both these ideas involves approximating a graph filter using Chebyshev polynomials \citep{Shuman2018}. In general, if a graph filter can be approximated as a polynomial of the graph Laplacian, then we can take advantage of the sparsity of $\LL$ to efficiently filter signals without performing eigendecomposition. Consider the following standard polynomial approximation to a graph filter. 
 
@@ -130,14 +131,22 @@ Standard Chebyshev polynomials form an orthonormal basis with respect to the pro
 
 and can be used to approximate arbitrary functions within this domain. They also have several well-documented advantages in terms of computational robustness and error over standard polynomial approximations that arise from a Taylor series expansion \citep{Rivlin2020}. While the standard Chebyshev polynomials $\{T_k\}$ are valid on the domain $[-1, 1]$, in the context of graph filters, they must be applicable over the range $[0, \lambda_{\text{max}}]$, leading to the transformed variant $\{\bar{T}_k\}$ appearing in \cref{eq:cheb_lap}. These can be defined recursively as follows. 
 
+
+\begin{figure}[t]
+	\centering
+		\includegraphics[width=0.55\linewidth]{Figures/cheb.pdf}
+	\caption[Successive approximations of a filter function using Chebyshev polynomials.]{Successive approximations of the filter function $g(\lambda) = \exp(-3\lambda)$ using Chebyshev polynomials. }
+	\label{fig:Chebyshev}
+\end{figure}
+
 \begin{equation}
-    \bar{T}_k(\LL) = \left(\frac{4 \LL }{\lambda_{\text{max}}}  - 2\right) \bar{T}_{k-1}(\LL) - \bar{T}_{k-2}(\LL)
+    \bar{T}_k(\LL) = \left(\frac{4 }{\lambda_{\text{max}}}  \LL  - 2\I \right) \bar{T}_{k-1}(\LL) - \bar{T}_{k-2}(\LL)
 \end{equation}
 
 subject to the initial conditions
 
 \begin{equation}
-    \bar{T}_0(\LL) = \I_N, \quad \bar{T}_1(\LL) = \frac{2 \LL }{\lambda_{\text{max}}} - \I_N
+    \bar{T}_0(\LL) = \I_N, \quad \bar{T}_1(\LL) = \frac{2}{\lambda_{\text{max}}} \LL - \I_N
 \end{equation}
 
 Note that this definition ensures only repeated multiplications by $\LL$ when applying $\bar{T}_k(\LL)$ to a graph signal. To approximate an arbitrary filter function $g(\lambda)$, the coefficients $c_k$ are given by 
@@ -153,13 +162,6 @@ Note that this definition ensures only repeated multiplications by $\LL$ when ap
 \end{equation}
 
 and can be quickly evaluated numerically. 
-
-\begin{figure}[t]
-	\centering
-		\includegraphics[width=0.55\linewidth]{Figures/cheb.pdf}
-	\caption[Successive approximations of a filter function using Chebyshev polynomials.]{Successive approximations of the filter function $g(\lambda) = \exp(-3\lambda)$ using Chebyshev polynomials. }
-	\label{fig:Chebyshev}
-\end{figure}
 
 
 Chebyshev polynomials appeared in early papers on GSP, such as \citep{Hammond2011}, in which the authors were concerned with defining wavelet transforms on graphs, also defined in terms of Laplacian-based spectral operators $g(\LL)$. Since then, they have been widely used in distributed applications \citep{Shuman2018}, and have also been extensively employed in Graph Neural Networks \citep{Gama2020}. In \cite{Defferrard2017}, Chebyshev polynomials form the basis of convolutional filters with learned parameters, in direct analogy with traditional Convolutional Neural Networks (CNNs). This approach was further developed in \cite{Kipf2017} by reducing the number of terms in the polynomial to mitigate overfitting.
@@ -181,7 +183,7 @@ Graph Signal Reconstruction (GSR), sometimes also known as graph signal interpol
 
 Early work on GSR, such as \cite{Narang2013, Wang2015b, Anis2016}, mainly focused on the reconstruction of bandlimited graph signals. Here, the goal is to find the optimal reconstruction of a signal using only the first $K$ eigenvectors of the graph Laplacian, with a frequency less than $\omega$ (the so-called Paley-Wiener space). In \cite{Narang2013}, for example, this is achieved using an Iteratively Reweighted Least Squares (IRLS) algorithm, with a Chebyshev polynomial approximation to the bandlimited filter. While most work assumes that the cut-off frequency is known, some authors have proposed simultaneously learning it \citep{Varma2015, Marques2016}. In other work, such as \citep{Belkin2004b, Narang2013c, Chen2015}, a simpler Laplacian-based regularisation term is used to penalise the total square variation.
 
-In \citep{Romero2017b}, the authors propose using a flexible parametrisation of the reconstructed signal profile based on graph kernels. This can be understood as a generalisation of previous works where, rather than specifying a particular form of the penalty term, arbitrary kernel functions of the graph Laplacian are utilised to draw functions from an RKHS.
+In \cite{Romero2017b}, the authors propose using a flexible parametrisation of the reconstructed signal profile based on graph kernels. This can be understood as a generalisation of previous works where, rather than specifying a particular form of the penalty term, arbitrary kernel functions of the graph Laplacian are utilised to draw functions from an RKHS.
 
 Several methods have also been proposed for the reconstruction of time-varying graph signals, in so termed Time-Vertex (T-V) problems. In \cite{Qiu2017}, the penalty term in the optimisation objective promotes both smoothness across the graph using a Laplacian penalty, and consistency across time, by introducing a temporal difference operator $\D$. Despite being presented in a slightly different way, this also amounts to a Laplacian penalty, since $\D\D^\top$, which appears in the regularisation term, is precisely the Laplacian of a path graph. The problem is then solved for both the noiseless and noisy cases using a gradient projection algorithm with a backtracking line search. A similar method is adopted in \cite{Giraldo2022}, but with a regularised version of the Laplacian for improved computational robustness. In \cite{Ioannidis2016}, this approach is modified to incorporate a more dynamic penalty that can adjust the strength of regularisation across the graph and across time independently, using so-termed ``space-time kernels''. Furthermore, in this paper, as well as \cite{Romero2017, Ioannidis2018}, the authors propose an online algorithm that can accommodate dynamic graphs (i.e. graphs for which the edge weights can change over time), although this is only possible for a special class of kernel which have a tri-diagonal inverse. 
 
@@ -200,7 +202,7 @@ In this thesis, the definition of graph signal regression we use differs somewha
 
 \subsection{Exogenous case: Kernel Graph Regression and Gaussian Processes on Graphs}
 
-The task of graph regression with endogenous explanatory variables can be stated as follows. Consider a series of $T$ real-valued graph signals, each measured on a graph comprising $N$ nodes, $\{\y_t \in \R^N\}_{t=1}^T$. Each of these signals has a corresponding associated length-$M$ vector of explanatory variables $\{\x_t\}_{t=1}^T$. The goal is to learn a function that maps the explanatory variables to the graph signals, such that if a new explanatory vector $\x'$ is supplied, we should be able to estimate the corresponding graph signal $\y'$. By penalising predictions that are not smooth with respect to the topology of the graph, the intention is to produce an estimator that outperforms non-graph-aware alternatives. Note that, while we use the index $t$ to denote each sample, the set $\{\x_t, \y_t\}$ can simply be regarded as training pairs and need not represent time-series data (although they often may). 
+The task of graph regression with endogenous explanatory variables can be stated as follows. Consider a series of $T$ real-valued graph signals, each measured on a graph comprising $N$ nodes, $\{\y_t \in \R^N\}_{t=1}^T$. Each of these signals has a corresponding associated length-$M$ vector of explanatory variables $\{\x_t \in \R^M\}_{t=1}^T$. The goal is to learn a function that maps the explanatory variables to the graph signals, such that if a new explanatory vector $\x'$ is supplied, we should be able to estimate the corresponding graph signal $\y'$. By penalising predictions that are not smooth with respect to the topology of the graph, the intention is to produce an estimator that outperforms non-graph-aware alternatives. Note that, while we use the index $t$ to denote each sample, the set $\{\x_t, \y_t\}$ can simply be regarded as training pairs and need not represent time-series data (although they often may). 
 
 
 In this context, the variables are `exogenous' or global in the sense that they are not associated with any node in particular, and the signal at each node in the graph can learn a unique functional response. For example, consider a time-varying graph signal consisting of net profits for a network of businesses connected based on industry or supply chain. In this case, the explanatory variables could be factors in the broader economy such as GDP growth, inflation or unemployment which may affect each company differently. 
@@ -245,10 +247,10 @@ The second graph regression setting we wish to highlight is the case when endoge
 In \cite{Li2019}, the authors propose Regression with Network Cohesion (RNC). Here, they propose modelling each element of the observed graph signal $\y_n$ as a linear combination of an intercept term and the explanatory variables at node $n$. This is summarised by the following statistical model. 
 
 \begin{equation}
-    \y = \cc + \X \w + \boldsymbol{\epsilon}
+    \y = \cc + \X \w + \boldsymbol{\varepsilon}
 \end{equation}
 
-$\X \in \R^{N \times M}$ is the matrix formed by stacking each vector of explanatory variables, $\w \in \R^M$ is a coefficient vector, and $\cc \in \R^N$ is a flexible intercept term of individual node effects. The model error $\boldsymbol{\epsilon} \in \R^N$ is assumed to have a zero mean and a variance of $\sigma^2 \I_N$. The model seeks to learn an optimal value for $\cc$ and $\w$ by minimising the following objective function. 
+$\X \in \R^{N \times M}$ is the matrix formed by stacking each vector of explanatory variables, $\w \in \R^M$ is a coefficient vector, and $\cc \in \R^N$ is a flexible intercept term of individual node effects. The model error $\boldsymbol{\varepsilon} \in \R^N$ is assumed to have a zero mean and a variance of $\sigma^2 \I_N$. The model seeks to learn an optimal value for $\cc$ and $\w$ by minimising the following objective function. 
 
 \begin{equation}
     \label{eq:RNC_objective}
@@ -262,9 +264,29 @@ The addition of the total square variation term, which the authors name the cohe
     \hat{\thetaa} = \begin{bmatrix}
         \I_N + \lambda \LL & \X \\ \X^\top & \X^\top \X
     \end{bmatrix}^{-1} \begin{bmatrix}
-        \I_N & \X
-    \end{bmatrix} \y
+        \I_N \\ \X^\top 
+    \end{bmatrix}\y
 \end{equation}
+
+It is worth highlighting that the RNC model places the graph-cohesion penalty on the intercept term $\cc$ only, and not the overall prediction $\X\w + \cc$. This separation into a smooth term $\cc$ and a potentially non-smooth term $\X\w$ is an interesting choice, which does not necessarily guarantee a smooth prediction. One could instead propose a model of the form 
+
+\begin{equation}
+    \label{eq:RNC_objective2}
+    C(\cc, \w) = ||\y - \X \w - \cc ||^2_2 + \lambda \text{TV}_2(\X \w + \cc)
+\end{equation}
+
+in which case the optimal value of the parameter vector $\thetaa$ would be given by 
+
+\begin{equation}
+    \label{eq:theta_RNC_OG}
+    \hat{\thetaa} = \begin{bmatrix}
+        \I_N + \lambda \LL & \left(\I_N + \lambda \LL\right)\X \\ \X^\top \left(\I_N + \lambda \LL\right) & \X^\top \left(\I_N + \lambda \LL\right) \X
+    \end{bmatrix}^{-1} \begin{bmatrix}
+        \I_N \\ \X^\top 
+    \end{bmatrix}\y
+\end{equation}
+
+This topic was not addressed in the original paper; however, it presents an interesting direction for future research. Comparing the predictive performance of these two models using real-world datasets could be particularly valuable.
 
 To make a prediction on the test set, where the new explanatory variables $\X' \in \R^{N' \times M}$ are available, the authors use the following. 
 

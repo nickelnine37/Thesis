@@ -6,37 +6,40 @@
 
 So far in this thesis we have introduced several Bayesian GSP models and focused on tractable methods for finding the mean of the associated Gaussian posterior. In this chapter, we turn our attention to the posterior \textit{covariance}, which presents several new interesting challenges. These challenges stem from the dimensionality of the associated covariance matrix which, in each case, is the inverse of a large Kronecker-structured operator. For example, consider the two-dimensional graph signal reconstruction problem defined in \cref{sec:gsr_cpg}. The posterior mean has shape $(N \times T)$ and the posterior covariance matrix has shape $(NT \times NT)$. For a modest-sized problem comprising a 200-node graph measured over 365 time points, the (known) precision matrix will have over $5 \times 10^9$ elements, corresponding to over 20GB of memory with 32-bit floating-point numbers. Even if this could be held in RAM, inverting a matrix of this size would be intractable on consumer-grade hardware. This problem is only compounded when considering the tensor-valued models introduced in \cref{chap:nd_gsp}, where the covariance matrices have $O(N^2)$ elements, where $N = \prod N_i$. \Cref{tab:post_cov} lists the posterior covariance matrices that appear in these models, along with their associated dimensionality. 
 
+
+
+
+
 \setcellgapes{8pt}
 \makegapedcells
 
-\begin{table}[t]
-    \def\arraystretch{1.5}
+\begin{table*}[t] 
     \centering
-    \begin{tabular}{|c|c|c|}
-    \hline
-    \textbf{Model} & \textbf{Covariance matrix} & \textbf{Element count}\\
-    \hline
+    \def\arraystretch{1.5} 
+    \begin{tabular}{lcc}
+    \toprule
+    \textbf{Model} & \textbf{Covariance matrix} & \textbf{Element count}\\ \midrule 
     GSR & $\left(\D_{\St} + \gamma \HH^{-2}\right)^{-1}$ & $ \prod N_i^2 $\\ 
-    \hline
+
     KGR & $\left(\D_{\St} + \gamma \K^{-1} \otimes \HH^{-2}\right)^{-1}$ & $T^2\prod N_i^2$\\ 
-    \hline
+
     RNC & $\begin{bmatrix}
         \D_\St + \gamma \HH^{-2} & \D_\St  \X \\
         \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
        \end{bmatrix}^{-1}$ & $\Big(\prod N_i + M\Big)^2$ \\ 
-    \hline
+
     KG-RNC & $\begin{bmatrix}
         \D_\St + \gamma \K^{-1} \otimes \HH^{-2} & \D_\St  \X \\
         \X^\top \D_\St & \X^\top \D_\St \X + \lambda \I_M   
        \end{bmatrix}^{-1}$ & $\Big(T\prod N_i + M\Big)^2$ \\
-    \hline
-\end{tabular}
-\caption{The posterior covariance matrix appearing in the tensor GSR, KGR, RNC and KR-RNC models.  }
-\label{tab:post_cov}
-\end{table}
+
+    \bottomrule 
+    \end{tabular}
+    \caption{The posterior covariance matrix appearing in the tensor GSR, KGR, RNC and KR-RNC models.  }
+    \label{tab:post_cov}
+\end{table*}
 
 \setcellgapes{2pt}
-
 
 Given these challenges, the goal of this chapter is to gain insight into the uncertainty about the predicted posterior mean, whilst circumventing the need to instantiate, invert or decompose large matrices directly in memory. To this end, we specify two separate but related tasks of interest:
 

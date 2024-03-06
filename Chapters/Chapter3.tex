@@ -28,20 +28,19 @@ In this chapter, we will be primarily concerned with signal processing on \texti
 
 \label{sec:graph_products_defined}
 
-In the general case, consider two undirected graphs $\mathcal{G}_A = (\mathcal{V}_A, \mathcal{E}_A)$ and $\mathcal{G}_B = (\mathcal{V}_B, \mathcal{E}_B)$ with vertex sets given by $\mathcal{V}_A = \{a \in \mathbb{N} \, | \, a \leq N_A \}$ and $\mathcal{V}_B = \{b \in \mathbb{N} \, | \, b \leq N_B \}$ respectively. (In this context we do not regard zero to be an element of the natural numbers). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_A$ and $\mathcal{G}_B$. This can be generically written as follows.
+In the general case, consider two undirected graphs $\mathcal{G}_A = (\mathcal{V}_A, \mathcal{E}_A)$ and $\mathcal{G}_B = (\mathcal{V}_B, \mathcal{E}_B)$ with vertex sets given by $\mathcal{V}_A = \{a \in \mathbb{N} \, | \, a \leq N_A \}$ and $\mathcal{V}_B = \{b \in \mathbb{N} \, | \, b \leq N_B \}$ respectively. (In this context we do not regard zero to be an element of the natural numbers, with node indices beginning from zero). A new graph $\mathcal{G}$ can be constructed by taking the product between $\mathcal{G}_A$ and $\mathcal{G}_B$. In its most general form, this can be written as follows.
 
 \begin{equation}
     \mathcal{G} = \mathcal{G}_A \, \diamond \, \mathcal{G}_B = (\mathcal{V}, \, \mathcal{E})
 \end{equation}
 
-For all definitions of a graph product, the new vertex set $\mathcal{V}$ is given by the Cartesian product of the vertex sets of the factor graphs, that is
+For all common definitions of a graph product $\diamond$, the resultant graph $\mathcal{G}$ has a vertex set $\mathcal{V}$ given by the Cartesian product of the vertex sets of the corresponding factor graphs, that is
 
 \begin{equation}
     \mathcal{V} = \mathcal{V}_A \times \mathcal{V}_B = \{(a, \, b) \in \mathbb{N}^2 \, | \, a \leq N_A \; \text{and} \; b \leq N_B \}
 \end{equation}
 
-
-Typically, vertices are arranged in lexicographic order, in the sense that $(a, \, b) \leq (a',\, b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. Each consistent rule for constructing the new edge set $\mathcal{E}$ corresponds to a different definition of a graph product. In general, there are eight possible conditions for deciding whether two nodes $(a, \, b)$ and $(a',\,  b')$ are to be connected in the new graph.
+Typically, vertices are arranged in lexicographic order, in the sense that $(a, \, b) \leq (a',\, b')$ iff $a < a'$ or ($a = a'$ and $b \leq b'$) \citep{Harzheim2005}. To define a product, one must specify a consistent rule for constructing the new edge set $\mathcal{E}$ from the factor edge sets $\mathcal{E}_A$ and $\mathcal{E}_B$. In general, there are eight possible conditions for deciding whether two nodes $(a, \, b)$ and $(a',\,  b')$ are to be connected in the new graph.
 
 
 \begin{table}[h]
@@ -112,7 +111,7 @@ Each definition of a graph product corresponds to the union of a specific subset
 
 Given these definitions, it may seem that all the standard graph products are non-commutative in the sense that $\A_A \oplus \A_B  \neq \A_B \oplus \A_A $ etc. However, the graphs $\mathcal{G}_A \, \diamond \, \mathcal{G}_B$ and $\mathcal{G}_B \, \diamond \, \mathcal{G}_A$ are in fact isomorphically identical in the case of the Cartesian, direct and strong products. This is not the case for the Lexicographic product \citep{Imrich2000}.
 
-\subsection{The spectral properties of graph products}
+\subsection{The spectral properties of products graphs}
 
 In the field of graph signal processing, we are often concerned with analysing the properties of graphs via eigendecomposition of the graph Laplacian \citep{Mieghem2010}. In the case of product graphs, it is greatly preferable if we can fully describe the spectrum of $\mathcal{G}_A \diamond \mathcal{G}_B$ in terms of the spectra of $\mathcal{G}_A$ and $\mathcal{G}_B$ alone. This is because the direct decomposition of a dense $\LL$ has time-complexity $O(N_A^3N_B^3)$, whereas decomposition of the factor Laplacians individually has complexity $O(N_A^3 + N_B^3)$. As the graphs under consideration become medium to large, this fact quickly makes direct decomposition of the product graph Laplacian intractable. However, in the general case, only the spectra of the Cartesian and lexicographic graph products can be described in this way \citep{Barik2018}. In the case of the direct and strong product, it is possible to estimate the spectra without performing the full decomposition (see \citep{Sayama2016}). However, in general, the full eigendecomposition of the product graph Laplacian can only be described in terms of the factor eigendecompositions when both factor graphs are regular.
 
@@ -177,7 +176,7 @@ Given these definitions, table \ref{tab:product_graph_spectra} gives information
 % subspace concentration 
 
 
-\subsection{GSP with Cartesian product graphs}
+\subsection{Signals and filters on Cartesian product graphs}
 
 \label{sec:gsp_cpg}
 
@@ -256,9 +255,9 @@ We observe that defining the filtering operation in this manner implies that the
     \G_{ba} =  g \left(\lambda^{(A)}_a, \lambda^{(B)}_b; \, \beta_a, \beta_b\right)
 \end{equation}
 
-where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer control over the filter intensity in each dimension. In order for the definition of a 2D anisotropic filter to remain consistent with the underlying Cartesian product graph, we note that all filters we list are given by a function of a weighted sum of each Laplacian eigenvalue. Other more general functions of $\lambda^{(A)}_a$ and $\lambda^{(B)}_b$ will also result in operators that commute with the Laplacian but cannot be consistently considered graph spectral operators on the Cartesian product graph. 
+where now $g$ is chosen to be an anisotropic graph filter such as one of those listed in table \ref{tab:anis_filters_2d}. Note that the original parameter $\beta$ is now replaced by two parameters $\beta_a$ and $\beta_a$ which offer independent control over the filter intensity in each dimension. In order for the definition of a 2D anisotropic filter to remain consistent with the underlying Cartesian product graph, we note that all filters we list are given by a function of a weighted sum of each Laplacian eigenvalue. Other more general functions of $\lambda^{(A)}_a$ and $\lambda^{(B)}_b$ will also result in operators that commute with the Laplacian but cannot be consistently considered graph spectral operators on the Cartesian product graph. 
 
-Similarly defined two-dimensional filters have appeared in image processing literature \citep{Aubert2006}, however, their use in graph signal processing so far has been limited to time-varying graph signal models. In \cite{Romero2017}, the authors propose `space-time kernels', and in \citep{Grassi2018, Isufi2017, Loukas2016, Jiang2021}, the authors discuss joint time-vertex filters. These models can essentially be understood as operating on a two-dimensional Cartesian product graph when one of the graphs takes the form of a path or a cycle graph, which gives rise to the standard Discrete Fourier Transform (DFT) in the time dimension. However, to the best of our knowledge, no one has addressed filters applicable to general two-dimensional Cartesian product graphs.  \Cref{fig:filters} depicts an anisotropic graph filter applied to an image, which is a special case of a 2D Cartesian product graph signal.  
+Similarly defined two-dimensional filters have appeared in image processing literature \citep{Aubert2006}, however, their use in graph signal processing so far has been limited to time-varying graph signal models. In \cite{Romero2017}, the authors propose `space-time kernels', and in \cite{Grassi2018, Isufi2017, Loukas2016, Jiang2021}, the authors discuss joint time-vertex filters. These models can essentially be understood as operating on a two-dimensional Cartesian product graph when one of the graphs takes the form of a path or a cycle graph, which gives rise to the standard Discrete Fourier Transform (DFT) in the time dimension. However, to the best of our knowledge, no one has addressed filters applicable to general two-dimensional Cartesian product graphs. \Cref{fig:filters} depicts an anisotropic graph filter applied to a Cartesian product graph constructed from a 4-node line graph and a generic 10-node. 
 
 
 \begin{table}[t]
@@ -284,13 +283,7 @@ Similarly defined two-dimensional filters have appeared in image processing lite
 \end{table}
 
 
-\begin{figure}[t]
-    % \begin{center}
-    \includegraphics[width=0.9\linewidth]{Figures/filter_types_butterfly.pdf}
-    % \end{center}
-    \caption[A visual representation of applying an isotropic and anisotropic graph filter]{A visual representation of applying an isotropic and anisotropic graph filter. Here, the graph signal is an image, which can be thought of as existing on the nodes of a Cartesian product graph constructed by taking the product of two chain graphs. }
-    \label{fig:filters}
-\end{figure}
+
 
 
 
@@ -298,21 +291,27 @@ Similarly defined two-dimensional filters have appeared in image processing lite
 
 \label{sec:gsr_cpg}
 
-We now turn our attention to the task of signal reconstruction on Cartesian product graphs. In the following, we will replace the factor graph labels $A$ and $B$ with $T$ and $N$ respectively. The reason for this is that one application of particular interest is graph time-series problems, where we seek to model a network of $N$ nodes across a series of $T$ discrete time points. These so-called ``time-vertex'' (T-V) problems have garnered significant interest recently in the context of GSP \citep{Grassi2018, Isufi2017, Loukas2016}. T-V signals can be understood as existing on the nodes of a Cartesian product graph $\mathcal{G}_T \, \square \, \mathcal{G}_N$. In particular, we can conceptualise $T$ repeated measurements of a signal defined across the nodes of a $N$-node graph as a single measurement of a signal defined on the nodes of $\mathcal{G}_T \, \square \, \mathcal{G}_N$, where $\mathcal{G}_T$ is a simple path graph.
-
-\vspace{1cm}
+We now turn our attention to the task of signal reconstruction on Cartesian product graphs. In the following, we will replace the factor graph labels $A$ and $B$ with $T$ and $N$ respectively. The reason for this is that one application of particular interest is graph time-series problems, where we seek to model a network of $N$ nodes across a series of $T$ discrete time points. These so-called ``time-vertex'' (T-V) problems have garnered significant interest recently in the context of GSP \citep{Grassi2018, Isufi2017, Loukas2016}. T-V signals can be understood as existing on the nodes of a Cartesian product graph $\mathcal{G}_T \, \square \, \mathcal{G}_N$. In particular, we can conceptualise $T$ repeated measurements of a signal defined across the nodes of a $N$-node graph as a single measurement of a signal defined on the nodes of $\mathcal{G}_T \, \square \, \mathcal{G}_N$, where $\mathcal{G}_T$ is a simple path graph. In the following subsection, we begin the main contributions of this chapter. 
 
 
-\begin{figure}[t]
-    \begin{center}
-        \includegraphics[width=0.75\linewidth]{Figures/TV.pdf}
-    \end{center}
-    \caption[A time-vertex Cartesian product graph]{A graphical depiction of a time-vertex Cartesian product graph. }
-    \label{fig:TV}
+
+\clearpage
+
+\vspace*{\fill}
+
+\begin{figure}[h]
+    \includegraphics[width=0.95\linewidth]{Figures/2dFilters.pdf}
+    \caption[A visual representation of applying an isotropic and anisotropic graph filter]{A visual representation of an anisotropic filter applied to a signal on a Cartesian product graph. In the top left, the filter intensity is low in both dimensions resulting in a signal with no particular correlation. In the top right, the filter intensity is strong in the $T$ dimension, resulting in a longitudinally smoother signal with little cross-sectional correlation. In the lower left, the filter is strong in the $N$ dimension, resulting in smooth cross-sections with little correlation longitudinally. In the lower right, the filter is strong in both dimensions, resulting in a signal that is smooth both cross-sectionally and longitudinally. }
+    \label{fig:filters}
 \end{figure}
 
+\vspace*{\fill}
 
 
+\clearpage
+
+\topskip0pt
+\vspace*{\fill}
 \note{On the Laplacian spectrum of the path graph}{
     \label{box}
     When considering time-vertex problems with uniformly spaced time intervals, $\mathcal{G}_T$ will be described by a path graph with equal weights on each edge. This special case of a graph has vertices given by $\mathcal{V}_T = \{t \in \mathbb{N} \, | \, t \leq T \}$ and edges given by $\mathcal{E}_T = \{ \, [t, t+1] \, | \, t < T \}$. The Laplacian matrix of the path graph is therefore given by
@@ -349,29 +348,29 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
         \text{GFT}(\y) = \U_T^\top \y \aand \text{IGFT}(\y) = \U_T \y
     \end{equation*}
 
-    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. The figure below compares the time to compute the graph Fourier transform of a random signal using the matrix multiplication method vs the FCT implementation. In particular, we varied $T$ from 10 to 15,000 in 20 equally spaced increments and measured the mean time to compute $\U_T^\top \y$ across five independent trials using both the standard matrix multiplication and the Fast Cosine Transform method. As is visible, the difference becomes extremely pronounced as $T$ grows large.
-
-    \begin{center}
-        \includegraphics[width=0.9\linewidth]{Figures/DCT.pdf}
-    \end{center}
-
+    from $O(T^2)$ operations to $O(T \log T)$ operations, which can be significant for large time-series problems. 
 }
 
+\vspace*{\fill}
 
 
-Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in the context of T-V problems, the methods introduced in this section are valid for the Cartesian product between arbitrary undirected factor graphs.
+
+% Note that, despite the observation that $\mathcal{G}_T$ is often a path graph in the context of T-V problems, the methods introduced in this section are valid for the Cartesian product between arbitrary undirected factor graphs.
+
+\newpage 
 
 \subsection{Problem statement}
 
 \label{sec:problem_statement_2d}
 
+\addtolength{\skip\footins}{2pc plus 2pt}
 
-The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is an observed signal $\Y \in \R^{N \times T}$ where only a partial set $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. All other missing elements of $\Y$ are set to zero. To track which elements were missing from $\Y$, we also define $\Ss \in \{0, 1\}^{N \times T}$, which is referred to as the binary sensing matrix. It has entries given by
+The goal of Graph Signal Reconstruction (GSR) is to estimate the value of a partially observed graph signal at nodes where no data was collected. In the context of GSR on a Cartesian product graph, the available data is a partially  observed signal $\Y \in \R^{N \times T}$ where only an arbitrary subset $\mathcal{S} = \{(n_1, t_1), (n_2, t_2), \dots \}$ of the signal elements were recorded. By default, all other missing elements of $\Y$ are set to zero. To track which elements were missing from $\Y$, we also define $\Ss \in \{0, 1\}^{N \times T}$, which is referred to as the binary sensing matrix. It has entries given by
 
 \begin{equation}
     \Ss_{nt} = \begin{cases}
         1 & \text{if} \;\; (n, t) \in \mathcal{S} \\
-        0 & \text{otherwise}
+        0 & \text{otherwise.}
     \end{cases}
 \end{equation}
 
@@ -381,7 +380,7 @@ As such, the data available for input into the GSR problem is as follows.
     \text{input data} = \Big\{\; \Y \in \R^{N \times T}, \;\; \Ss \in \{0, 1\}^{N \times T} , \;\; \A \in \R^{NT \times NT} \; \Big\}
 \end{equation*}
 
-Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is assumed to be smooth with respect to the graph topology. Specifically, we assume that the observed matrix $\Y$ is generated according to the following statistical model. 
+Our model is based on the assumption that $\Y$ is a noisy partial observation of an underlying signal $\F \in \R^{N \times T}$, which is assumed to be smooth with respect to the graph topology\footnote{See the note on page 48 for a how this assumption can be tested statistically.}. Specifically, we assume that the observed matrix $\Y$ is generated according to the following statistical model. 
 
 \begin{equation}
     \Y = \Ss \circ \big(\F + \E \big)
@@ -396,7 +395,8 @@ The matrix $\E$ represents the model error and is assumed, without loss of gener
 
 Note that the covariance matrix $\diag{\vecc{\Ss}}$ is semi-positive definite by construction. This naturally reflects the constraint that some elements of $\Y$ are zero with probability 1. 
 
-In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). For now, in the absence of any further information, we assume that the prior mean for $\F$ is zero across all elements.
+In order to estimate the latent signal $\F$, we must provide a prior distribution describing our belief about its likely profile ahead of time. In general, we expect $\F$ to be smooth with respect to the topology of the graph. This can be expressed by setting the covariance matrix in its prior to be proportional to $\HH^2$, where $\HH$ is a graph filter as defined in equation (\ref{eq:graph_filter}). Again without loss of generality, we assume that the prior mean for $\F$ is zero across all elements.
+
 
 \begin{equation}
     \label{eq:F_prior}
@@ -432,13 +432,81 @@ A proof of this can be found in the appendix, theorem \ref{the:F_posterior}. In 
     \vecc{\F} = \Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)^{-1} \vecc{\Y}
 \end{equation}
 
-We return to the question of sampling from the posterior and estimating the posterior covariance directly in \cref{chap:variance}.
+Note that here, to avoid the introduction of further notation, we have used $\vecc{\F}$ to represent the posterior mean, whereas previously it represented a random variable. We return to the question of sampling from the posterior and estimating the posterior covariance directly in \cref{chap:variance}.
 
 Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this section aim to overcome these problems.
 
 
 Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each is part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
 
+\vspace{2cm}
+
+\note{Is GSR appropriate? A statistical test }{
+    Before beginning a graph signal reconstruction task, it is worth asking whether GSR indeed represents an appropriate method for the given data. Rephrasing this, the question boils down to whether the partially observed signal already exhibits smoothness with respect to the available graph. To test this statistically, we can perform the following steps. For simplicity, we will assume a one-dimensional GSR problem, although the methods discussed can be extended to Cartesian product graphs. 
+    
+    \begin{enumerate}
+        \item Downsample the partially observed signal $\y \in \R^N$ into a vector $\widetilde{\y} \in \R^{\widetilde{N}}$ such that only the observed elements are kept. Do the same to the adjacency matrix to produce $\widetilde{\A} \in \R^{\widetilde{N}\times \widetilde{N}}$, which represents the connections between the available nodes, and create its corresponding Laplacian $\widetilde{\LL} \in \R^{\widetilde{N} \times \widetilde{N}}$. 
+        \item Shift and scale the vector of observed data $\widetilde{\y}$ such that it has a mean of zero and unit variance across the observed elements. 
+        \item Compute the total square variation of $\widetilde{\y}$ as 
+        \begin{align*}
+            \text{TV}_2(\widetilde{\y}) &= \widetilde{\y}^\top \, \widetilde{\LL} \, \widetilde{\y} \\
+            &= (\widetilde{\U}^\top\widetilde{\y})^\top \, \widetilde{\LAM} \, (\widetilde{\U}^\top\widetilde{\y}) \\
+            &= \sum_{n=1}^{\widetilde{N}} \widetilde{\lambda}_n  \, (\widetilde{\U}^\top\widetilde{\y})_n^2
+        \end{align*}
+
+        where $\widetilde{\LL} = \widetilde{\U}\widetilde{\LAM} \widetilde{\U}^\top $. 
+
+        \item Define the following hypothesis test: 
+
+    \end{enumerate}
+
+    
+        
+        \textbf{Null hypothesis} $\text{H}_0$: The vector $\widetilde{\y}$ is spherically distributed in the Fourier domain. 
+
+        \textbf{Alternative hypothesis }$\text{H}_1$: $\widetilde{\y}$ is biased towards low-frequency Fourier components. 
+
+        \vspace*{0.5cm}
+
+        If $\text{H}_0$ is true, then $(\widetilde{\U}^\top\widetilde{\y})_n \sim \Norm{0}{1}$ and $\text{Cov}\left((\widetilde{\U}^\top\widetilde{\y})_i, \; (\widetilde{\U}^\top\widetilde{\y})_j \right) = \delta_{ij}$. In this case, $\text{TV}_2(\widetilde{\y}) $ is the sum of $\widetilde{N}$ independent gamma random variables, where
+        $$
+        \widetilde{\lambda}_n  \, (\widetilde{\U}^\top\widetilde{\y})_n^2 \sim \Gamma(k = \frac{1}{2}, \, \theta=2 \widetilde{\lambda}_n)
+        $$
+
+        Therefore, 
+
+        $$
+        \text{E}\left[ \widetilde{\lambda}_n  \, (\widetilde{\U}^\top\widetilde{\y})_n^2 \right]  = \widetilde{\lambda}_n, \quad  \text{Var}\left[  \widetilde{\lambda}_n  \, (\widetilde{\U}^\top\widetilde{\y})_n^2 \right] = 2 \widetilde{\lambda}_n^2
+        $$
+
+        \vspace*{0.5cm}
+
+        By the Lyapunov central limit theorem \citep{Feller1968}, we can therefore say that under the null hypothesis, $\text{TV}_2(\widetilde{\y})$ will be approximately distributed as 
+
+        \begin{align*}
+        \text{TV}_2(\widetilde{\y}) &\sim \Norm{  \sum_{n=1}^{\widetilde{N}} \widetilde{\lambda}_n }{2\sum_{n=1}^{\widetilde{N}} \widetilde{\lambda}_n^2} \\[0.4cm]
+        &\sim \Norm{\text{Tr}(\widetilde{\LL}) }{\;2\,\text{Tr}(\widetilde{\LL}^2) }
+        \end{align*}
+
+        \vspace*{0.3cm}
+
+        assuming that $\widetilde{N}$ is sufficiently large. To test the hypothesis, we apply the corresponding Cumulative Distribution Function (CDF) $\Phi(\cdot)$, with the above mean and variance, to the computed value of $\text{TV}_2(\widetilde{\y})$ and check whether it is less than some predefined level $p$, for example 0.05. 
+
+        \vspace*{0.3cm}
+
+        $$
+        \Phi\left(\text{TV}_2(\widetilde{\y})\right) \;\begin{cases}
+           \; > p & \text{Accept} \; \text{H}_0 \\
+           \;  < p & \text{Reject} \; \text{H}_0, \; \text{Accept} \; \text{H}_1
+        \end{cases}
+        $$
+        
+        \vspace*{0.6cm}
+
+        In other words, if $\Phi\left(\text{TV}_2(\widetilde{\y})\right)$ is greater than $p$, GSR is unlikely to be an effective tool since the partially observed signal does not exhibit smoothness with respect to the underlying graph at a statistically significant level. On the other hand, if it is less than $p$ then there is good evidence that the signal is smooth and that GSR will likely prove effective. 
+}
+
+\vspace*{\fill}
 
 \subsection{A stationary iterative method}
 
@@ -635,7 +703,7 @@ where the coefficients, $c_k$, are computed numerically via the integral given i
 where $\bar{\LL} = \beta_T \LL_T \oplus \beta_N \LL_N$. The result of $\bar{T}(\bar{\LL}) \vecc{\Z} $ is defined recursively as 
 
 \begin{equation}
-    \bar{T}_k(\bar{\LL}) \vecc{\Z} = \left(\frac{4 \bar{\LL}}{\bar{\lambda}} - 2\right) \bar{T}_{k-1}(\bar{\LL}) \vecc{\Z} -\bar{T}_{k-2}(\bar{\LL}) \vecc{\Z}
+    \bar{T}_k(\bar{\LL}) \vecc{\Z} = \left(\frac{4}{\bar{\lambda}}\bar{\LL} - 2 \I \right) \bar{T}_{k-1}(\bar{\LL}) \vecc{\Z} -\bar{T}_{k-2}(\bar{\LL}) \vecc{\Z}
 \end{equation}
 
 with the initial conditions
@@ -1022,7 +1090,7 @@ In particular, at small $\gamma$, the CGM still runs with complexity proportiona
 
 \label{sec:GSR_convergence_implications}
 
-In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we examine these expressions more closely and distil the key features that are relevant for implementing these methods in practice.
+In the preceding two sections, we have derived several formulae that characterise the convergence behaviour of both the CGM and the SIM in the limiting case of a strong and weak filter, where $\beta \rightarrow \infty$ and $\beta \rightarrow 0$ respectively. For the sake of clarity, we have consolidated the critical expressions in \cref{tab:conv_SIM_CGM}. In this section, we take a closer look at these expressions and distil the key features that are relevant for implementing these methods in practice.
 
 
 \begin{table*}[t]

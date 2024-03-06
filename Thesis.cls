@@ -453,6 +453,21 @@ Unless otherwise specified, the following naming conventions apply.
 
 %---------------------------------   
 
+\newcommand\listpublications{Publications}
+\usepackage{longtable}
+\newcommand\listofpublications[1]{
+\btypeout{\listpublications}
+\addtotoc{\listpublications}
+    \chapter*{\listpublications
+      \@mkboth{
+          \MakeUppercase\listpublications}{\MakeUppercase\listpublications}}
+\vspace{0.2cm}
+#1
+   
+}
+
+%---------------------------------  
+
 
 \newcommand\acknowledgements[1]{
 \btypeout{Acknowledgements}
