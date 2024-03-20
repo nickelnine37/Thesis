@@ -319,6 +319,8 @@ With a fast algorithm for computing the action of a $d$-dimensional Kronecker pr
 
 \subsection{Multiway spectral operators and filtering}
 
+\label{sec:MWGSP_filters}
+
 In this section, we make a case for a specific restricted definition of $d$-dimensional graph filters. In \cite{Stanley2020}, the authors discuss spectral operators on multiway graph signals as functions on the space of product graph eigenvalues. We propose a specific form for such functions, which produces operators $\HH$ which can be understood as analytic functions of a Cartesian product graph Laplacian. This makes $d$-dimensional filters easier to interpret and reason about in the context of MWGSP models.  
 
 Just as in the one and two-dimensional case, the action of a general spectral operator is computed by first taking the GFT of a signal $\Yt$, then applying some scaling function to each spectral component, and finally transforming back into the vertex domain via the IGFT. 
@@ -740,6 +742,8 @@ and
     \bar{\Gt}_{t, \nn} = g(\lambdaa(\nn), \betaa) \sqrt{\lambda_t^{(K)}} \quad \Longleftrightarrow \quad \D_{\bar{\Gt}} = \LAM_K^{1/2} \otimes \D_\Gt 
 \end{equation}
 
+Just as with the to dimensional case in the previous chapter, elements of $\bar{\Gt}$ which are larger are associated with smoother eigenvectors. However now these eigenvectors span the entire product space including the product graph and the space of explanatory variables. 
+
 From here, either the SIM or CGM, as given in \cref{al:SIM_dd,al:CGM_dd}, can be applied. The only changes necessary are the swap in $\bar{\U}$ for $\U$ and $\bar{\Gt}$ for $\Gt$. As such, this means that whenever $\text{GFT}(\cdot)$ is used, it instead signifies the following operation.  
 
 \begin{alignat}{2}
@@ -751,6 +755,7 @@ From here, either the SIM or CGM, as given in \cref{al:SIM_dd,al:CGM_dd}, can be
 
 Note that these no longer technically represent the GFT and IGFT, but a modified Kronecker operation that now includes an additional dimension described by $\V$. 
 
+\newpage
 
 \section{Multiway Regression with Network Cohesion}
 
@@ -828,7 +833,7 @@ where $\U_M$ and $\D_M$ are generated form the eigendecomposition of $\X^\top \D
     \X^\top \D_\St \X = \U_M \LAM_M \U_M^\top, \aand \D_M = \left(\LAM_M + \lambda \I_M\right)^{-1/2}
 \end{equation}
 
-This allows us to generate a preconditioned coefficient matrix as follows.  
+This allows us to generate a preconditioned coefficient matrix and solve the modified linear system as follows.  
 
 \begin{equation*}
     \widetilde{\PSI}^\top \widetilde{\PP}  \widetilde{\PSI} = 
@@ -837,8 +842,6 @@ This allows us to generate a preconditioned coefficient matrix as follows.
         \D_M \U_M^\top \X^\top \D_\St \U \D_\Gt & \I_M
         \end{bmatrix}
 \end{equation*}
-
-Then we instead solve the modified linear system as follows.
 
 \begin{equation*}
     \thetaa^\star = \widetilde{\PP}^{-1}\begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}\, \quad \Longrightarrow \quad  \thetaa^\star = \widetilde{\PSI} \left(\widetilde{\PSI}^\top \widetilde{\PP}  \widetilde{\PSI} \right)^{-1}\widetilde{\PSI}^\top \begin{bmatrix} \y \\ \X^\top \y \end{bmatrix}
@@ -946,9 +949,9 @@ As previously noted, one model we employ in this case study to predict the yield
     \cmidrule{2-3} \cmidrule{5-6} \cmidrule{8-9}
     & MSE  & $R^2$  &&  MSE  & $R^2$ &&  MSE  & $R^2$  \\ \midrule \rule{0pt}{1cm}
 
-    GSR & 0.263 & 0.846 && 0.332 & 0.819 && 0.319 & 0.823 \\ \rule{0pt}{6ex}
+    GSR & \colorbox{best!35}{0.263} & \colorbox{best!35}{0.846} && \colorbox{best!35}{0.332} & 0.819 && 0.319 & 0.823 \\ \rule{0pt}{6ex}
     
-    KGR & 0.266 & 0.845 &&  0.333 & 0.820 && 0.317 & 0.824 \\\rule{0pt}{6ex}
+    KGR & 0.266 & 0.845 &&  0.333 & \colorbox{best!35}{0.820} && \colorbox{best!35}{0.317} & \colorbox{best!35}{0.824} \\\rule{0pt}{6ex}
     
     Ridge & 0.387 & 0.775 && 0.501 & 0.729 && 0.497 & 0.725 \\ \rule{0pt}{6ex}
     
@@ -962,7 +965,7 @@ As previously noted, one model we employ in this case study to predict the yield
 
 Our experiment proceeded as follows. Firstly, we randomly divided the 829 bonds into a training, validation, and test set in an 80:10:10 ratio. We then trained the GSR and KGR models on the training set, using the validation set to select the optimal hyperparameters, identified using an optimisation algorithm based on the Nelder-Mead method \citep{Gao2012}. In addition, we evaluated two standard linear regression techniques, namely Ridge and Lasso \citep{Murphy2012}. In these scenarios, the yield at each moment in time for each bond was modelled as a linear combination of a constant term, the features comprising the matrix $\X$, and a one-hot encoding of each of the bond descriptors (use of funds, rating, etc). This resulted in $1 + 14 + 159 + 8 + 8 + 7 = 197$ explanatory variables for each yield. The regularisation parameter for the Ridge and Lasso models was also selected on the validation set using a straightforward line search.
 
-The results from the experiment can be found in \cref{tab:bond_yield_results}. As can be observed, the GSR and KGR methods attain similar performance to each other, consistently outperforming the Ridge and Lasso techniques. Both also display a Mean Square Error (MSE) and $R^2$ statistic that remains relatively constant across the training, validation, and test sets, suggesting that overfitting has largely been avoided. \Cref{fig:yield_predictions_GSR,fig:yield_predictions_KGR} showcases the output of the GSR and KGR models respectively compared with the ground truth, for nine randomly representative bonds from the test set. The shaded regions represent two standard deviations of uncertainty, which is calculated by taking 20 samples from the posterior. (The method for producing these samples is explained in \cref{chap:variance}). We can observe that both GSR and KGR make broadly similar predictions, which often correlate closely with the ground truth. However, there are instances where the predictions do systematically under or overestimate the yield, for example in the upper middle, middle left, and lower middle plots. This may indicate there was hidden information about this bond not accounted for in our explanatory variables. Further investigation into the reasons for these deviations would be valuable.
+The results from the experiment can be found in \cref{tab:bond_yield_results}. As can be observed, the GSR and KGR methods attain similar performance to each other, consistently outperforming the Ridge and Lasso techniques. Both also display a Mean Square Error (MSE) and $R^2$ statistic that remains relatively constant across the training, validation, and test sets, suggesting that overfitting has largely been avoided. \Cref{fig:yield_predictions_GSR,fig:yield_predictions_KGR} showcases the output of the GSR and KGR models respectively compared with the ground truth, for nine randomly representative bonds from the test set. The shaded regions represent two standard deviations of uncertainty, which is calculated by taking 20 samples from the posterior. (The method for producing these samples is explained in \cref{chap:variance}). We can observe that both GSR and KGR make broadly similar predictions, which often correlate closely with the ground truth. However, there are instances where the predictions do systematically under or overestimate the yield, for example in the upper middle, middle right, and lower middle plots. This may indicate there was hidden information about this bond not accounted for in our explanatory variables. Further investigation into the reasons for these deviations would be valuable.
 
 \begin{figure}[t]  
     \begin{center}
@@ -985,7 +988,7 @@ The results from the experiment can be found in \cref{tab:bond_yield_results}. A
 
 \section{Conclusions}
 
-In this chapter, we have been concerned with regression and reconstruction tasks with tensor-valued signals that exist on the nodes of a $d$-dimensional Cartesian product graph, under the so-called `Multiway GSP' (MWGSP) framework \citep{Stanley2020}. We began by reviewing the concept of Cartesian product graphs in an arbitrary number of dimensions and discussed how this naturally leads to the definition of the $d$-dimensional GFT and IGFT. We also discussed the dual vector/tensor representation of multiway graph signals and highlighted the importance of efficient computation with chained Kronecker operators, presenting the PyKronecker software library for this purpose \citep{Antonian2023}. We then made the case for a restricted definition of $d$-dimensional anisotropic graph filters $g(\lambdaa)$, which are constructed as a decreasing function of a dot product between $\betaa$ and $\lambdaa$. This ensures that the resultant spectral operator can be consistently interpreted as an analytic function of a Cartesian product graph Laplacian. In addition to bringing benefits in terms of interpretation, this definition also enables Chebyshev polynomial approximations to graph filters to be computed efficiently. 
+In this chapter, we have been concerned with regression and reconstruction tasks with tensor-valued signals that exist on the nodes of a $d$-dimensional Cartesian product graph, under the so-called `Multiway GSP' (MWGSP) framework \citep{Stanley2020}. We began by reviewing the concept of Cartesian product graphs in an arbitrary number of dimensions and discussed how this naturally leads to the definition of the $d$-dimensional GFT and IGFT. We also discussed the dual vector/tensor representation of multiway graph signals and highlighted the importance of efficient computation with chained Kronecker operators, presenting the PyKronecker software library for this purpose \citep{Antonian2023}. We then made the case for a restricted definition of $d$-dimensional anisotropic graph filters $g(\lambdaa)$, which are constructed as a decreasing function of a dot product between $\betaa$ and $\lambdaa$. This ensures that the resultant spectral operator can be consistently interpreted as an analytic function of a Cartesian product graph Laplacian. 
 
 The key theoretical contribution of this chapter was to define models for graph signal reconstruction, as well as regression with exogenous and endogenous explanatory variables, for general tensor valued graph signals on $d$-dimensional Cartesian product graphs. In \cref{sec:tensor_gsr}, we reexamined the GSR model developed in \cref{chap:gsr_2d}, generalising it to $d$ dimensions. This necessitated a fresh look at the SIM and CGM methods previously developed to make them applicable to this setting. Next, in \cref{sec:kgr_dd,sec:rnc_dd} respectively we took the Kernel Graph Regression and Regression with Network Cohesion techniques, which were developed in \cref{chap:kgr_rnc_2d}, and generalised them for the multiway case. Finally, in \cref{sec:green_bonds}, we showed how the multiway KGR and GSR methods could be applied to the problem of predicting the yield of novel green bonds in a time series application. In particular, we showed that both GSR and KGR could achieve good performance, significantly outperforming the standard techniques of Ridge and Lasso regression. 
 

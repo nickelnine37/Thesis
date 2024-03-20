@@ -301,6 +301,7 @@ We now turn our attention to the task of signal reconstruction on Cartesian prod
 
 \begin{figure}[h]
     \includegraphics[width=0.95\linewidth]{Figures/2dFilters.pdf}
+    \vspace*{1cm}
     \caption[A visual representation of applying an isotropic and anisotropic graph filter]{A visual representation of an anisotropic filter applied to a signal on a Cartesian product graph. In the top left, the filter intensity is low in both dimensions resulting in a signal with no particular correlation. In the top right, the filter intensity is strong in the $T$ dimension, resulting in a longitudinally smoother signal with little cross-sectional correlation. In the lower left, the filter is strong in the $N$ dimension, resulting in smooth cross-sections with little correlation longitudinally. In the lower right, the filter is strong in both dimensions, resulting in a signal that is smooth both cross-sectionally and longitudinally. }
     \label{fig:filters}
 \end{figure}
@@ -437,16 +438,16 @@ Note that here, to avoid the introduction of further notation, we have used $\ve
 Two significant computational challenges arise when working with non-trivial graph signal reconstruction problems, where the number of vertices in the product graph is large. First, although the posterior mean point estimator given in \cref{eq:lin_system} has an exact closed-form solution, its evaluation requires solving an $NT \times NT$ system of equations, which is impractical for all but the smallest of problems. Second, since the eigenvalues of $\HH$ can be close to or exactly zero, $\HH^{-2}$ may be severely ill-conditioned and even undefined. This means the condition number of the coefficient matrix may not be finite, making basic iterative methods to numerically solve the linear system, such as steepest descent, slow or impossible. The models proposed in this section aim to overcome these problems.
 
 
-Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; and multigrid methods. Each is part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
+Since the coefficient matrix defining the system is of size $NT \times NT $, direct methods such as Gaussian elimination are assumed to be out of the question. In such cases, one often resorts to one of three possible solution approaches: stationary iterative methods; Krylov methods; or multigrid methods. Each is part of the family of iterative methods which are most commonly found in applications of sparse matrices, such as finite element methods \citep{Brenner2008}. In the following, we propose a stationary iterative method and a Krylov method and compare their relative behaviour. In both cases, we show that each step of the iterative process can be completed in $O(N^2T + NT^2)$ operations, making a solution feasible for relatively large graph problems. First, we present each of the methods in isolation. Then, the convergence behaviour of each is derived theoretically and verified numerically.
 
 \vspace{2cm}
 
 \note{Is GSR appropriate? A statistical test }{
-    Before beginning a graph signal reconstruction task, it is worth asking whether GSR indeed represents an appropriate method for the given data. Rephrasing this, the question boils down to whether the partially observed signal already exhibits smoothness with respect to the available graph. To test this statistically, we can perform the following steps. For simplicity, we will assume a one-dimensional GSR problem, although the methods discussed can be extended to Cartesian product graphs. 
+    Before beginning a graph signal reconstruction task, it is worth asking whether GSR indeed represents an appropriate method for the given data. Rephrasing this, the question boils down to whether the partially observed signal already exhibits smoothness with respect to the available graph. To test this statistically, we can perform the following steps. For simplicity, we will assume a one-dimensional GSR problem, howwver, the methods discussed can be extended to Cartesian product graphs (although some care must be taken to perfrom the operatrions efficiently). 
     
     \begin{enumerate}
         \item Downsample the partially observed signal $\y \in \R^N$ into a vector $\widetilde{\y} \in \R^{\widetilde{N}}$ such that only the observed elements are kept. Do the same to the adjacency matrix to produce $\widetilde{\A} \in \R^{\widetilde{N}\times \widetilde{N}}$, which represents the connections between the available nodes, and create its corresponding Laplacian $\widetilde{\LL} \in \R^{\widetilde{N} \times \widetilde{N}}$. 
-        \item Shift and scale the vector of observed data $\widetilde{\y}$ such that it has a mean of zero and unit variance across the observed elements. 
+        \item Shift and scale the vector of observed data $\widetilde{\y}$ such that it has a mean of zero and unit variance. 
         \item Compute the total square variation of $\widetilde{\y}$ as 
         \begin{align*}
             \text{TV}_2(\widetilde{\y}) &= \widetilde{\y}^\top \, \widetilde{\LL} \, \widetilde{\y} \\
@@ -686,7 +687,7 @@ $$
 J(x) = \frac{g^2(x)}{g^2(x) + \gamma} 
 $$
 
-and $g(\cdot)$ represents the original filter function used, with parameters $\beta_T, \beta_N$. (Here, we interpret the application of $J(x)$ to a matrix in terms of a power series rather than element-wise.) Thus, eigendecomposition can be entirely bypassed by approximating the function $J(x)$ using shifted Chebyshev polynomials \citep{Isufi2022}. This requires knowledge of the largest eigenvalues of $\LL_T$ and $\LL_N$, $ \lambda_T^{(\text{max})}$ and $ \lambda_N^{(\text{max})}$ respectively, but these can also be computed efficiently using methods that take advantage of sparsity such as Arnoldi iterations.
+and $g(\cdot)$ represents the original filter function used, with parameters $\beta_T, \beta_N$. (Here, we interpret the application of $J(x)$ to a matrix in terms of a power series rather than element-wise.) Thus, eigendecomposition can be entirely bypassed by approximating the function $J(x)$ using shifted Chebyshev polynomials \citep{Isufi2024}. This requires knowledge of the largest eigenvalues of $\LL_T$ and $\LL_N$, $ \lambda_T^{(\text{max})}$ and $ \lambda_N^{(\text{max})}$ respectively, but these can also be computed efficiently using methods that take advantage of sparsity such as Arnoldi iterations.
  
 Assuming an order $K$ approximation to the function $J(x)$ is used, with shifted Chebyshev polynomials ${\bar{T}_k(x)}$ defined over the interval $[0, \bar{\lambda}]$, where $\bar{\lambda} = \beta_T \lambda_T^{(\text{max})} + \beta_N \lambda_N^{(\text{max})}$,  the approximation is given by
 
@@ -722,14 +723,14 @@ with complexity $O\big(NT(|\mathcal{E_T}| + |\mathcal{E}_N|)\big)$. When perform
 
 In the context of a graph time series problem, this method also lends itself to an online implementation. In particular, since each node requires information from nodes no further than $K$ hops away, the signal at node $n$ at time $t$ can be reconstructed when the observed signal at time $t+K$ becomes available. 
 
-One caveat worth noting is that the accuracy of the Chebyshev approximation depends not only on the order of the polynomial but also on the filter used and its parameter(s). \Cref{fig:cheb_approx} demonstrates how an order-3 approximation to $J(x)$, with $\gamma=0.05$, varies across several different filter types and parameter settings. For filter functions that exhibit slow variation, typically corresponding to smaller values of $\beta$, the fit is usually quite accurate. However, in certain other contexts, it deviates significantly from the true filter function. Another consideration is that the spectral radius of $\M^{-1}$ is no longer guaranteed to be less than one. For instance, in the case of the bandlimited filter, the function clearly reaches higher values. To guarantee convergence, the polynomial coefficients should be adjusted such that the approximation remains within the range of $[-1, 1]$. 
+One caveat worth noting is that the accuracy of the Chebyshev approximation depends not only on the order of the polynomial but also on the filter used and its parameter(s). \Cref{fig:cheb_approx} demonstrates how an order-3 approximation to $J(x)$, with $\gamma=0.05$, varies across several different filter types and parameter settings. For filter functions that exhibit slow variation, typically corresponding to smaller values of $\beta$, the fit is usually quite accurate. However, in certain other contexts, it deviates significantly from the true filter function. Another consideration is that the spectral radius of $\M^{-1}$ is no longer guaranteed to be less than one. For instance, in the case of the bandlimited filter shown in \cref{fig:cheb_approx}, the function clearly reaches higher values. To guarantee convergence, the polynomial coefficients should be adjusted such that the approximation remains within the range of $[-1, 1]$. 
 
 \vspace{0.5cm}
 
 \begin{figure}[t]
     \hspace{0.2cm}
         \includegraphics[width=0.9\linewidth]{Figures/cheb_approx.pdf}
-    \caption[Chebyshev approximation accuracy visualisation]{\small{An order-3 Chebyshev polynomial approximation (orange) is compared to the true output of $J(x)$ (dashed blue) for several different filter types across various parameter settings. }}
+    \caption[Chebyshev approximation accuracy visualisation]{\small{An order-3 Chebyshev polynomial approximation (orange) is compared to the true output of $J(x)$ (dashed blue) for several different filter types across various parameter settings. Note how the accuracy of the fit depends on both the filter function used and the value of $\beta$. Furthermore, the approximation can sometimes fall outside of the [0, 1] interval. }}
     \label{fig:cheb_approx}
 \end{figure}
 
@@ -858,10 +859,10 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
  
 \subsection{Real data experiments}
 
-In this subsection, we evaluate our GSR method using a dataset consisting of daily new SARS-CoV-2 cases reported in 372 lower-tier local authorities across the United Kingdom from February 5, 2020, to March 18, 2023 (1138 days) taken from the UK government website\footnote{See \url{https://coronavirus.data.gov.uk/details/download}}. Specifically, we focused on the ``newCasesBySpecimenDateRollingRate" metric, which represents the daily number of cases reported per 100,000 residents in each local reporting authority over a 7-day rolling period. To create a graph, we used boundary data \footnote{Data from the Office for National Statistics \citep{ONS2019}}, setting adjacency matrix entries as $\A_{ij}$ = 1 if districts $i$ and $j$ share a border, and 0 otherwise. \Cref{fig:covid} illustrates a snapshot of this dataset on December 1, 2020.
+In this subsection, we evaluate our GSR method using a dataset consisting of daily new SARS-CoV-2 cases reported in 372 lower-tier local authorities across the United Kingdom from February 5, 2020, to March 18, 2023 (1138 days) taken from the UK government website\footnote{See \url{https://coronavirus.data.gov.uk/details/download}}. Specifically, we focused on the ``newCasesBySpecimenDateRollingRate" metric, which represents the daily number of cases reported per 100,000 residents in each local reporting authority over a 7-day rolling period. To create a graph, we used boundary data \footnote{Data from the Office for National Statistics \citep{ONS2019}}, setting adjacency matrix entries as $\A_{ij}$ to one if districts $i$ and $j$ share a border, and zero otherwise. Note, this graph construction strategy is fairly crude, with the underlying assumption being that virus spread occurs mainly between neighboring regions. Perhaps a more sophisticated model could use data such as inter-region travel volumes to construct a graph, although such data was not easily available at the time of writing. \Cref{fig:covid} illustrates a snapshot of this dataset on December 1, 2020.
 
 
-\begin{figure}[b]
+\begin{figure}[t]
     \begin{center}
         \includegraphics[width=0.6\linewidth]{Figures/UK_covid.pdf}
     \end{center}
@@ -872,8 +873,7 @@ In this subsection, we evaluate our GSR method using a dataset consisting of dai
 
 Before beginning the experiments, we performed two preprocessing steps on the raw signal data. First, we took the logarithm of 10 plus the original case rate. This was to eliminate the long tail in the case rate histogram, transforming it to be closer to a Gaussian. We then normalised by subtracting the overall mean and dividing by the standard deviation. The resultant signal, of shape $372 \times 1138$, we refer to as $\Y_0$. Note that 4.8\% of the entries in $\Y_0$ were already missing from the original dataset (mostly occurring in the earlier stages of the pandemic).
 
-The experiment was conducted as follows. First, we removed data from $\Y_0$ such that a total fraction $m$ was no longer present. This created two matrices: $\Y$, the partially observed signal with missing values filled with zeros; and $\Ss$, the corresponding binary sensing matrix. Data was removed in four distinct ways. First, individual elements of $\Y$ were selected uniformly at random for removal (`uniform'). Second, strings of 100 days, beginning at a random date, were removed for individual randomly selected districts (`strings'). Third, the entire time series for randomly chosen districts were removed (`districts'). Finally, the signal across every node at randomly selected dates was removed (`dates'). These four techniques for data removal are depicted for clarity in \cref{fig:missing_data}. For each technique, we solved the signal reconstruction problem using the GSR model described in this chapter and compared its performance to other baseline reconstruction strategies. In particular, for uniform and string removal, we compared it to linear interpolation in time and longitudinal averaging across all districts. For date removal, we compared it to interpolation in time only, since longitudinal averaging is not possible in this case. Finally, for district removal, we compared it to longitudinal averaging, since linear interpolation in time is not possible in this case. For each model, for each method of data removal, we measured the Root Mean Square Error (RMSE) across the reconstructed entries, over four increasing values of $m$. The results are shown in \cref{tab:gsr_real_data_experiemnts}. 
-
+The experiment was conducted as follows. First, we removed data from $\Y_0$ such that a total fraction $m$ was no longer present. This created two matrices: $\Y$, the partially observed signal with missing values filled with zeros; and $\Ss$, the corresponding binary sensing matrix. Data was removed in four distinct ways. First, individual elements of $\Y$ were selected uniformly at random for removal (`uniform'). Second, strings of 100 days, beginning at a random date, were removed for individual randomly selected districts (`strings'). Third, the entire time series for randomly chosen districts were removed (`districts'). Finally, the signal across every node at randomly selected dates was removed (`dates'). These four techniques for data removal are depicted for clarity in \cref{fig:missing_data}. For each technique, we solved the signal reconstruction problem using the GSR model described in this chapter and compared its performance to other baseline reconstruction strategies. In particular, for uniform and string removal, we compared it to linear interpolation in time and longitudinal averaging across all districts. For date removal, we compared it to interpolation in time only, since longitudinal averaging is not possible in this case. Finally, for district removal, we compared it to longitudinal averaging, since linear interpolation in time is not possible in this case. For each model, for each method of data removal, we measured the Root Mean Square Error (RMSE) across the reconstructed entries, over four increasing values of $m$. 
 
 
 \begin{figure}[t]
@@ -885,36 +885,42 @@ The experiment was conducted as follows. First, we removed data from $\Y_0$ such
 \end{figure}
 
 
-\definecolor{best}{rgb}{0.6,0.99,0.58}
-
-
- 
 \begin{table*}[t]
     \centering
     \footnotesize 
-    \def\arraystretch{1.4}
+    % \def\arraystretch{1}
     \begin{tabular}{lcccccccccc}
     \toprule
     & \multicolumn{4}{c}{Uniform} & \phantom{a} & \multicolumn{4}{c}{Strings} \\
     \cmidrule{2-5} \cmidrule{7-10} 
     $m$ & 0.1   & 0.3 & 0.5 & 0.7 &&  0.1   & 0.3  & 0.5 & 0.7  \\ \midrule \rule{0pt}{0.5cm}
-    GSR & 0.037 & 0.040 & \colorbox{best!35}{0.048} & 0.081 && \colorbox{best!35}{0.230} &  \colorbox{best!35}{0.249} & \colorbox{best!35}{0.247} & \colorbox{best!35}{0.243} \\ \rule{0pt}{6ex} 
-    Linear interp & \colorbox{best!35}{0.034} & \colorbox{best!35}{0.039} &  \colorbox{best!35}{0.048} & \colorbox{best!35}{0.070} && 0.540 & 0.531 & 0.520 & 0.526 \\ \rule{0pt}{6ex}
+   Bayesian GSR & 0.037 & 0.040 & \colorbox{best!35}{0.048} & 0.081 && 0.230 &  \colorbox{best!35}{0.249} & \colorbox{best!35}{0.247} & \colorbox{best!35}{0.243} \\ \rule{0pt}{6ex} 
+    Qiu et al noiseless & 0.040 & 0.043 & 0.054 & 0.092 && 0.242 & 0.255 & 0.254 & 0.251 \\ \rule{0pt}{6ex} 
+    Qiu et al noisy & 0.037 & 0.041 & \colorbox{best!35}{0.048} & 0.080 && \colorbox{best!35}{0.229} &  \colorbox{best!35}{0.249} & 0.249 & 0.244 \\ 
+    \rule{0pt}{6ex} 
+    Linear interp & \colorbox{best!35}{0.034} & \colorbox{best!35}{0.039} &  0.049 & \colorbox{best!35}{0.070} && 0.540 & 0.531 & 0.520 & 0.526 \\ 
+    \rule{0pt}{6ex}
     Longitudinal avrg & 0.350 & 0.348 &  0.347 & 0.348 && 0.341 & 0.350 & 0.356 & 0.347  \\[0.2cm] \midrule \rule{0pt}{4ex}
     & \multicolumn{4}{c}{Dates} & \phantom{a} & \multicolumn{4}{c}{Districts} \\
     \cmidrule{2-5} \cmidrule{7-10} 
     $m$ & 0.1   & 0.3 & 0.5 & 0.7 &&  0.1   & 0.3  & 0.5 & 0.7  \\ \midrule \rule{0pt}{0.5cm}
-    GSR & 0.038 & 0.055 & 0.058 & 0.075  && \colorbox{best!35}{0.202} & \colorbox{best!35}{0.249} & \colorbox{best!35}{0.271} & \colorbox{best!35}{0.273} \\ \rule{0pt}{6ex} 
+    Bayesian GSR & 0.038 & 0.055 & 0.058 & 0.075  && \colorbox{best!35}{0.202} & 0.249 & \colorbox{best!35}{0.271} & \colorbox{best!35}{0.273} \\ 
+    \rule{0pt}{6ex} 
+     Qiu et al noiseless & 0.041 & 0.060 & 0.062 & 0.079 && 0.210 &  0.257 & 0.281 & 0.282 \\ \rule{0pt}{6ex} 
+    Qiu et al noisy & 0.037 & 0.040 & \colorbox{best!35}{0.048} & 0.081 && \colorbox{best!35}{0.202} &  \colorbox{best!35}{0.248} & 0.274 & \colorbox{best!35}{0.273} \\ \rule{0pt}{6ex} 
     Linear interp & \colorbox{best!35}{0.035} & \colorbox{best!35}{0.038} & \colorbox{best!35}{0.046} & \colorbox{best!35}{0.066} && NA & NA & NA & NA \\ \rule{0pt}{6ex}
     Longitudinal avrg & NA & NA & NA & NA && 0.318 & 0.333 & 0.347 & 0.345 \\[0.2cm] \bottomrule
     \end{tabular}
-    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each value of $m$, the best-performing model is highlighted in green. Entries where the model is not applicable are indicated by NA. }
+    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each fraction of missing data $m$, the best performing model is highlighted in green. Entries where the model is not applicable is indicated by NA. }
     \label{tab:gsr_real_data_experiemnts} 
 \end{table*}
 
-\newpage
 
-The findings reveal that the GSR method demonstrates superior performance by a noticeable margin when substantial segments of time series data are removed from a specific district. This is evidenced by the low RMSE across all values of $m$ for the `strings' and `districts' removal techniques. Notice also that GSR significantly outperforms longitudinal averaging in both instances, suggesting that the incorporation of topological relations between districts has yielded substantial advantages. On the other hand, when individual dates are removed, meaning only brief sections of the time series are likely missing within any given district, GSR remains competitive, but linear interpolation tends to exhibit slightly better performance. This observation is logical for this dataset, as the metric is calculated using a 7-day rolling average, resulting in a highly smooth signal over time. GSR, however, remains the most versatile technique, as it can be applied across all patterns of missing data. 
+In addition to the aforementioned reconstruction models, we also implemented the time-varying signal reconstruction models described in \cite{Qiu2017}. In this paper, the authors describe two alternative methods for reconstructing a time-varying graph signal representing a noiseless and a noisy case. The noiseless case seeks the reconstructed signal $\F$ that minimises their chosen smoothness metric subject to the constraint that it precisely interpolates the observed values of $\Y$. The noisey case, which is more similar to the model described in this paper, assumes a certain level of noise in the observed values and does not strictly interpolate. The results are shown in table \ref{tab:gsr_real_data_experiemnts}. 
+
+The findings indicate that the graph-aware approaches exhibit significantly better performance, particularly for the `strings' and `districts' removal strategies. In particular, they outperform longitudinal averaging, underscoring the substantial benefits derived from integrating topological relationships between districts. Conversely, when individual dates are excluded, thus likely leaving only brief segments of the time series absent in any district, the GSR methods remain competitive, albeit linear interpolation shows marginally superior results. This outcome is anticipated for this dataset, considering the metric is computed using a 7-day rolling average, which naturally results in a smooth signal progression. Nevertheless, GSR stands out for its adaptability, applicable to various patterns of missing data.
+
+Comparing the Bayesian GSR model presented in this study with the noiseless and noisy GSR models discussed in \cite{Qiu2017}, it emerges that both the noisy model and Bayesian GSR generally surpass the noiseless model. This disparity is likely attributable to the significant noise in the real data, which disproportionately influences the reconstruction predictions. The performances of Bayesian GSR and Qiu’s noisy model are closely matched, with Bayesian GSR slightly outperforming in a small majority of scenarios.
 
  
 \section{Convergence properties}
