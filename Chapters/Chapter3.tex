@@ -443,7 +443,7 @@ Since the coefficient matrix defining the system is of size $NT \times NT $, dir
 \vspace{2cm}
 
 \note{Is GSR appropriate? A statistical test }{
-    Before beginning a graph signal reconstruction task, it is worth asking whether GSR indeed represents an appropriate method for the given data. Rephrasing this, the question boils down to whether the partially observed signal already exhibits smoothness with respect to the available graph. To test this statistically, we can perform the following steps. For simplicity, we will assume a one-dimensional GSR problem, howwver, the methods discussed can be extended to Cartesian product graphs (although some care must be taken to perfrom the operatrions efficiently). 
+    Before beginning a graph signal reconstruction task, it is worth asking whether GSR indeed represents an appropriate method for the given data. Rephrasing this, the question boils down to whether the partially observed signal already exhibits smoothness with respect to the available graph. To test this statistically, we can perform the following steps. For simplicity, we will assume a one-dimensional GSR problem, however, the methods discussed can be extended to Cartesian product graphs (although some care must be taken to perform the operations efficiently). 
     
     \begin{enumerate}
         \item Downsample the partially observed signal $\y \in \R^N$ into a vector $\widetilde{\y} \in \R^{\widetilde{N}}$ such that only the observed elements are kept. Do the same to the adjacency matrix to produce $\widetilde{\A} \in \R^{\widetilde{N}\times \widetilde{N}}$, which represents the connections between the available nodes, and create its corresponding Laplacian $\widetilde{\LL} \in \R^{\widetilde{N} \times \widetilde{N}}$. 
@@ -491,7 +491,7 @@ Since the coefficient matrix defining the system is of size $NT \times NT $, dir
 
         \vspace*{0.3cm}
 
-        assuming that $\widetilde{N}$ is sufficiently large. To test the hypothesis, we apply the corresponding Cumulative Distribution Function (CDF) $\Phi(\cdot)$, with the above mean and variance, to the computed value of $\text{TV}_2(\widetilde{\y})$ and check whether it is less than some predefined level $p$, for example 0.05. 
+        assuming that $\widetilde{N}$ is sufficiently large. To test the hypothesis, we apply the corresponding Cumulative Distribution Function (CDF) $\Phi(\cdot)$, with the above mean and variance, to the computed value of $\text{TV}_2(\widetilde{\y})$ and check whether it is less than some predefined level $p$, for example, 0.05. 
 
         \vspace*{0.3cm}
 
@@ -765,7 +765,7 @@ The CGM works best when the coefficient matrix $\A$ has a low condition number $
 
 In our case, where the coefficient matrix is given by $\Big(\diag{\vecc{\Ss}} + \gamma  \HH^{-2}\Big)$, preconditioning will be essential for convergence. To see why, consider the definition of $\HH$ in equation (\ref{eq:graph_filter}). A low-pass filter function $g(\cdot)$ may be close to zero when applied to the high-frequency eigenvalues of the graph Laplacian, meaning elements of $\diag{\vecc{\G}}^{-2}$ may be very large. In the worst case, for example with a band-limited filter, the matrix $\HH$ will be singular, no matrix $\HH^{-2}$ will exist, and the condition number of the coefficient matrix will be, in effect, infinite. Therefore, the primary purpose of this subsection is to find a preconditioner that maintains efficient forward multiplication and is effective at reducing the condition number of the coefficient matrix.
 
-References such as \citep{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard examples include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
+References such as \cite{Saad2003} give a broad overview of the known approaches to finding a preconditioner. Standard examples include the Jacobi preconditioner which is given by the inverse of the coefficient matrix diagonal and is effective for diagonally dominant matrices, and the Sparse Approximate Inverse preconditioner \citep{Grote1997}. However, such preconditioners generally require direct evaluation of parts of the coefficient matrix or are computationally intensive to calculate.
 
 In the following, we derive an effective symmetric preconditioner that allows forward multiplication of the coefficient matrix to be performed efficiently. First consider the transformed variable $\Z$, related to $\F$ in the following way.
 
@@ -859,14 +859,14 @@ Since preconditioning of the coefficient matrix on the left is achieved with $\P
  
 \subsection{Real data experiments}
 
-In this subsection, we evaluate our GSR method using a dataset consisting of daily new SARS-CoV-2 cases reported in 372 lower-tier local authorities across the United Kingdom from February 5, 2020, to March 18, 2023 (1138 days) taken from the UK government website\footnote{See \url{https://coronavirus.data.gov.uk/details/download}}. Specifically, we focused on the ``newCasesBySpecimenDateRollingRate" metric, which represents the daily number of cases reported per 100,000 residents in each local reporting authority over a 7-day rolling period. To create a graph, we used boundary data \footnote{Data from the Office for National Statistics \citep{ONS2019}}, setting adjacency matrix entries as $\A_{ij}$ to one if districts $i$ and $j$ share a border, and zero otherwise. Note, this graph construction strategy is fairly crude, with the underlying assumption being that virus spread occurs mainly between neighboring regions. Perhaps a more sophisticated model could use data such as inter-region travel volumes to construct a graph, although such data was not easily available at the time of writing. \Cref{fig:covid} illustrates a snapshot of this dataset on December 1, 2020.
+In this subsection, we evaluate our GSR method using a dataset consisting of daily new SARS-CoV-2 cases reported in 372 lower-tier local authorities across the United Kingdom from February 5, 2020, to March 18, 2023 (1138 days) taken from the UK government website\footnote{See \url{https://coronavirus.data.gov.uk/details/download}}. Specifically, we focused on the ``newCasesBySpecimenDateRollingRate" metric, which represents the daily number of cases reported per 100,000 residents in each local reporting authority over a 7-day rolling period. To create a graph, we used boundary data \footnote{Data from the Office for National Statistics \citep{ONS2019}}, setting adjacency matrix entries as $\A_{ij}$ to one if districts $i$ and $j$ share a border, and zero otherwise. Note, this graph construction strategy is fairly crude, with the underlying assumption being that virus spread occurs mainly between neighbouring regions. Perhaps a more sophisticated model could use data such as inter-region travel volumes to construct a graph, although such data was not easily available at the time of writing. \Cref{fig:covid} illustrates a snapshot of this dataset on December 1, 2020.
 
 
 \begin{figure}[t]
     \begin{center}
         \includegraphics[width=0.6\linewidth]{Figures/UK_covid.pdf}
     \end{center}
-    \caption[Snapshot of the Covid-19 case rate in the UK]{\small{The seven-day rolling rate of new covid cases reported per 100,000 residents in each lower-tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in grey.}}
+    \caption[Snapshot of the Covid-19 case rate in the UK]{\small{The seven-day rolling rate of new Covid cases reported per 100,000 residents in each lower-tier local reporting authority in the United Kingdom on the 1st of December 2020. Missing data is indicated in grey.}}
     \label{fig:covid}
 \end{figure}
 
@@ -911,12 +911,12 @@ The experiment was conducted as follows. First, we removed data from $\Y_0$ such
     Linear interp & \colorbox{best!35}{0.035} & \colorbox{best!35}{0.038} & \colorbox{best!35}{0.046} & \colorbox{best!35}{0.066} && NA & NA & NA & NA \\ \rule{0pt}{6ex}
     Longitudinal avrg & NA & NA & NA & NA && 0.318 & 0.333 & 0.347 & 0.345 \\[0.2cm] \bottomrule
     \end{tabular}
-    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each fraction of missing data $m$, the best performing model is highlighted in green. Entries where the model is not applicable is indicated by NA. }
+    \caption[Graph signal reconstruction real data results]{The RMSE for different reconstruction models and data removal techniques on the UK SARS-CoV-2 case rate dataset. For each fraction of missing data $m$, the best-performing model is highlighted in green. Entries where the model is not applicable are indicated by NA. }
     \label{tab:gsr_real_data_experiemnts} 
 \end{table*}
 
 
-In addition to the aforementioned reconstruction models, we also implemented the time-varying signal reconstruction models described in \cite{Qiu2017}. In this paper, the authors describe two alternative methods for reconstructing a time-varying graph signal representing a noiseless and a noisy case. The noiseless case seeks the reconstructed signal $\F$ that minimises their chosen smoothness metric subject to the constraint that it precisely interpolates the observed values of $\Y$. The noisey case, which is more similar to the model described in this paper, assumes a certain level of noise in the observed values and does not strictly interpolate. The results are shown in table \ref{tab:gsr_real_data_experiemnts}. 
+In addition to the aforementioned reconstruction models, we also implemented the time-varying signal reconstruction models described in \cite{Qiu2017}. In this paper, the authors describe two alternative methods for reconstructing a time-varying graph signal representing a noiseless and a noisy case. The noiseless case seeks the reconstructed signal $\F$ that minimises their chosen smoothness metric subject to the constraint that it precisely interpolates the observed values of $\Y$. The noisy case, which is more similar to the model described in this paper, assumes a certain level of noise in the observed values and does not strictly interpolate. The results are shown in table \ref{tab:gsr_real_data_experiemnts}. 
 
 The findings indicate that the graph-aware approaches exhibit significantly better performance, particularly for the `strings' and `districts' removal strategies. In particular, they outperform longitudinal averaging, underscoring the substantial benefits derived from integrating topological relationships between districts. Conversely, when individual dates are excluded, thus likely leaving only brief segments of the time series absent in any district, the GSR methods remain competitive, albeit linear interpolation shows marginally superior results. This outcome is anticipated for this dataset, considering the metric is computed using a 7-day rolling average, which naturally results in a smooth signal progression. Nevertheless, GSR stands out for its adaptability, applicable to various patterns of missing data.
 
